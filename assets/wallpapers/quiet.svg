@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2560" height="1440" viewBox="0 0 2560 1440">
+<defs><radialGradient id="g"><stop stop-color="#17221d"/><stop offset="1" stop-color="#060a09"/></radialGradient></defs><path fill="url(#g)" d="M0 0h2560v1440H0z"/>
+<path d="M0 0l2560 300" stroke="#67858a" opacity=".06"/>
+<path d="M0 70l2560 300" stroke="#67858a" opacity=".06"/>
+<path d="M0 140l2560 300" stroke="#67858a" opacity=".06"/>
+<path d="M0 210l2560 300" stroke="#67858a" opacity=".06"/>
+<path d="M0 280l2560 300" stroke="#67858a" opacity=".06"/>
+<path d="M0 350l2560 300" stroke="#67858a" opacity=".06"/>
+<path d="M0 420l2560 300" stroke="#67858a" opacity=".06"/>
+<path d="M0 490l2560 300" stroke="#67858a" opacity=".06"/>
+<path d="M0 560l2560 300" stroke="#67858a" opacity=".06"/>
+<path d="M0 630l2560 300" stroke="#67858a" opacity=".06"/>
+<path d="M0 700l2560 300" stroke="#67858a" opacity=".06"/>
+<path d="M0 770l2560 300" stroke="#67858a" opacity=".06"/>
+<path d="M0 840l2560 300" stroke="#67858a" opacity=".06"/>
+<path d="M0 910l2560 300" stroke="#67858a" opacity=".06"/>
+<path d="M0 980l2560 300" stroke="#67858a" opacity=".06"/>
+<path d="M0 1050l2560 300" stroke="#67858a" opacity=".06"/>
+<path d="M0 1120l2560 300" stroke="#67858a" opacity=".06"/>
+<path d="M0 1190l2560 300" stroke="#67858a" opacity=".06"/>
+<path d="M0 1260l2560 300" stroke="#67858a" opacity=".06"/>
+<path d="M0 1330l2560 300" stroke="#67858a" opacity=".06"/>
+<path d="M0 1400l2560 300" stroke="#67858a" opacity=".06"/>
+<path d="M80 100h100v4H84v90h-4zM2480 1340h-100v-4h96v-90h4z" fill="#67858a" opacity=".6"/>
+<text x="1280" y="1360" text-anchor="middle" fill="#67858a" opacity=".4" font-family="monospace" font-size="14" letter-spacing="6">MACHINE SPIRIT / QUIET</text></svg>

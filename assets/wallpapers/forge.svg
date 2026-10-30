@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2560" height="1440" viewBox="0 0 2560 1440">
+<defs><radialGradient id="g"><stop stop-color="#17221d"/><stop offset="1" stop-color="#060a09"/></radialGradient></defs><path fill="url(#g)" d="M0 0h2560v1440H0z"/>
+<path d="M80 0v1440m30-1440v1440" stroke="#b88a3e" opacity=".12" stroke-width="3"/>
+<path d="M280 0v1440m30-1440v1440" stroke="#b88a3e" opacity=".12" stroke-width="3"/>
+<path d="M480 0v1440m30-1440v1440" stroke="#b88a3e" opacity=".12" stroke-width="3"/>
+<path d="M680 0v1440m30-1440v1440" stroke="#b88a3e" opacity=".12" stroke-width="3"/>
+<path d="M880 0v1440m30-1440v1440" stroke="#b88a3e" opacity=".12" stroke-width="3"/>
+<path d="M1080 0v1440m30-1440v1440" stroke="#b88a3e" opacity=".12" stroke-width="3"/>
+<path d="M1280 0v1440m30-1440v1440" stroke="#b88a3e" opacity=".12" stroke-width="3"/>
+<path d="M1480 0v1440m30-1440v1440" stroke="#b88a3e" opacity=".12" stroke-width="3"/>
+<path d="M1680 0v1440m30-1440v1440" stroke="#b88a3e" opacity=".12" stroke-width="3"/>
+<path d="M1880 0v1440m30-1440v1440" stroke="#b88a3e" opacity=".12" stroke-width="3"/>
+<path d="M2080 0v1440m30-1440v1440" stroke="#b88a3e" opacity=".12" stroke-width="3"/>
+<path d="M2280 0v1440m30-1440v1440" stroke="#b88a3e" opacity=".12" stroke-width="3"/>
+<path d="M2480 0v1440m30-1440v1440" stroke="#b88a3e" opacity=".12" stroke-width="3"/>
+<path d="M0 90h2560" stroke="#b88a3e" opacity=".25" stroke-width="4"/>
+<path d="M0 180h2560" stroke="#b88a3e" opacity=".25" stroke-width="4"/>
+<path d="M0 1260h2560" stroke="#b88a3e" opacity=".25" stroke-width="4"/>
+<path d="M0 1350h2560" stroke="#b88a3e" opacity=".25" stroke-width="4"/>
+<path d="M80 100h100v4H84v90h-4zM2480 1340h-100v-4h96v-90h4z" fill="#b88a3e" opacity=".6"/>
+<text x="1280" y="1360" text-anchor="middle" fill="#b88a3e" opacity=".4" font-family="monospace" font-size="14" letter-spacing="6">MACHINE SPIRIT / FORGE</text></svg>

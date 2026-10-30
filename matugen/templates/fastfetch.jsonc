@@ -1,0 +1,41 @@
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": {
+    "type": "kitty-direct",
+    "source": "~/.config/fastfetch/emblem.png",
+    "width": 28,
+    "preserveAspectRatio": true,
+    "padding": { "top": 1, "left": 2, "right": 4 }
+  },
+  "display": {
+    "separator": " ",
+    "color": { "keys": "38;2;{{colors.primary.default.red}};{{colors.primary.default.green}};{{colors.primary.default.blue}}", "title": "38;2;{{colors.primary_fixed_dim.default.red}};{{colors.primary_fixed_dim.default.green}};{{colors.primary_fixed_dim.default.blue}}", "output": "38;2;{{colors.primary_fixed_dim.default.red}};{{colors.primary_fixed_dim.default.green}};{{colors.primary_fixed_dim.default.blue}}", "separator": "38;2;{{colors.outline.default.red}};{{colors.outline.default.green}};{{colors.outline.default.blue}}" },
+    "bar": {
+      "width": 16,
+      "char": { "elapsed": "━", "total": "─" },
+      "border": { "left": "", "right": " " },
+      "color": { "elapsed": "38;2;{{colors.primary_fixed.default.red}};{{colors.primary_fixed.default.green}};{{colors.primary_fixed.default.blue}}", "total": "38;2;{{colors.outline.default.red}};{{colors.outline.default.green}};{{colors.outline.default.blue}}", "border": "38;2;{{colors.outline.default.red}};{{colors.outline.default.green}};{{colors.outline.default.blue}}" }
+    },
+    "percent": { "color": { "green": "38;2;{{colors.primary_fixed.default.red}};{{colors.primary_fixed.default.green}};{{colors.primary_fixed.default.blue}}", "yellow": "38;2;{{colors.primary_fixed.default.red}};{{colors.primary_fixed.default.green}};{{colors.primary_fixed.default.blue}}", "red": "38;2;239;106;80" } }
+  },
+  "modules": [
+    { "type": "custom", "format": "\u001b[38;2;{{colors.outline.default.red}};{{colors.outline.default.green}};{{colors.outline.default.blue}}m── \u001b[38;2;{{colors.primary_fixed.default.red}};{{colors.primary_fixed.default.green}};{{colors.primary_fixed.default.blue}}mM A C H I N E   S P I R I T \u001b[38;2;{{colors.outline.default.red}};{{colors.outline.default.green}};{{colors.outline.default.blue}}m──────────────────" },
+    { "type": "title", "format": "\u001b[38;2;{{colors.primary_fixed_dim.default.red}};{{colors.primary_fixed_dim.default.green}};{{colors.primary_fixed_dim.default.blue}}m{user-name}\u001b[38;2;{{colors.outline.default.red}};{{colors.outline.default.green}};{{colors.outline.default.blue}}m @ \u001b[38;2;{{colors.primary_fixed_dim.default.red}};{{colors.primary_fixed_dim.default.green}};{{colors.primary_fixed_dim.default.blue}}m{host-name}" },
+    { "type": "custom", "format": "\u001b[38;2;{{colors.outline.default.red}};{{colors.outline.default.green}};{{colors.outline.default.blue}}m╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌" },
+    { "type": "os", "key": "\u001b[38;2;{{colors.primary.default.red}};{{colors.primary.default.green}};{{colors.primary.default.blue}}m\uf303  \u001b[38;2;{{colors.outline.default.red}};{{colors.outline.default.green}};{{colors.outline.default.blue}}mmachine   " },
+    { "type": "kernel", "key": "\u001b[38;2;{{colors.primary.default.red}};{{colors.primary.default.green}};{{colors.primary.default.blue}}m\uf17c  \u001b[38;2;{{colors.outline.default.red}};{{colors.outline.default.green}};{{colors.outline.default.blue}}mkernel    " },
+    { "type": "wm", "key": "\u001b[38;2;{{colors.primary.default.red}};{{colors.primary.default.green}};{{colors.primary.default.blue}}m\uf2d0  \u001b[38;2;{{colors.outline.default.red}};{{colors.outline.default.green}};{{colors.outline.default.blue}}mspirit    " },
+    { "type": "shell", "key": "\u001b[38;2;{{colors.primary.default.red}};{{colors.primary.default.green}};{{colors.primary.default.blue}}m\uf489  \u001b[38;2;{{colors.outline.default.red}};{{colors.outline.default.green}};{{colors.outline.default.blue}}mlitany    " },
+    { "type": "terminal", "key": "\u001b[38;2;{{colors.primary.default.red}};{{colors.primary.default.green}};{{colors.primary.default.blue}}m\uf120  \u001b[38;2;{{colors.outline.default.red}};{{colors.outline.default.green}};{{colors.outline.default.blue}}mvox       " },
+    { "type": "cpu", "key": "\u001b[38;2;{{colors.primary.default.red}};{{colors.primary.default.green}};{{colors.primary.default.blue}}m\uf2db  \u001b[38;2;{{colors.outline.default.red}};{{colors.outline.default.green}};{{colors.outline.default.blue}}mcogitator " },
+    { "type": "gpu", "key": "\u001b[38;2;{{colors.primary.default.red}};{{colors.primary.default.green}};{{colors.primary.default.blue}}m\uf108  \u001b[38;2;{{colors.outline.default.red}};{{colors.outline.default.green}};{{colors.outline.default.blue}}maugur     ", "hideType": "integrated" },
+    { "type": "memory", "key": "\u001b[38;2;{{colors.primary.default.red}};{{colors.primary.default.green}};{{colors.primary.default.blue}}m\uf538  \u001b[38;2;{{colors.outline.default.red}};{{colors.outline.default.green}};{{colors.outline.default.blue}}mmemory    ", "percent": { "type": ["bar", "num"], "green": 70, "yellow": 88 } },
+    { "type": "disk", "key": "\u001b[38;2;{{colors.primary.default.red}};{{colors.primary.default.green}};{{colors.primary.default.blue}}m\uf0a0  \u001b[38;2;{{colors.outline.default.red}};{{colors.outline.default.green}};{{colors.outline.default.blue}}marchive   ", "percent": { "type": ["bar", "num"], "green": 70, "yellow": 88 }, "folders": "/", "format": "{size-percentage-bar} {size-used} / {size-total} ({size-percentage})" },
+    { "type": "uptime", "key": "\u001b[38;2;{{colors.primary.default.red}};{{colors.primary.default.green}};{{colors.primary.default.blue}}m\uf017  \u001b[38;2;{{colors.outline.default.red}};{{colors.outline.default.green}};{{colors.outline.default.blue}}mvigil     " },
+    { "type": "packages", "key": "\u001b[38;2;{{colors.primary.default.red}};{{colors.primary.default.green}};{{colors.primary.default.blue}}m\uf187  \u001b[38;2;{{colors.outline.default.red}};{{colors.outline.default.green}};{{colors.outline.default.blue}}mrelics    " },
+    { "type": "custom", "format": "\u001b[38;2;{{colors.outline.default.red}};{{colors.outline.default.green}};{{colors.outline.default.blue}}m╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌" },
+    { "type": "custom", "format": "\u001b[38;2;{{colors.outline.default.red}};{{colors.outline.default.green}};{{colors.outline.default.blue}}m+++ \u001b[38;2;{{colors.primary_fixed_dim.default.red}};{{colors.primary_fixed_dim.default.green}};{{colors.primary_fixed_dim.default.blue}}mThe Omnissiah knows all, comprehends all \u001b[38;2;{{colors.outline.default.red}};{{colors.outline.default.green}};{{colors.outline.default.blue}}m+++" },
+    "break",
+    { "type": "colors", "symbol": "circle", "paddingLeft": 0 }
+  ]
+}

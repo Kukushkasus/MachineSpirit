@@ -1,0 +1,70 @@
+{
+  "shell": {
+    "packages": [
+      "qt6-svg",
+      "quickshell",
+      "matugen",
+      "python",
+      "imagemagick",
+      "curl",
+      "cava",
+      "playerctl",
+      "networkmanager",
+      "pipewire",
+      "wireplumber",
+      "bluez",
+      "bluez-utils",
+      "blueman",
+      "brightnessctl",
+      "ddcutil",
+      "grim",
+      "slurp",
+      "wl-clipboard",
+      "librsvg",
+      "libnotify",
+      "ttf-jetbrains-mono-nerd",
+      "ttf-material-symbols-variable"
+    ]
+  },
+  "hyprland": {
+    "packages": [
+      "hyprland",
+      "xdg-desktop-portal-hyprland",
+      "polkit-kde-agent",
+      "gnome-keyring"
+    ]
+  },
+  "terminal": {
+    "packages": [
+      "kitty",
+      "fish",
+      "fastfetch"
+    ]
+  },
+  "apps": {
+    "packages": [
+      "dolphin",
+      "firefox",
+      "qt6ct",
+      "breeze",
+      "breeze-icons",
+      "plasma-integration",
+      "adw-gtk-theme",
+      "btop"
+    ]
+  },
+  "lock": {
+    "packages": [
+      "hyprlock",
+      "hypridle"
+    ]
+  },
+  "wallpapers": {
+    "packages": []
+  },
+  "boot": {
+    "packages": [
+      "plymouth"
+    ]
+  }
+}

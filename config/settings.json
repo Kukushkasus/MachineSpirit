@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "layouts": ["us"],
+  "layoutSwitch": "grp:alt_shift_toggle",
+  "primaryOutput": "",
+  "monitors": [],
+  "reducedMotion": false,
+  "lowPower": false,
+  "blur": true,
+  "lockSeconds": 600,
+  "screenOffSeconds": 900,
+  "bindings": {}
+}

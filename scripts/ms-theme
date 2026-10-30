@@ -1,0 +1,336 @@
+#!/usr/bin/env python3
+# [ PURITY SEAL ] Keep the signal clear. Preserve the entrusted work.
+"""ms-theme: derive the MachineSpirit colour scheme from a wallpaper and push it to every app.
+
+  ms-theme apply [WALLPAPER] [--mode strict|loose|fixed]
+  ms-theme status
+
+Modes
+  follow  (default)  Material You: surfaces and accent take the wallpaper's colour as it is
+  strict             take the wallpaper's colour, but keep its hue inside the rust-to-brass band,
+                     so the theme stays Mechanicus whatever wallpaper you pick
+  fixed              ignore the wallpaper; the built-in rust/brass scheme (needs no matugen)
+"""
+import argparse, colorsys, configparser, fcntl, hashlib, json, os, re, shutil, subprocess, sys, time, tomllib
+from pathlib import Path
+
+HOME = Path.home()
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", HOME / ".config"))
+SHARE = Path(os.environ.get("XDG_DATA_HOME", HOME / ".local/share"))
+DATA = SHARE / "machinespirit"
+STATE = Path(os.environ.get("XDG_STATE_HOME", HOME / ".local/state")) / "machinespirit"
+CONF = CONFIG / "machinespirit/theme.conf"
+FIXED_SEED = "#b0702a"
+BAND = (6.0, 46.0)            # degrees of hue a strict theme may use (rust .. brass)
+
+
+def say(*a): print("ms-theme:", *a, file=sys.stderr)
+
+
+def read_conf():
+    cfg = {"mode": "follow", "type": "auto", "darkness": "-0.05"}
+    if CONF.exists():
+        for line in CONF.read_text().splitlines():
+            if "=" in line and not line.strip().startswith("#"):
+                k, v = line.split("=", 1)
+                cfg[k.strip()] = v.strip()
+    return cfg
+
+
+def hex_to_rgb(h):
+    h = h.lstrip("#")
+    return tuple(int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
+
+
+def rgb_to_hex(r, g, b):
+    return "#%02x%02x%02x" % tuple(round(max(0, min(1, c)) * 255) for c in (r, g, b))
+
+
+def clamp_hue(seed):
+    """Keep the wallpaper's character but move the hue into the Mechanicus band."""
+    h, l, s = colorsys.rgb_to_hls(*hex_to_rgb(seed))
+    deg = h * 360
+    if not (deg >= 350 or deg <= 52):                 # outside the warm arc: fold it in
+        deg = BAND[0] + (deg / 360) * (BAND[1] - BAND[0])
+    s = max(s, 0.45)                                  # grey wallpapers still get a warm accent
+    l = min(max(l, 0.38), 0.62)
+    return rgb_to_hex(*colorsys.hls_to_rgb((deg % 360) / 360, l, s))
+
+
+def colourfulness(wallpaper):
+    """Mean HSL saturation of a small copy of the picture (0..1), or None without ImageMagick."""
+    if not shutil.which("magick"):
+        return None
+    r = subprocess.run(["magick", str(wallpaper) + "[0]", "-resize", "64x64!", "-colorspace", "HSL",
+                        "-format", "%[fx:mean.g]", "info:"], capture_output=True, text=True)
+    try:
+        return float(r.stdout.strip())
+    except ValueError:
+        return None
+
+
+def pick_type(wallpaper, configured):
+    """auto: grey pictures get a neutral scheme, strongly coloured ones keep their colour."""
+    if configured != "auto":
+        return configured
+    c = colourfulness(wallpaper) if wallpaper and wallpaper.exists() else None
+    if c is None:
+        return "scheme-tonal-spot"
+    if c < 0.10:
+        return "scheme-neutral"
+    if c > 0.45:
+        return "scheme-content"
+    return "scheme-tonal-spot"
+
+
+def tone(palette, t):
+    return palette[str(t)]["color"] if isinstance(palette[str(t)], dict) else palette[str(t)]
+
+
+def materials(seed, scheme, darkness):
+    """Forge materials from the scheme's tonal palettes: metal, brass, cogitator glass and glow."""
+    r = subprocess.run(["matugen", "color", "hex", seed, "--dry-run", "--json", "hex", "--type", scheme,
+                        "--mode", "dark", "--lightness-dark", darkness], capture_output=True, text=True)
+    p = json.loads(r.stdout)["palettes"]
+    pr, nv, n, se = p["primary"], p["neutral_variant"], p["neutral"], p["secondary"]
+    return {
+        "metal_lo": tone(nv, 10), "metal": tone(nv, 20), "metal_hi": tone(nv, 35), "metal_edge": tone(nv, 60),
+        "brass_lo": tone(pr, 30), "brass": tone(pr, 60), "brass_hi": tone(pr, 80),
+        "glass": tone(n, 5), "glass_hi": tone(n, 10),
+        "glow": tone(pr, 90), "glow_dim": tone(pr, 70), "glow_faint": tone(pr, 40),
+    }
+
+
+def repaint_emblem(colors_json):
+    """Redraw the fastfetch emblem in the new scheme's phosphor."""
+    tool = DATA / "tools/make_emblem.py"
+    if not tool.exists() or not shutil.which("rsvg-convert"):
+        return
+    try:
+        c = json.loads(colors_json.read_text())
+        svg = STATE / "emblem.svg"
+        subprocess.run([sys.executable, str(tool), str(svg), "--glow", c["glow"], "--dim", c["glow_dim"],
+                        "--faint", c["glow_faint"]], check=True)
+        out = CONFIG / "fastfetch/emblem.png"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.run(["rsvg-convert", "-w", "512", "-h", "512", str(svg), "-o", str(out)], check=True)
+    except Exception as e:
+        say("could not repaint the emblem:", e)
+
+
+def matugen_source(wallpaper):
+    out = subprocess.run(["matugen", "image", str(wallpaper), "--dry-run", "--json", "hex",
+                          "--prefer", "saturation", "--fallback-color", FIXED_SEED, "--mode", "dark", "-q"],
+                         capture_output=True, text=True)
+    try:
+        return json.loads(out.stdout)["colors"]["source_color"]["default"]["color"]
+    except Exception:
+        return None
+
+
+def hypr_env():
+    env = dict(os.environ)
+    run = Path(f"/run/user/{os.getuid()}")
+    env.setdefault("XDG_RUNTIME_DIR", str(run))
+    if "HYPRLAND_INSTANCE_SIGNATURE" not in env and (run / "hypr").exists():
+        sigs = sorted((run / "hypr").iterdir(), key=lambda p: p.stat().st_mtime, reverse=True)
+        if sigs:
+            env["HYPRLAND_INSTANCE_SIGNATURE"] = sigs[0].name
+    return env
+
+
+def backup_once(path):
+    if path.exists() and "generated by ms-theme" not in path.read_text(errors="ignore")[:200]:
+        bak = path.with_name(path.name + ".ms-backup")
+        if not bak.exists():
+            shutil.copy2(path, bak)
+
+
+def merge_kde():
+    src = CONFIG / "machinespirit/kdeglobals"
+    dst = CONFIG / "kdeglobals"
+    if not src.exists():
+        return
+    sect = lambda txt: dict(re.findall(r"^\[([^\]]+)\]\n((?:(?!\[).*\n?)*)", txt, re.M))
+    new = sect(src.read_text())
+    old_txt = dst.read_text() if dst.exists() else ""
+    backup_once(dst)
+    old = sect(old_txt)
+    old.update(new)
+    # KDE apps (Dolphin...) switch to Breeze Light on their own unless a named scheme is set, so install ours
+    # as a colour scheme and name it; Icons dark to match.
+    schemes = SHARE / "color-schemes"
+    schemes.mkdir(parents=True, exist_ok=True)
+    (schemes / "MachineSpirit.colors").write_text("[General]\nName=MachineSpirit\nColorScheme=MachineSpirit\n\n" +
+        "".join(f"[{k}]\n{v.rstrip()}\n\n" for k, v in new.items()))
+    gen = dict(re.findall(r"^([^=\n]+)=(.*)$", old.get("General", ""), re.M))
+    gen["ColorScheme"] = "MachineSpirit"
+    old["General"] = "".join(f"{k}={v}\n" for k, v in gen.items())
+    # KColorSchemeManager reads UiSettings/ColorScheme from each app's rc, which falls back to kdeglobals
+    ui = dict(re.findall(r"^([^=\n]+)=(.*)$", old.get("UiSettings", ""), re.M))
+    ui["ColorScheme"] = "MachineSpirit"
+    old["UiSettings"] = "".join(f"{k}={v}\n" for k, v in ui.items())
+    # widget style: Darkly (rounded) when installed, else Breeze, else leave it
+    kde = dict(re.findall(r"^([^=\n]+)=(.*)$", old.get("KDE", ""), re.M))
+    styles = Path("/usr/lib/qt6/plugins/styles")
+    style = "Darkly" if (styles / "darkly6.so").exists() else "Breeze" if (styles / "breeze6.so").exists() else None
+    if style:
+        kde["widgetStyle"] = style
+        old["KDE"] = "".join(f"{k}={v}\n" for k, v in kde.items())
+    darkly = CONFIG / "darklyrc"
+    if style == "Darkly" and not darkly.exists():
+        # rounded, flat, no heavy shadows; translucency off so the colours stay true to the wallpaper
+        darkly.write_text("[Common]\nCornerRadius=8\n\n[Style]\nWidgetDrawShadow=false\nMenuOpacity=100\nDolphinSidebarOpacity=100\n"
+                          "TabDrawHighlight=true\nViewDrawFocusIndicator=false\n\n[Windeco]\nDrawBorderOnMaximizedWindows=false\n")
+    icons = dict(re.findall(r"^([^=\n]+)=(.*)$", old.get("Icons", ""), re.M))
+    icons.setdefault("Theme", "breeze-dark")
+    old["Icons"] = "".join(f"{k}={v}\n" for k, v in icons.items())
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    dst.write_text("# generated by ms-theme (manages [Colors:*], [ColorEffects:*], the colour scheme name and a default icon theme)\n" +
+                   "".join(f"[{k}]\n{v.rstrip()}\n\n" for k, v in old.items()))
+
+
+def ensure_qt():
+    """Merge only palette keys, preserving unrelated user preferences."""
+    for name in ("qt6ct", "qt5ct"):
+        conf = CONFIG / f"{name}/{name}.conf"
+        parser = configparser.ConfigParser(interpolation=None, strict=False)
+        parser.optionxform = str
+        if conf.exists(): parser.read(conf)
+        if not parser.has_section("Appearance"): parser.add_section("Appearance")
+        parser["Appearance"]["color_scheme_path"] = str(CONFIG / f"{name}/colors/machinespirit.conf")
+        parser["Appearance"]["custom_palette"] = "true"
+        parser["Appearance"].setdefault("style", "Fusion")
+        conf.parent.mkdir(parents=True, exist_ok=True)
+        with conf.open("w") as f: parser.write(f)
+
+
+def reload_apps(env, selected):
+    if "terminal" in selected:
+        subprocess.run(["pkill", "-USR1", "-x", "kitty"], capture_output=True)
+    if "hyprland" in selected and shutil.which("hyprctl"):
+        subprocess.run(["hyprctl", "reload"], env=env, capture_output=True)
+
+
+def apply_inner(args, selected, runtime):
+    cfg = read_conf()
+    mode = args.mode or cfg["mode"]
+    wallpaper = Path(args.wallpaper).expanduser() if args.wallpaper else None
+    if wallpaper is None:
+        cur = STATE / "theme.json"
+        wallpaper = Path(json.loads(cur.read_text()).get("source_wallpaper", "")) if cur.exists() else None
+        if not wallpaper or not wallpaper.exists():
+            wallpaper = DATA / "wallpapers/forge.png"
+    if not wallpaper.is_file():
+        raise ValueError("Wallpaper does not exist: " + str(wallpaper))
+    STATE.mkdir(parents=True, exist_ok=True)
+    (DATA / "wallpapers").mkdir(parents=True, exist_ok=True)
+
+    have_matugen = shutil.which("matugen") is not None
+    source = None
+    if mode == "fixed" or not have_matugen:
+        if not have_matugen and mode != "fixed":
+            say("matugen not found, using the built-in scheme")
+        seed = FIXED_SEED
+    else:
+        source = matugen_source(wallpaper)
+        if not source:
+            say("could not read a colour from the wallpaper, using the built-in scheme")
+            seed = FIXED_SEED
+        else:
+            seed = clamp_hue(source) if mode == "strict" else source
+
+    scheme = pick_type(wallpaper, cfg["type"]) if mode != "fixed" else "scheme-tonal-spot"
+    if have_matugen:
+        r = subprocess.run(["matugen", "color", "hex", seed, "--config", str(runtime),
+                            "--type", scheme, "--mode", "dark",
+                            "--lightness-dark", cfg["darkness"], "-q"], capture_output=True, text=True)
+        if r.returncode != 0:
+            say("matugen failed:", r.stderr.strip()[:300])
+            return 1
+        # forge materials go into the same colors.json the shell reads
+        cj = STATE / "colors.json"
+        try:
+            colors = json.loads(cj.read_text())
+            colors.update(materials(seed, scheme, cfg["darkness"]))
+            cj.write_text(json.dumps(colors, indent=2))
+        except Exception as e:
+            say("could not add materials:", e)
+        if "terminal" in selected: repaint_emblem(cj)
+    else:
+        fixed = DATA / "matugen/fixed-colors.json"
+        if fixed.exists():
+            shutil.copy(fixed, STATE / "colors.json")
+
+    # wallpaper copy under a fresh name so the shell notices the change
+    stamp = time.time_ns()
+    if wallpaper.exists():
+        dst = DATA / f"wallpapers/active-{hashlib.sha256(wallpaper.read_bytes()).hexdigest()[:16]}{wallpaper.suffix}"
+        if wallpaper.resolve() != dst.resolve(): shutil.copy(wallpaper, dst)
+    else:
+        dst = None
+    (STATE / "theme.json").write_text(json.dumps({
+        "stamp": stamp, "mode": mode, "seed": seed, "scheme": scheme if have_matugen else "fixed", "source_color": source,
+        "source_wallpaper": str(wallpaper), "wallpaper": str(dst) if dst else ""}, indent=2))
+
+    if "apps" in selected:
+        merge_kde()
+        ensure_qt()
+    reload_apps(hypr_env(), selected)
+    say(f"applied: mode={mode} scheme={scheme if have_matugen else 'fixed'} seed={seed}" + (f" (wallpaper colour {source})" if source else ""))
+    return 0
+
+
+def apply(args):
+    selected_path = STATE / "install/components.json"
+    selected = json.loads(selected_path.read_text()) if selected_path.exists() else ["shell"]
+    STATE.mkdir(parents=True, exist_ok=True)
+    source = (DATA / "matugen/ms.toml").read_text()
+    parsed = tomllib.loads(source)
+    text = source.split("[templates.", 1)[0]
+    paths = [STATE / "colors.json", STATE / "theme.json"]
+    owners = {"hyprland":"hyprland", "kitty":"terminal", "fastfetch":"terminal", "fish":"terminal", "gtk3":"apps", "gtk4":"apps", "qt6ct":"apps", "qt5ct":"apps", "kde":"apps", "quickshell":"shell"}
+    for name, template in parsed["templates"].items():
+        if owners[name] not in selected: continue
+        inp = DATA / "matugen/templates" / Path(template["input_path"]).name
+        raw = template["output_path"]
+        out = CONFIG / raw[len("~/.config/"):] if raw.startswith("~/.config/") else STATE / Path(raw).name
+        paths.append(out)
+        text += "\n[templates." + name + "]\ninput_path = " + json.dumps(str(inp)) + "\noutput_path = " + json.dumps(str(out)) + "\n"
+    if "apps" in selected:
+        paths += [CONFIG / n for n in ["kdeglobals","darklyrc","qt6ct/qt6ct.conf","qt5ct/qt5ct.conf"]]
+        paths += [SHARE / "color-schemes/MachineSpirit.colors"]
+    if "terminal" in selected: paths += [CONFIG / "fastfetch/emblem.png"]
+    runtime = STATE / "matugen-runtime.toml"
+    runtime.write_text(text)
+    sys.path.insert(0, str(DATA / "tools"))
+    from managed import transaction
+    with (STATE / "theme.lock").open("w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        with transaction(paths, STATE):
+            result = apply_inner(args, selected, runtime)
+            if result: raise RuntimeError("Theme generation failed; original files restored")
+    return 0
+
+
+def status(_):
+    f = STATE / "theme.json"
+    print(f.read_text() if f.exists() else "no theme applied yet")
+    return 0
+
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = p.add_subparsers(dest="cmd", required=True)
+    a = sub.add_parser("apply", help="apply a wallpaper")
+    a.add_argument("wallpaper", nargs="?")
+    a.add_argument("--mode", choices=["follow", "strict", "fixed"])
+    a.set_defaults(fn=apply)
+    s = sub.add_parser("status")
+    s.set_defaults(fn=status)
+    args = p.parse_args()
+    sys.exit(args.fn(args))
+
+
+if __name__ == "__main__":
+    main()

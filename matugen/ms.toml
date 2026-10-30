@@ -1,0 +1,52 @@
+# MachineSpirit theme engine. Run through `ms-theme`, which passes --config to this file.
+[config]
+version_check = false
+
+# terminal hues, pulled towards the wallpaper's colour so kitty matches the shell
+[config.custom_colors]
+red     = { color = "#d0473a", blend = true }
+green   = { color = "#5fa86a", blend = true }
+yellow  = { color = "#d6a646", blend = true }
+blue    = { color = "#5a8fc4", blend = true }
+magenta = { color = "#b0688f", blend = true }
+cyan    = { color = "#4aa59a", blend = true }
+
+[templates.quickshell]
+input_path  = '~/.local/share/machinespirit/matugen/templates/colors.json'
+output_path = '~/.local/state/machinespirit/colors.json'
+
+[templates.hyprland]
+input_path  = '~/.local/share/machinespirit/matugen/templates/hypr-colors.lua'
+output_path = '~/.config/hypr/colors.lua'
+
+[templates.kitty]
+input_path  = '~/.local/share/machinespirit/matugen/templates/kitty-colors.conf'
+output_path = '~/.config/kitty/colors.conf'
+
+[templates.fastfetch]
+input_path  = '~/.local/share/machinespirit/matugen/templates/fastfetch.jsonc'
+output_path = '~/.config/fastfetch/config.jsonc'
+
+[templates.fish]
+input_path  = '~/.local/share/machinespirit/matugen/templates/fish-colors.fish'
+output_path = '~/.config/fish/ms-colors.fish'
+
+[templates.gtk3]
+input_path  = '~/.local/share/machinespirit/matugen/templates/gtk.css'
+output_path = '~/.config/gtk-3.0/gtk.css'
+
+[templates.gtk4]
+input_path  = '~/.local/share/machinespirit/matugen/templates/gtk.css'
+output_path = '~/.config/gtk-4.0/gtk.css'
+
+[templates.qt6ct]
+input_path  = '~/.local/share/machinespirit/matugen/templates/qtct.conf'
+output_path = '~/.config/qt6ct/colors/machinespirit.conf'
+
+[templates.qt5ct]
+input_path  = '~/.local/share/machinespirit/matugen/templates/qtct.conf'
+output_path = '~/.config/qt5ct/colors/machinespirit.conf'
+
+[templates.kde]
+input_path  = '~/.local/share/machinespirit/matugen/templates/kdeglobals'
+output_path = '~/.config/machinespirit/kdeglobals'

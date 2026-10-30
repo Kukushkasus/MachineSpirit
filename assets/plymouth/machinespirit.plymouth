@@ -1,0 +1,7 @@
+[Plymouth Theme]
+Name=MachineSpirit
+Description=An original phosphor instrument waking in the dark
+ModuleName=script
+[script]
+ImageDir=/usr/share/plymouth/themes/machinespirit
+ScriptFile=/usr/share/plymouth/themes/machinespirit/machinespirit.script

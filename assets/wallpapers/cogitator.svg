@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2560" height="1440" viewBox="0 0 2560 1440">
+<defs><radialGradient id="g"><stop stop-color="#17221d"/><stop offset="1" stop-color="#060a09"/></radialGradient></defs><path fill="url(#g)" d="M0 0h2560v1440H0z"/>
+<circle cx="220" cy="240" r="60" fill="none" stroke="#79a879" opacity=".2" stroke-width="2" stroke-dasharray="12 8"/>
+<circle cx="220" cy="240" r="110" fill="none" stroke="#79a879" opacity=".2" stroke-width="2" stroke-dasharray="12 8"/>
+<circle cx="220" cy="240" r="160" fill="none" stroke="#79a879" opacity=".2" stroke-width="2" stroke-dasharray="12 8"/>
+<circle cx="220" cy="240" r="210" fill="none" stroke="#79a879" opacity=".2" stroke-width="2" stroke-dasharray="12 8"/>
+<circle cx="220" cy="240" r="260" fill="none" stroke="#79a879" opacity=".2" stroke-width="2" stroke-dasharray="12 8"/>
+<circle cx="220" cy="240" r="310" fill="none" stroke="#79a879" opacity=".2" stroke-width="2" stroke-dasharray="12 8"/>
+<circle cx="220" cy="240" r="360" fill="none" stroke="#79a879" opacity=".2" stroke-width="2" stroke-dasharray="12 8"/>
+<circle cx="2320" cy="1200" r="60" fill="none" stroke="#79a879" opacity=".2" stroke-width="2" stroke-dasharray="12 8"/>
+<circle cx="2320" cy="1200" r="110" fill="none" stroke="#79a879" opacity=".2" stroke-width="2" stroke-dasharray="12 8"/>
+<circle cx="2320" cy="1200" r="160" fill="none" stroke="#79a879" opacity=".2" stroke-width="2" stroke-dasharray="12 8"/>
+<circle cx="2320" cy="1200" r="210" fill="none" stroke="#79a879" opacity=".2" stroke-width="2" stroke-dasharray="12 8"/>
+<circle cx="2320" cy="1200" r="260" fill="none" stroke="#79a879" opacity=".2" stroke-width="2" stroke-dasharray="12 8"/>
+<circle cx="2320" cy="1200" r="310" fill="none" stroke="#79a879" opacity=".2" stroke-width="2" stroke-dasharray="12 8"/>
+<circle cx="2320" cy="1200" r="360" fill="none" stroke="#79a879" opacity=".2" stroke-width="2" stroke-dasharray="12 8"/>
+<path d="M80 100h100v4H84v90h-4zM2480 1340h-100v-4h96v-90h4z" fill="#79a879" opacity=".6"/>
+<text x="1280" y="1360" text-anchor="middle" fill="#79a879" opacity=".4" font-family="monospace" font-size="14" letter-spacing="6">MACHINE SPIRIT / COGITATOR</text></svg>

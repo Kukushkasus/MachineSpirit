@@ -1,0 +1,11 @@
+*.log
+.DS_Store
+hypr/local.lua
+wallpapers-local/
+
+__pycache__/
+*.pyc
+.dist/
+*.qcow2
+*.iso
+keys.conf

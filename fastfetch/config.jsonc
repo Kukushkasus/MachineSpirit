@@ -1,0 +1,41 @@
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": {
+    "type": "kitty-direct",
+    "source": "~/.config/fastfetch/emblem.png",
+    "width": 28,
+    "preserveAspectRatio": true,
+    "padding": { "top": 1, "left": 2, "right": 4 }
+  },
+  "display": {
+    "separator": " ",
+    "color": { "keys": "38;2;168;203;159", "title": "38;2;168;203;159", "output": "38;2;168;203;159", "separator": "38;2;135;140;130" },
+    "bar": {
+      "width": 16,
+      "char": { "elapsed": "━", "total": "─" },
+      "border": { "left": "", "right": " " },
+      "color": { "elapsed": "38;2;196;234;187", "total": "38;2;135;140;130", "border": "38;2;135;140;130" }
+    },
+    "percent": { "color": { "green": "38;2;196;234;187", "yellow": "38;2;196;234;187", "red": "38;2;239;106;80" } }
+  },
+  "modules": [
+    { "type": "custom", "format": "\u001b[38;2;135;140;130m── \u001b[38;2;196;234;187mM A C H I N E   S P I R I T \u001b[38;2;135;140;130m──────────────────" },
+    { "type": "title", "format": "\u001b[38;2;168;203;159m{user-name}\u001b[38;2;135;140;130m @ \u001b[38;2;168;203;159m{host-name}" },
+    { "type": "custom", "format": "\u001b[38;2;135;140;130m╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌" },
+    { "type": "os", "key": "\u001b[38;2;168;203;159m\uf303  \u001b[38;2;135;140;130mmachine   " },
+    { "type": "kernel", "key": "\u001b[38;2;168;203;159m\uf17c  \u001b[38;2;135;140;130mkernel    " },
+    { "type": "wm", "key": "\u001b[38;2;168;203;159m\uf2d0  \u001b[38;2;135;140;130mspirit    " },
+    { "type": "shell", "key": "\u001b[38;2;168;203;159m\uf489  \u001b[38;2;135;140;130mlitany    " },
+    { "type": "terminal", "key": "\u001b[38;2;168;203;159m\uf120  \u001b[38;2;135;140;130mvox       " },
+    { "type": "cpu", "key": "\u001b[38;2;168;203;159m\uf2db  \u001b[38;2;135;140;130mcogitator " },
+    { "type": "gpu", "key": "\u001b[38;2;168;203;159m\uf108  \u001b[38;2;135;140;130maugur     ", "hideType": "integrated" },
+    { "type": "memory", "key": "\u001b[38;2;168;203;159m\uf538  \u001b[38;2;135;140;130mmemory    ", "percent": { "type": ["bar", "num"], "green": 70, "yellow": 88 } },
+    { "type": "disk", "key": "\u001b[38;2;168;203;159m\uf0a0  \u001b[38;2;135;140;130marchive   ", "percent": { "type": ["bar", "num"], "green": 70, "yellow": 88 }, "folders": "/", "format": "{size-percentage-bar} {size-used} / {size-total} ({size-percentage})" },
+    { "type": "uptime", "key": "\u001b[38;2;168;203;159m\uf017  \u001b[38;2;135;140;130mvigil     " },
+    { "type": "packages", "key": "\u001b[38;2;168;203;159m\uf187  \u001b[38;2;135;140;130mrelics    " },
+    { "type": "custom", "format": "\u001b[38;2;135;140;130m╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌" },
+    { "type": "custom", "format": "\u001b[38;2;135;140;130m+++ \u001b[38;2;168;203;159mThe Omnissiah knows all, comprehends all \u001b[38;2;135;140;130m+++" },
+    "break",
+    { "type": "colors", "symbol": "circle", "paddingLeft": 0 }
+  ]
+}

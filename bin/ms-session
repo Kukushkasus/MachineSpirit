@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+# [ PURITY SEAL ] Touch only the spirit entrusted to this session.
+import fcntl, os, signal, subprocess, sys, time
+from pathlib import Path
+run=Path(os.environ.get('XDG_RUNTIME_DIR','/tmp')) / ('machinespirit-'+str(os.getuid()))
+run.mkdir(mode=0o700,exist_ok=True)
+cmd=sys.argv[1] if len(sys.argv)>1 else 'start'
+if cmd == 'resume':
+    # Some DRM backends expose the output after logind's resume signal.
+    for delay in (0, 1):
+        time.sleep(delay)
+        subprocess.run(['hyprctl','eval','hl.dispatch(hl.dsp.dpms({ state = "on" }))'],stdout=subprocess.DEVNULL)
+    sys.exit(0)
+if cmd == 'lock':
+    with (run/'lockscreen.lock').open('w') as f:
+        try: fcntl.flock(f,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        except BlockingIOError: sys.exit(0)
+        sys.exit(subprocess.call(['hyprlock']))
+if cmd == 'restart':
+    restart_env=dict(os.environ)
+    p=run/'supervisor.pid'
+    if p.exists():
+        pid=int(p.read_text())
+        try:
+            if b'ms-session' in Path(f'/proc/{pid}/cmdline').read_bytes():
+                restart_env.update(dict(x.split('=',1) for x in Path(f'/proc/{pid}/environ').read_bytes().decode().split('\0') if '=' in x))
+                os.kill(pid,signal.SIGTERM)
+        except (FileNotFoundError,ProcessLookupError): pass
+    for _ in range(40):
+        if not p.exists(): break
+        time.sleep(.1)
+    subprocess.Popen([sys.executable,__file__,'start'],env=restart_env,start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    sys.exit(0)
+if cmd != 'start': sys.exit('Use start, restart or lock')
+f=(run/'session.lock').open('w')
+try: fcntl.flock(f,fcntl.LOCK_EX|fcntl.LOCK_NB)
+except BlockingIOError: sys.exit(0)
+(run/'supervisor.pid').write_text(str(os.getpid()))
+children=[]
+def stop(*_):
+    for p in children:
+        if p.poll() is None:
+            try: os.killpg(p.pid,signal.SIGTERM)
+            except ProcessLookupError: pass
+    (run/'supervisor.pid').unlink(missing_ok=True)
+    sys.exit(0)
+signal.signal(signal.SIGTERM,stop);signal.signal(signal.SIGINT,stop)
+conf=Path(os.environ.get('XDG_CONFIG_HOME',Path.home()/'.config'))
+subprocess.run(['ms-settings','generate'],stdout=subprocess.DEVNULL)
+env=dict(os.environ,MS_STARTUP='1')
+state=Path(os.environ.get('XDG_STATE_HOME',Path.home()/'.local/state'))/'machinespirit'
+state.mkdir(parents=True,exist_ok=True)
+with (state/'session.log').open('w') as log:
+    children.append(subprocess.Popen(['quickshell','-c','machinespirit'],env=env,stdout=log,stderr=log,start_new_session=True))
+    if (conf/'hypr/hyprlock.conf').exists():
+        import shutil
+        if shutil.which('hypridle'): children.append(subprocess.Popen(['hypridle','-c',str(conf/'machinespirit/hypridle.conf')],stdout=log,stderr=log,start_new_session=True))
+    idleconf=conf/'machinespirit/hypridle.conf'
+    stamp=idleconf.stat().st_mtime_ns if idleconf.exists() else 0
+    try:
+        while children[0].poll() is None:
+            time.sleep(1)
+            now=idleconf.stat().st_mtime_ns if idleconf.exists() else 0
+            if now != stamp and len(children)>1:
+                children[1].terminate(); children[1].wait(timeout=3)
+                children[1]=subprocess.Popen(['hypridle','-c',str(idleconf)],stdout=log,stderr=log,start_new_session=True)
+                stamp=now
+    finally: stop()

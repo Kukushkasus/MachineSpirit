@@ -1,0 +1,233 @@
+#!/usr/bin/env python3
+# [ PURITY SEAL ] Keep the signal clear. Preserve the entrusted work.
+"""ms-walls: wallpaper sources for the Pict archive. Prints JSON.
+
+  ms-walls search SOURCE [--query Q] [--color HEX] [--sort S] [--page N] [--seed X]
+        SOURCE: local | wallhaven | openverse | unsplash | pexels
+  ms-walls apply PATH_OR_URL        download if needed, then `ms-theme apply`
+  ms-walls save URL                 download into the wallpaper folder only
+  ms-walls setkey SOURCE KEY        store an API key (unsplash, pexels, wallhaven)
+  ms-walls folders                  print the local wallpaper folders
+"""
+import argparse, colorsys, hashlib, json, os, random, re, subprocess, sys, urllib.parse, urllib.request
+from pathlib import Path
+
+HOME = Path.home()
+CONF = Path(os.environ.get("XDG_CONFIG_HOME", HOME / ".config")) / "machinespirit"
+CACHE = Path(os.environ.get("XDG_CACHE_HOME", HOME / ".cache")) / "machinespirit/thumbs"
+SAVE_DIR = HOME / "Pictures/Wallpapers"
+KEYS = CONF / "keys.conf"
+UA = {"User-Agent": "MachineSpirit/1.0 (+https://github.com/Kukushkasus)"}
+EXT = {".png", ".jpg", ".jpeg", ".webp", ".svg"}
+# the 29 colours Wallhaven can filter by
+LENSES = ["660000", "990000", "cc0000", "cc3333", "ea4c88", "993399", "663399", "333399", "0066cc", "0099cc",
+          "66cccc", "77cc33", "669900", "336600", "666600", "999900", "cccc33", "ffff00", "ffcc33", "ff9900",
+          "ff6600", "cc6633", "996633", "663300", "000000", "999999", "cccccc", "ffffff", "424153"]
+
+
+def out(obj):
+    print(json.dumps(obj))
+    sys.exit(0)
+
+
+def fail(msg, **kw):
+    out({"error": msg, **kw})
+
+
+def keys():
+    k = {}
+    if KEYS.exists():
+        for line in KEYS.read_text().splitlines():
+            if "=" in line:
+                a, b = line.split("=", 1)
+                k[a.strip()] = b.strip()
+    return k
+
+
+def folders():
+    f = CONF / "wallpapers.conf"
+    dirs = [Path(l.strip()).expanduser() for l in f.read_text().splitlines() if l.strip() and not l.startswith("#")] if f.exists() else []
+    return dirs or [SAVE_DIR, Path(os.environ.get("XDG_DATA_HOME", HOME / ".local/share")) / "machinespirit/wallpapers"]
+
+
+def get_json(url, headers=None, timeout=25):
+    req = urllib.request.Request(url, headers={**UA, **(headers or {})})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return json.loads(r.read().decode())
+
+
+def rgb(h):
+    h = h.lstrip("#")
+    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def near(a, b):
+    """Perceptual-ish distance between two hex colours (0 = same)."""
+    (r1, g1, b1), (r2, g2, b2) = rgb(a), rgb(b)
+    rm = (r1 + r2) / 2
+    return (((512 + rm) * (r1 - r2) ** 2) / 256 + 4 * (g1 - g2) ** 2 + ((767 - rm) * (b1 - b2) ** 2) / 256) ** 0.5
+
+
+# ---------------------------------------------------------------- local
+def thumb_and_colours(path):
+    st = path.stat()
+    key = hashlib.sha1(f"{path}:{st.st_mtime}:{st.st_size}".encode()).hexdigest()[:16]
+    CACHE.mkdir(parents=True, exist_ok=True)
+    th, meta = CACHE / f"{key}.jpg", CACHE / f"{key}.json"
+    if th.exists() and meta.exists():
+        return str(th), json.loads(meta.read_text())
+    subprocess.run(["magick", str(path) + "[0]", "-thumbnail", "480x270^", "-gravity", "center", "-extent", "480x270",
+                    "-quality", "82", str(th)], capture_output=True)
+    r = subprocess.run(["magick", str(path) + "[0]", "-resize", "80x80!", "+dither", "-colors", "5", "-unique-colors", "txt:-"],
+                       capture_output=True, text=True)
+    cols = re.findall(r"#([0-9A-Fa-f]{6})", r.stdout)
+    r2 = subprocess.run(["magick", "identify", "-format", "%wx%h", str(path) + "[0]"], capture_output=True, text=True)
+    m = {"colors": [c.lower() for c in cols][:5], "resolution": r2.stdout.strip()}
+    meta.write_text(json.dumps(m))
+    return str(th), m
+
+
+def search_local(a):
+    items = []
+    for d in folders():
+        if not d.exists():
+            continue
+        for p in sorted(d.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True):
+            if p.suffix.lower() not in EXT or not p.is_file() or p.name.startswith("active-"):
+                continue
+            if a.query and a.query.lower() not in p.name.lower():
+                continue
+            th, m = thumb_and_colours(p)
+            if a.color and not any(near(c, a.color) < 140 for c in m["colors"]):
+                continue
+            items.append({"id": str(p), "thumb": th, "full": str(p), "local": True, "resolution": m["resolution"],
+                          "colors": m["colors"], "title": p.stem, "credit": ""})
+    if a.sort == "random":
+        random.shuffle(items)
+    per = 24
+    page = max(1, a.page)
+    return {"items": items[(page - 1) * per: page * per], "page": page, "pages": max(1, -(-len(items) // per)), "total": len(items)}
+
+
+# ---------------------------------------------------------------- remote
+def search_wallhaven(a):
+    q = {"q": a.query or "", "purity": "100", "categories": "111", "page": a.page,
+         "sorting": {"latest": "date_added", "top": "toplist", "random": "random", "relevance": "relevance"}.get(a.sort, "toplist"),
+         "ratios": "16x9,16x10,21x9", "atleast": a.atleast or "1920x1080"}
+    if a.color:
+        q["colors"] = a.color.lower().lstrip("#")
+    if q["sorting"] == "toplist":
+        q["topRange"] = "1y" if q["q"] else "1M"
+    if q["sorting"] == "random":
+        q["seed"] = a.seed or "".join(random.choice("abcdefghijklmnopqrstuvwxyz0123456789") for _ in range(6))
+    if q["sorting"] == "relevance" and not q["q"]:
+        q["sorting"] = "toplist"
+    k = keys().get("wallhaven")
+    if k:
+        q["apikey"] = k
+    d = get_json("https://wallhaven.cc/api/v1/search?" + urllib.parse.urlencode(q))
+    items = [{"id": w["id"], "thumb": w["thumbs"]["large"], "full": w["path"], "local": False, "resolution": w["resolution"],
+              "colors": [c.lstrip("#") for c in w.get("colors", [])], "title": w["id"], "credit": "wallhaven.cc/w/" + w["id"]}
+             for w in d.get("data", [])]
+    meta = d.get("meta", {})
+    return {"items": items, "page": meta.get("current_page", a.page), "pages": meta.get("last_page", 1),
+            "total": meta.get("total", len(items)), "seed": meta.get("seed") or q.get("seed", "")}
+
+
+def search_openverse(a):
+    q = {"q": a.query or "wallpaper", "page": a.page, "page_size": 20, "aspect_ratio": "wide"}   # anonymous limit: 20
+    d = get_json("https://api.openverse.org/v1/images/?" + urllib.parse.urlencode(q))
+    items = [{"id": i["id"], "thumb": i.get("thumbnail") or i["url"], "full": i["url"], "local": False,
+              "resolution": f'{i.get("width") or "?"}x{i.get("height") or "?"}', "colors": [], "title": i.get("title") or "",
+              "credit": f'{i.get("creator") or "unknown"}, {(i.get("license") or "").upper()}'} for i in d.get("results", [])]
+    return {"items": items, "page": a.page, "pages": d.get("page_count", 1), "total": d.get("result_count", len(items))}
+
+
+def search_unsplash(a):
+    k = keys().get("unsplash")
+    if not k:
+        fail("key", source="unsplash", hint="Get a free access key at unsplash.com/developers")
+    q = {"query": a.query or "wallpaper", "page": a.page, "per_page": 24, "orientation": "landscape"}
+    d = get_json("https://api.unsplash.com/search/photos?" + urllib.parse.urlencode(q), {"Authorization": "Client-ID " + k})
+    items = [{"id": p["id"], "thumb": p["urls"]["small"], "full": p["urls"]["raw"] + "&w=3840&q=90&fm=jpg", "local": False,
+              "resolution": f'{p["width"]}x{p["height"]}', "colors": [(p.get("color") or "#000000").lstrip("#")],
+              "title": p.get("alt_description") or "", "credit": p["user"]["name"] + ", Unsplash"} for p in d.get("results", [])]
+    return {"items": items, "page": a.page, "pages": d.get("total_pages", 1), "total": d.get("total", len(items))}
+
+
+def search_pexels(a):
+    k = keys().get("pexels")
+    if not k:
+        fail("key", source="pexels", hint="Get a free API key at pexels.com/api")
+    q = {"query": a.query or "wallpaper", "page": a.page, "per_page": 24, "orientation": "landscape"}
+    if a.color:
+        q["color"] = "#" + a.color.lstrip("#")
+    d = get_json("https://api.pexels.com/v1/search?" + urllib.parse.urlencode(q), {"Authorization": k})
+    items = [{"id": str(p["id"]), "thumb": p["src"]["medium"], "full": p["src"]["original"], "local": False,
+              "resolution": f'{p["width"]}x{p["height"]}', "colors": [(p.get("avg_color") or "#000000").lstrip("#")],
+              "title": p.get("alt") or "", "credit": p["photographer"] + ", Pexels"} for p in d.get("photos", [])]
+    total = d.get("total_results", len(items))
+    return {"items": items, "page": a.page, "pages": max(1, -(-total // 24)), "total": total}
+
+
+def download(url):
+    SAVE_DIR.mkdir(parents=True, exist_ok=True)
+    name = os.path.basename(urllib.parse.urlparse(url).path) or "wallpaper"
+    if "." not in name:
+        name += ".jpg"
+    if "unsplash" in url:
+        name = "unsplash_" + hashlib.sha1(url.encode()).hexdigest()[:10] + ".jpg"
+    dst = SAVE_DIR / name
+    if not dst.exists():
+        req = urllib.request.Request(url, headers=UA)
+        with urllib.request.urlopen(req, timeout=60) as r, open(dst, "wb") as f:
+            while True:
+                b = r.read(1 << 16)
+                if not b:
+                    break
+                f.write(b)
+    return dst
+
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = p.add_subparsers(dest="cmd", required=True)
+    s = sub.add_parser("search")
+    s.add_argument("source", choices=["local", "wallhaven", "openverse", "unsplash", "pexels"])
+    s.add_argument("--query", default="")
+    s.add_argument("--color", default="")
+    s.add_argument("--sort", default="top")
+    s.add_argument("--page", type=int, default=1)
+    s.add_argument("--seed", default="")
+    s.add_argument("--atleast", default="")
+    ap = sub.add_parser("apply"); ap.add_argument("target")
+    sv = sub.add_parser("save"); sv.add_argument("url")
+    sk = sub.add_parser("setkey"); sk.add_argument("source"); sk.add_argument("key")
+    sub.add_parser("folders")
+    a = p.parse_args()
+    try:
+        if a.cmd == "search":
+            out({"source": a.source, **{"local": search_local, "wallhaven": search_wallhaven, "openverse": search_openverse,
+                                         "unsplash": search_unsplash, "pexels": search_pexels}[a.source](a)})
+        if a.cmd == "folders":
+            out({"folders": [str(d) for d in folders()]})
+        if a.cmd == "save":
+            out({"saved": str(download(a.url))})
+        if a.cmd == "setkey":
+            CONF.mkdir(parents=True, exist_ok=True)
+            k = keys(); k[a.source] = a.key.strip()
+            KEYS.write_text("".join(f"{x}={y}\n" for x, y in k.items()))
+            os.chmod(KEYS, 0o600)
+            out({"ok": True})
+        if a.cmd == "apply":
+            path = download(a.target) if a.target.startswith("http") else Path(a.target).expanduser()
+            r = subprocess.run([str(HOME / ".local/bin/ms-theme"), "apply", str(path)], capture_output=True, text=True)
+            if r.returncode: fail(r.stderr.strip() or "Theme application failed")
+            out({"applied": str(path), "log": (r.stderr or r.stdout).strip().splitlines()[-1:]})
+    except urllib.error.HTTPError as e:
+        fail(f"{a.source if a.cmd == 'search' else 'download'} answered {e.code}" + (" (too many requests, wait a minute)" if e.code == 429 else ""))
+    except Exception as e:
+        fail(str(e)[:200])
+
+
+main()
