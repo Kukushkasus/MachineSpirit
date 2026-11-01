@@ -1,6 +1,6 @@
 # Verification ledger
 
-Dates: 2026-10-30 / 2026-10-31 (Asia/Sakhalin). This is a beta inspection record, not a claim of universal hardware support.
+Dates: 2026-10-30 / 2026-10-31. This is a beta inspection record, not a claim of universal hardware support.
 
 ## Environment
 
@@ -23,12 +23,12 @@ CachyOS in QEMU/KVM, virtio/virgl graphics, 4 vCPUs, 4 GiB RAM. Hyprland 0.57.0,
 
 ## Performance sample
 
-Same renderer, five widgets, no media playing, 6-second samples after startup:
+Same renderer, five widgets, media playing, 10-second samples after startup:
 
 | Mode | CPU (% of one core) | Renderer RSS |
 |---|---:|---:|
-| Normal | 9.8% | 366.0 MiB |
-| Low power | 3.3% | 368.7 MiB |
+| Normal | 6.8% | 366.0 MiB |
+| Low power | 3.3% | 337.7 MiB |
 
 Short VM samples are noisy and include the current widget configuration. They are not hardware-wide performance guarantees. GIF recording substantially increases CPU and was not running during these samples.
 
