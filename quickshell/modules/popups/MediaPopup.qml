@@ -35,14 +35,14 @@ Item {
     SequentialAnimation {
         id: roll
         ParallelAnimation {
-            YAnimator { target: meta; from: 0; to: -10; duration: 120; easing.type: Easing.InCubic }
-            OpacityAnimator { target: meta; from: 1; to: 0; duration: 120 }
-            OpacityAnimator { target: coverBox; from: 1; to: 0.3; duration: 120 }
+            YAnimator { target: meta; from: 0; to: -10; duration: Theme.dShort; easing.type: Easing.InCubic }
+            OpacityAnimator { target: meta; from: 1; to: 0; duration: Theme.dShort }
+            OpacityAnimator { target: coverBox; from: 1; to: 0.3; duration: Theme.dShort }
         }
         ScriptAction { script: root.swap() }
         ParallelAnimation {
-            YAnimator { target: meta; from: 10; to: 0; duration: 220; easing.type: Easing.OutCubic }
-            OpacityAnimator { target: meta; from: 0; to: 1; duration: 220 }
+            YAnimator { target: meta; from: 10; to: 0; duration: Theme.dLong; easing.type: Easing.OutCubic }
+            OpacityAnimator { target: meta; from: 0; to: 1; duration: Theme.dLong }
             OpacityAnimator { target: coverBox; from: 0.3; to: 1; duration: 260 }
         }
     }
@@ -105,7 +105,7 @@ Item {
                     Rectangle { anchors.centerIn: parent; width: 5; height: 5; radius: 2.5; color: "#0b0b0c" }
                     RotationAnimator on rotation {
                         from: 0; to: 360; duration: 4000; loops: Animation.Infinite
-                        running: Media.playing && !Theme.lowPower && root.visible
+                        running: Media.playing && Theme.motionEnabled && root.visible
                     }
                 }
             }
@@ -193,7 +193,7 @@ Item {
                     x: parent.width * root.frac - width / 2
                     width: 18; height: 18; radius: 9; color: Qt.alpha(Theme.glow, seekArea.containsMouse ? 0.25 : 0.14)
                     Rectangle { anchors.centerIn: parent; width: seekArea.containsMouse || seekArea.pressed ? 11 : 8; height: width; radius: width / 2; color: Theme.glow
-                        Behavior on width { NumberAnimation { duration: 120 } } }
+                        Behavior on width { NumberAnimation { duration: Theme.dShort } } }
                 }
                 Tile {   // time under the pointer
                     visible: seekArea.containsMouse && root.len > 1
@@ -265,7 +265,7 @@ Item {
                 color: c.big ? Theme.glass : (c.small && !c.on ? Theme.glowFaint : Theme.glow)
             }
             SequentialAnimation {   // paused: play breathes slowly
-                running: c.big && !Media.playing && !Theme.lowPower && root.visible
+                running: c.big && !Media.playing && Theme.motionEnabled && root.visible
                 loops: Animation.Infinite
                 onRunningChanged: if (!running) face.opacity = 1
                 OpacityAnimator { target: face; from: 1; to: 0.7; duration: 1400; easing.type: Easing.InOutSine }
@@ -275,10 +275,10 @@ Item {
         SequentialAnimation {
             id: kick
             XAnimator { target: glyph; from: (face.width - glyph.width) / 2; to: (face.width - glyph.width) / 2 + c.nudge; duration: 70 }
-            XAnimator { target: glyph; from: (face.width - glyph.width) / 2 + c.nudge; to: (face.width - glyph.width) / 2; duration: 160; easing.type: Easing.OutBack }
+            XAnimator { target: glyph; from: (face.width - glyph.width) / 2 + c.nudge; to: (face.width - glyph.width) / 2; duration: 160; easing.type: Easing.OutCubic }
         }
         Rectangle { visible: c.small && c.on; anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom } width: 4; height: 4; radius: 2; color: Theme.glow }
         MouseArea { id: cm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-            onClicked: { if (c.nudge !== 0 && !Theme.lowPower) kick.restart(); c.hit() } }
+            onClicked: { if (c.nudge !== 0 && Theme.motionEnabled) kick.restart(); c.hit() } }
     }
 }

@@ -162,7 +162,7 @@ Variants {
         }
 
         // ---------------- visuals
-        Rectangle { anchors.fill: parent; visible: win.showing; color: Theme.glass; opacity: win.mine ? 0.7 : 0; Behavior on opacity { NumberAnimation { duration: 120 } }
+        Rectangle { anchors.fill: parent; visible: win.showing; color: Theme.glass; opacity: win.mine ? 0.7 : 0; Behavior on opacity { NumberAnimation { duration: Theme.dShort } }
             MouseArea { anchors.fill: parent; onClicked: Launcher.close() } }
 
         Item {
@@ -170,14 +170,17 @@ Variants {
             anchors.fill: parent
             visible: opacity > 0.01
             opacity: win.mine ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: 120 } }
+            scale: win.mine ? 1 : 0.98
+            enabled: win.mine
+            Behavior on scale { NumberAnimation { duration: win.mine ? Theme.dLong : Theme.dClose; easing.type: Easing.OutCubic } }
+            Behavior on opacity { NumberAnimation { duration: Theme.dShort } }
 
             // ---- the query terminal
             Item {   // floats on its servo-skulls; moved on the render thread so the hover stays smooth
                 id: floatCard
                 width: shell.width; height: shell.height; z: 10
                 SequentialAnimation {
-                    running: win.mine && !Theme.lowPower; loops: Animation.Infinite
+                    running: win.mine && Theme.motionEnabled; loops: Animation.Infinite
                     YAnimator { target: floatCard; from: 0; to: 2.5; duration: 2000; easing.type: Easing.InOutSine }
                     YAnimator { target: floatCard; from: 2.5; to: -2.5; duration: 4000; easing.type: Easing.InOutSine }
                     YAnimator { target: floatCard; from: -2.5; to: 0; duration: 2000; easing.type: Easing.InOutSine }
@@ -189,7 +192,7 @@ Variants {
                 height: 76 + (win.typing ? list.height + 12 : 0)
                 x: (win.width - width) / 2
                 y: 70 + (win.mine ? 0 : 14)
-                Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                Behavior on y { NumberAnimation { duration: Theme.dMedium; easing.type: Easing.OutCubic } }
                 Behavior on height { NumberAnimation { duration: Theme.dShort; easing.type: Easing.OutCubic } }
                 MouseArea { anchors.fill: parent }
 
@@ -220,7 +223,7 @@ Variants {
                                 Keys.onPressed: event => { event.accepted = win.keys(event) }
                                 Rectangle {
                                     x: field.cursorRectangle.x; y: 3; width: 9; height: parent.height - 6; color: Theme.glow
-                                    SequentialAnimation on opacity { loops: Animation.Infinite; running: win.mine && !Theme.lowPower
+                                    SequentialAnimation on opacity { loops: Animation.Infinite; running: win.mine && Theme.motionEnabled
                                         NumberAnimation { to: 1; duration: 1 } PauseAnimation { duration: 520 } NumberAnimation { to: 0; duration: 1 } PauseAnimation { duration: 420 } }
                                 }
                                 Text { anchors.fill: parent; leftPadding: 14; verticalAlignment: Text.AlignVCenter; visible: field.text === ""
@@ -280,7 +283,7 @@ Variants {
                 id: floatStrip
                 width: shell.width; height: shell.height; z: 0
                 SequentialAnimation {
-                    running: win.mine && !Theme.lowPower; loops: Animation.Infinite
+                    running: win.mine && Theme.motionEnabled; loops: Animation.Infinite
                     YAnimator { target: floatStrip; from: 0; to: -2; duration: 2200; easing.type: Easing.InOutSine }
                     YAnimator { target: floatStrip; from: -2; to: 2; duration: 4400; easing.type: Easing.InOutSine }
                     YAnimator { target: floatStrip; from: 2; to: 0; duration: 2200; easing.type: Easing.InOutSine }
@@ -302,7 +305,7 @@ Variants {
                 visible: opacity > 0.01
                 enabled: !win.typing
                 Behavior on opacity { NumberAnimation { duration: Theme.dShort } }
-                Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                Behavior on y { NumberAnimation { duration: Theme.dMedium; easing.type: Easing.OutCubic } }
                 MouseArea { anchors.fill: parent }
 
                 property string dragAddr: ""
@@ -364,8 +367,14 @@ Variants {
                                             anchors.fill: parent
                                             layer.enabled: true
                                             layer.effect: MultiEffect { maskEnabled: true; maskSource: msk }
-                                            ScreencopyView { anchors.fill: parent; captureSource: th.modelData.wayland; live: false   // one snapshot per opening
-                                                Component.onCompleted: Qt.callLater(captureFrame) }
+                                            ScreencopyView {
+                                                anchors.fill: parent
+                                                // Wait for the first delivered frame instead of capturing
+                                                // before the recording context is ready. Reset on close
+                                                // so the next opening gets a fresh, non-live snapshot.
+                                                captureSource: win.mine ? th.modelData.wayland : null
+                                                live: win.mine && !hasContent
+                                            }
                                         }
                                         Item { id: msk; anchors.fill: parent; visible: false; layer.enabled: true; Rectangle { anchors.fill: parent; radius: 4 } }
                                         Rectangle { anchors.fill: parent; radius: 4; color: "transparent"; border { width: tm.containsMouse ? 2 : 1; color: tm.containsMouse ? Theme.glow : Qt.alpha(Theme.glowDim, 0.4) } }
@@ -433,8 +442,8 @@ Variants {
                 ServoSkull { id: skSR; x: parent.width - 2; y: parent.height / 2 - 22; mirror: true; active: win.mine }
                 // blast doors: two forged halves part from the middle when the console opens
                 property real doors: 1
-                Connections { target: win; function onMineChanged() { if (win.mine && !Theme.lowPower) { strip.doors = 1; doorAnim.restart() } } }
-                NumberAnimation { id: doorAnim; target: strip; property: "doors"; from: 1; to: 0; duration: 240; easing.type: Easing.InOutCubic }
+                Connections { target: win; function onMineChanged() { if (win.mine && Theme.motionEnabled) { strip.doors = 1; doorAnim.restart() } } }
+                NumberAnimation { id: doorAnim; target: strip; property: "doors"; from: 1; to: 0; duration: Theme.dLong; easing.type: Easing.InOutCubic }
                 Item {
                     anchors.fill: parent; clip: true; z: 200
                     visible: strip.doors > 0.01

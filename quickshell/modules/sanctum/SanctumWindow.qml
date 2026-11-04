@@ -56,7 +56,7 @@ Variants {
             target: Notifs
             function onAllChanged() {
                 const n = Notifs.all[Notifs.all.length - 1]
-                if (!win.mine || !n || n.id === win.typedId || Theme.lowPower) return
+                if (!win.mine || !n || n.id === win.typedId || !Theme.motionEnabled) return
                 win.typedId = n.id; win.typed = 0; typer.restart()
             }
         }
@@ -66,8 +66,9 @@ Variants {
             id: panel
             width: 440
             y: 50; height: win.height - y - 10
+            enabled: win.mine
             property real slide: win.mine ? 0 : 1
-            Behavior on slide { NumberAnimation { duration: 230; easing.type: win.mine ? Easing.OutCubic : Easing.InCubic } }
+            Behavior on slide { NumberAnimation { duration: win.mine ? Theme.dLong : Theme.dClose; easing.type: win.mine ? Easing.OutCubic : Easing.InCubic } }
             x: win.width - width - 10 + slide * (width + 20)
             opacity: 1 - slide * 0.6
             MouseArea { anchors.fill: parent }
@@ -236,7 +237,7 @@ Variants {
                             model: Notifs.groups
                             boundsBehavior: Flickable.StopAtBounds
                             delegate: Group { required property var modelData; group: modelData; width: groups.width }
-                            displaced: Transition { NumberAnimation { property: "y"; duration: 200; easing.type: Easing.OutCubic } }
+                            displaced: Transition { NumberAnimation { property: "y"; duration: Theme.dMedium; easing.type: Easing.OutCubic } }
                         }
                     }
                 }
@@ -270,7 +271,7 @@ Variants {
 
         // lamps warm up one by one when the panel opens
         property int warm: 0
-        Connections { target: win; function onMineChanged() { win.warm = win.mine && !Theme.lowPower ? 0 : (win.mine ? 9 : 0); if (win.mine) warmer.restart() } }
+        Connections { target: win; function onMineChanged() { win.warm = win.mine && Theme.motionEnabled ? 0 : (win.mine ? 9 : 0); if (win.mine && Theme.motionEnabled) warmer.restart(); else warmer.stop() } }
         Timer { id: warmer; interval: 45; repeat: true; onTriggered: { win.warm += 1; if (win.warm > 8) stop() } }
 
         // =============== parts

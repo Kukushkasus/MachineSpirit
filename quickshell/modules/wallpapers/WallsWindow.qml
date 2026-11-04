@@ -382,9 +382,10 @@ Variants {
                 width: Math.min(win.width - 160, 1500); height: width * 9 / 16
                 anchors.centerIn: parent; anchors.verticalCenterOffset: -24
                 Bezel { anchors { fill: parent; margins: -12 } radius: 14; inset: 0; boltSize: 7 }
-                Image {
+                PrivateImage {
+                    feature:"wallpapers";manual:true
                     anchors.fill: parent
-                    source: win.inspect ? (win.inspect.local ? "file://" + win.inspect.full : win.inspect.full) : ""
+                    requestSource: win.inspect ? (win.inspect.local ? "file://" + win.inspect.full : win.inspect.full) : ""
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
                     sourceSize: Qt.size(width * 1.5, height * 1.5)

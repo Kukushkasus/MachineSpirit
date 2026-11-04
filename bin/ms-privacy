@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-only
+import json,sys,shutil,subprocess,signal,time
+from ms_privacy import *
+
+def proxy_config():
+    p=read()['proxy'];secret={}
+    try: secret=json.loads((CONF/'proxy-secret.json').read_text())
+    except FileNotFoundError: pass
+    auth={'username':p['username'],'password':secret.get('password','')}
+    node={'name':'upstream','addr':('['+p['host']+']' if ':' in p['host'] else p['host'])+':'+str(p['port']),
+          'connector':{'type':'socks5' if p['scheme']=='socks5' else 'http'},'dialer':{'type':'tls' if p['scheme']=='https' else 'tcp'}}
+    if p['username']: node['connector']['auth']=auth
+    return {'services':[{'name':'machinespirit','addr':'127.0.0.1:17879','handler':{'type':'http','chain':'upstream'},'listener':{'type':'tcp'}}],
+            'chains':[{'name':'upstream','hops':[{'name':'upstream','nodes':[node]}]}], 'log':{'level':'fatal'}}
+
+def daemon():
+    import fcntl
+    RUNTIME.mkdir(mode=0o700,parents=True,exist_ok=True)
+    lock=(RUNTIME/'proxy.lock').open('w')
+    try: fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+    except BlockingIOError: return {}
+    child=None;stamp=None
+    def stop(*_):
+        if child and child.poll() is None: child.terminate();child.wait(timeout=3)
+        (RUNTIME/'gost.json').unlink(missing_ok=True)
+        sys.exit(0)
+    signal.signal(signal.SIGTERM,stop);signal.signal(signal.SIGINT,stop)
+    try:
+        while True:
+            try:
+                p=read();cfg=proxy_config();new=json.dumps(cfg) if p['proxy']['enabled'] else ''
+                if new!=stamp or (new and child and child.poll() is not None):
+                    if child and child.poll() is None: child.terminate();child.wait(timeout=3)
+                    child=None;stamp=new
+                    if new and shutil.which('gost'):
+                        atomic(RUNTIME/'gost.json',new)
+                        child=subprocess.Popen(['gost','-C',str(RUNTIME/'gost.json')],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+                    else: (RUNTIME/'gost.json').unlink(missing_ok=True)
+            except Exception: pass
+            time.sleep(1)
+    finally: stop()
+
+def main():
+    cmd=sys.argv[1] if len(sys.argv)>1 else 'status'
+    if cmd=='daemon': return daemon()
+    if cmd=='status':
+        return {'completed':completed(),'proxyAvailable':bool(shutil.which('gost')),'hasPassword':(CONF/'proxy-secret.json').exists(),
+                'helperAvailable':Path('/usr/local/libexec/ms-browser-policy').exists()}
+    if cmd=='complete':
+        p=read()
+        if p['mode']!='local' and p['weather']!='off' and p['weatherMode']=='city' and not p['city'].strip(): raise ValueError('Enter a weather city or choose IP location')
+        atomic(STATE/'onboarding.json',json.dumps({'version':1}));return main_status()
+    if cmd=='password':
+        r=json.load(sys.stdin);password=r.get('password','')
+        if not isinstance(password,str) or len(password)>1024: raise ValueError('Invalid password')
+        if password: atomic(CONF/'proxy-secret.json',json.dumps({'password':password}))
+        else: (CONF/'proxy-secret.json').unlink(missing_ok=True)
+        return {'saved':True}
+    raise ValueError('Unknown privacy operation')
+def main_status(): return {'completed':completed(),'proxyAvailable':bool(shutil.which('gost'))}
+try: print(json.dumps(main()))
+except Exception as e: print(json.dumps({'error':str(e)[:200]}));sys.exit(1)

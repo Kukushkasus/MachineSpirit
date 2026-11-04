@@ -140,7 +140,7 @@ Variants {
             x: Math.max(12, Math.min(win.width - 12 - width, Popups.anchorX - width / 2))
             y: 66 + (win.shown === "traymenu" ? Popups.drop : 0)
             property real open: win.mine ? 1 : 0
-            Behavior on open { NumberAnimation { duration: win.mine ? 260 : 170; easing.type: win.mine ? Easing.OutCubic : Easing.InCubic } }
+            Behavior on open { NumberAnimation { duration: win.mine ? Theme.dLong : Theme.dClose; easing.type: win.mine ? Easing.OutCubic : Easing.InCubic } }
             // unload the panel once it has folded away, so nothing inside keeps animating
             property bool vented: false
             onOpenChanged: {

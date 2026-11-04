@@ -14,7 +14,7 @@ Item {
         // only flicker when more than the last digit moved (minutes, not every second)
         let diff = 0
         for (let i = 0; i < text.length; i++) if (text[i] !== shownText[i]) diff = text.length - i
-        if (Theme.lowPower || diff <= 1) { flicker.stop(); shownText = text; return }
+        if (!Theme.motionEnabled || diff <= 1) { flicker.stop(); shownText = text; return }
         flick = 3; flicker.restart()
     }
     Timer {

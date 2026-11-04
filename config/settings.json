@@ -1,6 +1,8 @@
 {
   "version": 1,
-  "layouts": ["us"],
+  "layouts": [
+    "us"
+  ],
   "layoutSwitch": "grp:alt_shift_toggle",
   "primaryOutput": "",
   "monitors": [],
@@ -9,5 +11,38 @@
   "blur": true,
   "lockSeconds": 600,
   "screenOffSeconds": 900,
-  "bindings": {}
+  "bindings": {},
+  "rounding": 14,
+  "gapsIn": 6,
+  "gapsOut": 12,
+  "borderSize": 2,
+  "shadows": true,
+  "dimInactive": true,
+  "dimStrength": 0.1,
+  "sensitivity": 0.0,
+  "accelProfile": "adaptive",
+  "naturalScroll": true,
+  "tapToClick": true,
+  "leftHanded": false,
+  "followMouse": true,
+  "repeatRate": 25,
+  "repeatDelay": 600,
+  "privacy": {
+    "mode": "custom",
+    "weather": "auto",
+    "publicIp": "auto",
+    "coverSearch": "auto",
+    "remoteArt": "auto",
+    "wallpapers": "auto",
+    "weatherMode": "ip",
+    "city": "",
+    "proxy": {
+      "enabled": false,
+      "scheme": "socks5",
+      "host": "",
+      "port": 1080,
+      "username": "",
+      "shell": false
+    }
+  }
 }

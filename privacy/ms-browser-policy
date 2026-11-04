@@ -1,0 +1,180 @@
+#!/usr/bin/python3 -I
+# SPDX-License-Identifier: GPL-3.0-only
+"""Fixed-policy privileged helper. Never accepts paths, commands or arbitrary policy keys."""
+import copy,fcntl,json,os,sys,tempfile
+from pathlib import Path
+BROWSERS={
+ 'firefox':{'exe':['/usr/bin/firefox'],'paths':['/etc/firefox/policies/policies.json','/usr/lib/firefox/distribution/policies.json'],'engine':'gecko'},
+ 'chrome':{'exe':['/usr/bin/google-chrome-stable','/usr/bin/google-chrome'],'paths':['/etc/opt/chrome/policies/managed/machinespirit.json'],'engine':'chromium'},
+ 'chromium':{'exe':['/usr/bin/chromium'],'paths':['/etc/chromium/policies/managed/machinespirit.json'],'engine':'chromium'},
+ 'librewolf':{'exe':['/usr/bin/librewolf'],'paths':['/usr/lib/librewolf/distribution/policies.json','/opt/librewolf/distribution/policies.json'],'engine':'gecko'},
+ 'zen':{'exe':['/usr/bin/zen-browser','/usr/bin/zen'],'paths':['/opt/zen-browser-bin/distribution/policies.json','/opt/zen-browser/distribution/policies.json','/opt/zen/distribution/policies.json','/usr/lib/zen-browser/distribution/policies.json'],'engine':'gecko'}}
+STATE=Path('/var/lib/machinespirit/privacy')
+FLAGS=('telemetry','studies','crashes','suggestions','prefetch','proxy')
+
+def target(name):
+    b=BROWSERS[name]
+    if not any(Path(x).exists() for x in b['exe']): return None
+    if name=='firefox':
+        return next((Path(p) for p in b['paths'] if Path(p).exists()),Path(b['paths'][0]))
+    for p in b['paths']:
+        path=Path(p)
+        if name in ('firefox','chrome','chromium') or path.parent.parent.exists(): return path
+    return None
+
+def read(p):
+    try: return json.loads(p.read_text())
+    except FileNotFoundError: return {}
+
+def atomic(p,value):
+    p.parent.mkdir(parents=True,exist_ok=True)
+    fd,tmp=tempfile.mkstemp(dir=p.parent)
+    try:
+        with os.fdopen(fd,'w') as f:json.dump(value,f,indent=2);f.flush();os.fsync(f.fileno())
+        os.chmod(tmp,0o644);os.replace(tmp,p)
+    finally:
+        if os.path.exists(tmp):os.unlink(tmp)
+
+def secure(p):
+    for parent in [p,*p.parents]:
+        if parent.is_symlink():raise ValueError('Symlink policy paths are not supported')
+        if parent.exists() and (parent.stat().st_uid!=0 or parent.stat().st_mode&0o022):raise ValueError('Policy path is not administrator-owned')
+
+def leaves(d,prefix=()):
+    for k,v in d.items():
+        if isinstance(v,dict):yield from leaves(v,prefix+(k,))
+        else:yield prefix+(k,),v
+
+def get(d,path):
+    for k in path:
+        if not isinstance(d,dict) or k not in d:return {'exists':False}
+        d=d[k]
+    return {'exists':True,'value':d}
+
+def put(d,path,value):
+    if len(path)==1:
+        if value['exists']:d[path[0]]=value['value']
+        else:d.pop(path[0],None)
+        return
+    k=path[0]
+    if k not in d:d[k]={}
+    if not isinstance(d[k],dict):raise ValueError('Conflicting policy structure')
+    put(d[k],path[1:],value)
+    if not d[k]:d.pop(k)
+
+def policies(name,flags):
+    if any(k not in FLAGS or type(v) is not bool for k,v in flags.items()):raise ValueError('Invalid browser options')
+    f={k:flags.get(k,False) for k in FLAGS};d={}
+    if BROWSERS[name]['engine']=='gecko':
+        if f['telemetry']:d['DisableTelemetry']=True
+        if f['studies']:d['DisableFirefoxStudies']=True
+        prefs={}
+        if f['crashes']:
+            prefs.update({'browser.crashReports.unsubmittedCheck.autoSubmit2':False,'browser.tabs.crashReporting.sendReport':False})
+        if f['suggestions']:d['SearchSuggestEnabled']=False
+        if f['prefetch']:d['NetworkPrediction']=False
+        if f['proxy']:
+            d['Proxy']={'Mode':'manual','Locked':True,'HTTPProxy':'127.0.0.1:17879','SSLProxy':'127.0.0.1:17879','Passthrough':''}
+            prefs.update({'network.proxy.failover_direct':False,'media.peerconnection.ice.proxy_only':True,'media.peerconnection.ice.no_host':True,'network.http.http3.enable':False,'network.dns.disablePrefetch':True})
+            d['DNSOverHTTPS']={'Enabled':False,'Locked':True}
+        if prefs:d['Preferences']={k:{'Value':v,'Status':'locked'} for k,v in prefs.items()}
+        return {'policies':d}
+    if f['telemetry'] or f['crashes']:d['MetricsReportingEnabled']=False
+    if f['suggestions']:d['SearchSuggestEnabled']=False
+    if f['prefetch']:d['NetworkPredictionOptions']=2
+    if f['proxy']:
+        d.update(ProxySettings={'ProxyMode':'fixed_servers','ProxyServer':'http://127.0.0.1:17879','ProxyBypassList':'<-loopback>'},
+                 WebRtcIPHandling='disable_non_proxied_udp',QuicAllowed=False,DnsOverHttpsMode='off',NetworkPredictionOptions=2)
+    return d
+
+def status():
+    rows=[]
+    for name,b in BROWSERS.items():
+        p=target(name);record=read(STATE/(name+'.json'))
+        row={'id':name,'installed':p is not None,'supported':p is not None,'engine':b['engine'],'flags':record.get('flags',{}),'state':'Not installed / unsupported package','conflict':False}
+        if p:
+            try:
+                secure(p);current=read(p)
+                changed=any(get(current,json.loads(k))!={'exists':True,'value':v} for k,v in record.get('written',{}).items())
+                row.update(state='External changes detected' if changed else 'Written; verify after restart' if record.get('written') else 'Browser defaults / existing policies',conflict=changed)
+                row['policies']=current
+                row['observed']={f:all(get(current,path)=={'exists':True,'value':v} for path,v in leaves(policies(name,{f:True}))) for f in FLAGS if f!='studies' or b['engine']=='gecko'}
+                # Do not infer effective state solely from brand or a saved switch.
+                if name in ('zen','librewolf'):row['note']='Vendor removes telemetry; installed runtime state still needs verification.'
+            except Exception as e:row.update(state=str(e),supported=False)
+        rows.append(row)
+    return {'browsers':rows}
+
+def apply(name,flags):
+    if os.geteuid()!=0:raise ValueError('Administrator authorization is required')
+    if name not in BROWSERS:raise ValueError('Unsupported browser')
+    p=target(name)
+    if not p:raise ValueError('Native browser installation not found')
+    secure(p);STATE.mkdir(parents=True,exist_ok=True);secure(STATE)
+    with (STATE/'lock').open('w') as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX)
+        old=read(p);new=copy.deepcopy(old);recordpath=STATE/(name+'.json');record=read(recordpath)
+        if record.get('written') and record.get('path') != str(p):
+            raise ValueError('Browser policy location changed; restore the original policy file before applying')
+        backup=record.get('before',{});written=record.get('written',{})
+        # Remove only our unchanged values. Never clobber administrator changes.
+        for k,v in written.items():
+            path=json.loads(k)
+            if get(new,path)!={'exists':True,'value':v}:raise ValueError('External policy change; restore manually before applying')
+            put(new,path,backup[k])
+        desired=dict((json.dumps(k),v) for k,v in leaves(policies(name,flags)))
+        before={}
+        for k,v in desired.items():
+            path=json.loads(k);existing=get(new,path)
+            if existing['exists'] and existing['value']!=v:raise ValueError('Existing policy conflict: '+'.'.join(path))
+            before[k]=existing;put(new,path,{'exists':True,'value':v})
+        if BROWSERS[name]['engine']=='chromium':
+            for other in p.parent.glob('*.json'):
+                if other!=p and any(k in read(other) for k in policies(name,flags)):raise ValueError('Another managed policy file controls these settings')
+        # Record intent first; recovery retains original values even if interrupted.
+        newrecord={'before':before,'written':desired,'flags':flags,'path':str(p)}
+        atomic(recordpath,newrecord)
+        try:atomic(p,new)
+        except Exception:atomic(recordpath,record);raise
+    return {'browser':name,'state':'Written; restart browser and verify its policy page','flags':flags}
+
+def batch(request, write=False):
+    items=request.get('changes')
+    if not isinstance(items,list) or not 1 <= len(items) <= len(BROWSERS):
+        raise ValueError('Expected a non-empty browser changes list')
+    seen=set(); previews={}
+    for item in items:
+        if not isinstance(item,dict) or item.get('browser') not in BROWSERS:
+            raise ValueError('Unknown browser')
+        name=item['browser'];flags=item.get('flags',{})
+        if name in seen or not isinstance(flags,dict):raise ValueError('Invalid browser changes')
+        seen.add(name);previews[name]=policies(name,flags)
+    if not write:return {'policies':previews}
+    if os.geteuid()!=0:raise ValueError('Administrator authorization is required')
+    results=[];errors=[]
+    for item in items:
+        try:results.append(apply(item['browser'],item.get('flags',{})))
+        except Exception as e:errors.append(item['browser']+': '+str(e)[:240])
+    return {'results':results,'error':'; '.join(errors),
+            'state':str(len(results))+' browser(s) updated; restart browsers and verify their policy pages'}
+
+def main():
+    cmd=sys.argv[1] if len(sys.argv)>1 else 'status'
+    if cmd=='status':return status()
+    if cmd=='uninstall':
+        if os.geteuid()!=0:raise ValueError('Administrator authorization is required')
+        for name in BROWSERS:
+            if read(STATE/(name+'.json')).get('written'):
+                apply(name,{})
+        for path in ['/usr/share/polkit-1/actions/org.machinespirit.browser.policy','/usr/local/libexec/ms-browser-policy']:
+            p=Path(path);secure(p);p.unlink(missing_ok=True)
+        return {'restored':True}
+    if cmd in ('preview-batch','apply-batch'):return batch(json.load(sys.stdin),cmd=='apply-batch')
+    if cmd not in ('preview','apply'):raise ValueError('Unknown operation')
+    r=json.load(sys.stdin);name=r.get('browser');flags=r.get('flags',{})
+    if name not in BROWSERS:raise ValueError('Unknown browser')
+    if cmd=='preview':return {'browser':name,'policies':policies(name,flags),'scope':'All profiles of this native browser'}
+    return apply(name,flags)
+if __name__=='__main__':
+    try:print(json.dumps(main()))
+    except Exception as e:print(json.dumps({'error':str(e)[:240]}));sys.exit(1)

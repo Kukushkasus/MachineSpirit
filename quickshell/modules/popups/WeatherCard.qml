@@ -29,7 +29,7 @@ Column {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 3
                 Glow { halo: 0; font { family: Theme.fontNum; pixelSize: 16; weight: Font.DemiBold }
-                    text: Weather.ready ? Weather.desc : "Consulting the auspex" }
+                    text: Weather.ready ? Weather.desc + (Weather.stale?" · saved "+new Date(Weather.updatedAt).toLocaleString():"") : "Weather paused or unavailable" }
                 Glow { halo: 0; color: Theme.glowDim; font { family: Theme.fontNum; pixelSize: 13 }
                     text: "Feels like " + Math.round(Weather.feels) + "°" }
                 Glow { halo: 0; color: Theme.glowDim; font { family: Theme.fontNum; pixelSize: 13 }

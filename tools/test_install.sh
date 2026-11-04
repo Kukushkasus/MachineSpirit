@@ -9,10 +9,10 @@ mkdir -p "$HOME"
 unset HYPRLAND_INSTANCE_SIGNATURE
 "$root/install.sh" --components shell --dry-run > "$work/dry-run.log"
 test ! -e "$XDG_CONFIG_HOME"
-"$root/install.sh" --components shell --no-packages --yes > "$work/install.log"
+"$root/install.sh" --components shell --no-packages --no-system --yes > "$work/install.log"
 printf '\n// user edit\n' >> "$XDG_CONFIG_HOME/quickshell/machinespirit/shell.qml"
-"$root/install.sh" update --no-packages --yes > "$work/update.log"
+"$root/install.sh" update --no-packages --no-system --yes > "$work/update.log"
 grep -q 'user edit' "$XDG_CONFIG_HOME/quickshell/machinespirit/shell.qml"
-"$root/install.sh" uninstall --yes > "$work/uninstall.log"
+"$root/install.sh" uninstall --no-system --yes > "$work/uninstall.log"
 grep -q 'user edit' "$XDG_CONFIG_HOME/quickshell/machinespirit/shell.qml"
 echo 'PASS: dry-run, install, update, uninstall and preservation'

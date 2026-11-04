@@ -1,27 +1,40 @@
-// [ PURITY SEAL ] Keep the signal clear. Preserve the entrusted work.
+// SPDX-License-Identifier: GPL-3.0-only
 import QtQuick
+import Quickshell
 import qs.common
 import qs.services
+
 Instrument {
+    id: root
     title: "Chronometer"; serial: "01 / LOCAL"; corner: 22
-    property date now: new Date()
-    readonly property string timeText: Qt.formatDateTime(now, DesktopWidgets.state.seconds ? "HH:mm:ss" : "HH:mm")
-    Timer { interval: 1000; running: true; repeat: true; onTriggered: now = new Date() }
+    SystemClock { id: clock; precision: DesktopWidgets.state.seconds ? SystemClock.Seconds : SystemClock.Minutes }
     Row {
-        anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: -1 }
-        spacing: 5
-        Repeater { model: timeText.length
-            Item {
-                required property int index
-                readonly property string digit: timeText[index]
-                width: digit === ":" ? 8 : (DesktopWidgets.state.seconds ? 29 : 43); height: 53
-                Rectangle { anchors.fill: parent; radius: 15; visible: parent.digit !== ":"; color: Qt.alpha(Theme.glassHi, 0.65); border.color: Qt.alpha(Theme.brassHi, 0.25)
-                    Rectangle { x: 6; y: 8; width: 1; height: 23; color: Qt.alpha(Theme.glow, 0.15) }
-                }
-                Nixie { anchors.centerIn: parent; text: parent.digit; size: DesktopWidgets.state.seconds ? 32 : 42 }
-                Rectangle { anchors { bottom: parent.bottom; horizontalCenter: parent.horizontalCenter } width: parent.width - 12; height: 2; visible: parent.digit !== ":"; color: Theme.brassLo }
+        anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: -3 }
+        height: 58; spacing: 9
+        Glow {
+            anchors.verticalCenter: parent.verticalCenter
+            text: Qt.formatDateTime(clock.date, "HH:mm")
+            font { family: Theme.fontMono; pixelSize: 43; weight: Font.Medium; letterSpacing: -1.5 }
+            halo: 0.35
+        }
+        Column {
+            visible: DesktopWidgets.state.seconds
+            anchors.verticalCenter: parent.verticalCenter; spacing: 0
+            Glow {
+                id: seconds
+                text: Qt.formatDateTime(clock.date, "ss")
+                font { family: Theme.fontMono; pixelSize: 23; weight: Font.Medium }
+                color: Theme.glowDim; halo: 0.15
+                onTextChanged: tick.restart()
+                NumberAnimation { id: tick; target: seconds; property: "opacity"; from: 0.65; to: 1; duration: Theme.dShort }
             }
+            Text { text: "SEC"; color: Theme.glowFaint; font { family: Theme.fontMono; pixelSize: 9; letterSpacing: 1.5 } }
         }
     }
-    Text { anchors { bottom: parent.bottom; horizontalCenter: parent.horizontalCenter } text: Qt.formatDateTime(now, "dddd  ·  dd MMM yyyy"); color: Theme.glowDim; font { family: Theme.fontNum; pixelSize: 13 } }
+    Text {
+        anchors { bottom: parent.bottom; horizontalCenter: parent.horizontalCenter }
+        text: Qt.formatDateTime(clock.date, "ddd  ·  dd MMM yyyy")
+        color: Theme.glowDim
+        font { family: Theme.fontUi; pixelSize: 12; letterSpacing: 0.3 }
+    }
 }

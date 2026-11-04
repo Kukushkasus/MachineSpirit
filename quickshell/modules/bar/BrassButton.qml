@@ -33,11 +33,7 @@ BarButton {
         visible: root.lamp
         x: 22; y: 2; width: 7; height: 7; radius: 3.5
         color: root.lit ? root.lampColor : Theme.metalLo
-        Behavior on color { SequentialAnimation {
-            ColorAnimation { duration: 90 }
-            NumberAnimation { target: lampDot; property: "opacity"; to: 0.35; duration: 60 }
-            NumberAnimation { target: lampDot; property: "opacity"; to: 1; duration: 140 }
-        } }
+        Behavior on color { ColorAnimation { duration: Theme.dShort } }
         border { width: 1; color: Theme.metalLo }
         Rectangle { anchors.centerIn: parent; width: 11; height: 11; radius: 5.5; color: root.lampColor; opacity: root.lit ? 0.25 : 0; z: -1 }
     }

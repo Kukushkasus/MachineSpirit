@@ -73,20 +73,25 @@ Singleton {
             root.upcoming = slots.slice(0, 8)
             root.ready = true
             root.stale = false
-            root.updatedAt = Date.now()
+            root.updatedAt = d._msUpdatedAt || Date.now()
         } catch (e) {
             root.stale = root.ready
             console.warn("weather parse failed:", e)
         }
     }
 
+    Process{id:cached;running:true;command:["ms-net"];stdinEnabled:true
+        onStarted:{write('{"kind":"weatherCache"}');stdinEnabled=false}
+        stdout:StdioCollector{onStreamFinished:{try{const r=JSON.parse(text);if(!r.error&&!root.ready){root.parse(text);root.stale=true}}catch(e){}}}}
+    property string error: ""
+    property bool manualRequest: false
+    function refresh(manual) { if(!Privacy.allowed("weather",manual)) {error="Weather disabled in Privacy";return};manualRequest=!!manual;proc.running=true }
+    Connections {target:Privacy;function onPolicyChanged(){proc.running=false;root.stale=root.ready;if(Privacy.allowed("weather",false))root.refresh(false)} function onReadyChanged(){if(Privacy.allowed("weather",false))root.refresh(false)}}
     Process {
-        id: proc
-        command: ["curl", "-s", "-m", "10", "https://wttr.in/" + (Quickshell.env("MS_WEATHER_LOCATION") || "") + "?format=j1"]
-        stdout: StdioCollector { onStreamFinished: root.parse(text) }
+        id:proc;command:["ms-net"];stdinEnabled:true
+        onStarted:{write(JSON.stringify({kind:"weather",manual:root.manualRequest}));stdinEnabled=false}
+        onExited:stdinEnabled=true
+        stdout:StdioCollector{onStreamFinished:{try{const r=JSON.parse(text);if(r.error){root.error=r.error;root.stale=root.ready}else{root.error="";root.parse(text)}}catch(e){root.error="Weather unavailable"}}}
     }
-    Timer {
-        interval: 20 * 60 * 1000; running: true; repeat: true; triggeredOnStart: true
-        onTriggered: proc.running = true
-    }
+    Timer { interval:20*60*1000;running:Privacy.allowed("weather",false);repeat:true;triggeredOnStart:true;onTriggered:root.refresh(false) }
 }

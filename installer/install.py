@@ -51,6 +51,7 @@ def mappings(selected):
         tree('assets/fonts', DATA / 'fonts/machinespirit')
         tree('matugen', DATA / 'machinespirit/matugen')
         tree('tools', DATA / 'machinespirit/tools')
+        tree('privacy', DATA / 'machinespirit/privacy')
         tree('bin', BIN)
         for n in ('ms-theme', 'ms-walls'): pairs.append((ROOT / 'scripts' / n, BIN / n))
         pairs.append((ROOT / 'config/settings.json', CONF / 'machinespirit/settings.json'))
@@ -82,6 +83,7 @@ def main():
     p.add_argument('backup', nargs='?')
     p.add_argument('--full', action='store_true'); p.add_argument('--components')
     p.add_argument('--dry-run', action='store_true'); p.add_argument('--no-packages', action='store_true')
+    p.add_argument('--no-system',action='store_true',help='Skip privileged privacy helper installation/removal (for isolated tests)')
     p.add_argument('--yes', action='store_true'); p.add_argument('--with-aur', action='store_true')
     a = p.parse_args()
     if any(not path.is_absolute() for path in [HOME,CONF,DATA,STATE]): p.error('HOME and XDG paths must be absolute')
@@ -106,6 +108,8 @@ def main():
                 if not a.backup or Path(a.backup).name != a.backup: p.error('Supply a backup ID from the install records.')
                 restore(STATE / a.backup)
             else:
+                helper=Path('/usr/local/libexec/ms-browser-policy')
+                if helper.exists() and not a.no_system: subprocess.run(['sudo',str(helper),'uninstall'],check=True)
                 for tx in sorted(STATE.glob('*/manifest.json'), reverse=True):
                     if json.loads(tx.read_text()).get('status') == 'complete': restore(tx.parent)
         return 0
@@ -121,6 +125,7 @@ def main():
     selected = [c.strip() for c in selected]
     if not selected or any(c not in COMPONENTS for c in selected): p.error('Unknown component')
     selected = sorted(set(selected) | {'shell'})
+    if a.no_system and 'boot' in selected: p.error('--no-system cannot install boot components')
     pairs = mappings(selected)
     packages = sorted(set(' '.join(PACKAGES[c] for c in selected).split()))
     print('Components:', ', '.join(selected)); print('Packages:', ' '.join(packages))
@@ -131,6 +136,7 @@ def main():
             if parent == HOME.parent: break
             if parent.is_symlink(): raise ValueError(f'Symlink parent requires manual installation: {parent}')
         fingerprint(dst)
+    if 'shell' in selected: print('System privacy helper: /usr/local/libexec/ms-browser-policy (Polkit authorization)')
     if 'boot' in selected:
         subprocess.run([sys.executable, str(ROOT / 'installer/boot.py'), 'check'], check=True)
     if shutil.which('Hyprland'):
@@ -183,6 +189,7 @@ def main():
         if 'wallpapers' in selected and not (STATE.parent / 'theme.json').exists():
             subprocess.run([str(BIN / 'ms-theme'), 'apply', str(DATA / 'machinespirit/wallpapers/forge.png')], check=True)
         if shutil.which('fc-cache'): subprocess.run(['fc-cache', '-f', str(DATA / 'fonts/machinespirit')], check=True)
+        if 'shell' in selected and not a.no_system: subprocess.run(['sudo',sys.executable,str(ROOT/'privacy/install.py')],check=True)
         if 'boot' in selected: subprocess.run(['sudo', sys.executable, str(ROOT / 'installer/boot.py'), 'install'], check=True)
     except BaseException:
         for record_path in sorted(STATE.glob('*/manifest.json'), reverse=True):

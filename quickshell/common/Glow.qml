@@ -5,6 +5,7 @@ import qs.common
 
 // Phosphor text: glow colour plus a soft halo. Use on cogitator screens.
 Text {
+    textFormat: Text.PlainText
     id: root
     property real halo: 0.6
     color: Theme.glow

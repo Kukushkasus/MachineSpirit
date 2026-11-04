@@ -51,8 +51,10 @@ Singleton {
     }
     Process {
         id: pub
-        command: ["curl", "-s", "-m", "6", "https://api.ipify.org"]
-        stdout: StdioCollector { onStreamFinished: root.publicIp = text.trim() }
+        command:["ms-net"];stdinEnabled:true
+        onStarted:{write(JSON.stringify({kind:"publicIp",manual:root.manualRequest}));stdinEnabled=false}
+        onExited:stdinEnabled=true
+        stdout: StdioCollector { onStreamFinished: {try{const r=JSON.parse(text);root.publicIp=r.ip||"";root.publicError=r.error||""}catch(e){root.publicError="Unavailable"}} }
     }
     FileView { id: dev; path: "/proc/net/dev" }
 
@@ -60,7 +62,11 @@ Singleton {
         interval: 15000; running: true; repeat: true; triggeredOnStart: true
         onTriggered: { route.running = true }
     }
-    Timer { interval: 600000; running: true; repeat: true; triggeredOnStart: true; onTriggered: pub.running = true }
+    property bool manualRequest:false
+    property string publicError:""
+    function refreshPublic(){if(Privacy.allowed("publicIp",true)){manualRequest=true;pub.running=true}}
+    Connections{target:Privacy;function onPolicyChanged(){pub.running=false;root.publicIp=""}}
+    Timer {interval:600000;running:Privacy.allowed("publicIp",false);repeat:true;triggeredOnStart:true;onTriggered:{root.manualRequest=false;pub.running=true}}
     Timer {
         interval: 2000; running: true; repeat: true; triggeredOnStart: true
         onTriggered: {

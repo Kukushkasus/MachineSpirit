@@ -23,7 +23,8 @@
       "librsvg",
       "libnotify",
       "ttf-jetbrains-mono-nerd",
-      "ttf-material-symbols-variable"
+      "ttf-material-symbols-variable",
+      "gost"
     ]
   },
   "hyprland": {

@@ -1,6 +1,4 @@
-# Third-party software and provenance
-
-MachineSpirit is an unofficial fan desktop inspired by the Adeptus Mechanicus aesthetic. Warhammer 40,000 and Adeptus Mechanicus belong to Games Workshop. This project is not affiliated with or endorsed by Games Workshop. No official artwork, logos or music are bundled. Original code and original project graphics use the repository MIT license; third-party fonts retain their own licenses.
+# Third-party credits
 
 | Component | License / source | Role |
 |---|---|---|
@@ -11,10 +9,10 @@ MachineSpirit is an unofficial fan desktop inspired by the Adeptus Mechanicus ae
 | UnifrakturCook | OFL-1.1, `assets/fonts/OFL-UnifrakturCook.txt` | Bundled display font |
 | JetBrainsMono Nerd Font | OFL-1.1; system package | Monospace glyphs |
 | Material Symbols | Apache-2.0; system package | UI icons |
-| end-4/dots-hyprland | [GPL-3.0](https://github.com/end-4/dots-hyprland) | Interaction, shortcut and configuration reference; not vendored |
+| end-4/dots-hyprland, end-4 and contributors | [GPL-3.0](https://github.com/end-4/dots-hyprland/blob/main/LICENSE) | Super-tap handling adapted in `hypr/binds.lua` and `quickshell/shell.qml`; desktop reference. |
+| pctrade/end4-pC, pctrade and contributors | [GPL-3.0](https://github.com/pctrade/end4-pC/blob/main/LICENSE) | Desktop and visual reference. |
 | DMS / DUX | [Upstream](https://github.com/duxlabs-dev/dux-shell) | Early visual and installer reference; not vendored |
 | Caelestia | [Upstream](https://github.com/caelestia-dots/caelestia) | Component/install reference; not vendored |
 
-External dependencies are installed from their distribution packages and are not relicensed by this repository. Optional Darkly is an external package. Artwork obtained through wallpaper providers remains subject to its original license and is not part of the project release.
 
-The README banner, seal, Plymouth presentation and three starter wallpapers were created for MachineSpirit. README screenshots/GIFs show the running project in its test VM with bundled wallpaper.
+Bundled fonts retain their OFL copyright and license notices in `assets/fonts/`. External dependencies retain their own licenses. Wallpapers downloaded from external providers are subject to their original terms.

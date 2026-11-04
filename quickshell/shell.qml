@@ -1,4 +1,7 @@
 //@ pragma Env QT_QUICK_DEFAULT_TEXT_RENDER_TYPE=NativeTextRendering
+// SPDX-License-Identifier: GPL-3.0-only
+// Super-tap approach adapted from end-4/dots-hyprland (end-4 and contributors).
+// Credits: THIRD-PARTY.md.
 // [ PURITY SEAL ] Keep the signal clear. Preserve the entrusted work.
 import Quickshell
 import Quickshell.Io
@@ -18,9 +21,10 @@ import QtQuick
 
 ShellRoot {
     id: root
+    readonly property bool privacyLoaded: Privacy.loaded
     SettingsWindow {}
     Startup {}
-    IpcHandler { target: "settings"; function toggle(): void { Settings.toggle(false) } }
+    IpcHandler { target: "settings"; function toggle(): void { Settings.toggle(false) } function setup(): void { Privacy.restartSetup() } }
     IpcHandler { target: "manual"; function toggle(): void { Settings.toggle(true) } }
     Wallpaper {}
     Desktop {}

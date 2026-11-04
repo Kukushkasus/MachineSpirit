@@ -20,8 +20,8 @@ Instrument {
         Icon { anchors.centerIn: parent; name: "graphic_eq"; size: 36; color: Theme.glowFaint }
         Image { anchors { fill: parent; margins: 3 } source: Media.art; visible: status === Image.Ready; fillMode: Image.PreserveAspectCrop; asynchronous: true; sourceSize: Qt.size(140,140) }
     }
-    Text { x: 88; width: parent.width - 88; text: Media.available ? Media.title || "Untitled track" : "No transmission"; wrapMode: Text.Wrap; maximumLineCount: 2; elide: Text.ElideRight; color: Theme.glow; font { family: Theme.fontNum; pixelSize: 17; weight: Font.Medium } }
-    Text { x: 88; y: 49; width: parent.width - 88; text: Media.available ? Media.artist : "Start a player to connect"; elide: Text.ElideRight; color: Theme.glowDim; font { family: Theme.fontNum; pixelSize: 12 } }
+    Text { textFormat: Text.PlainText; x: 88; width: parent.width - 88; text: Media.available ? Media.title || "Untitled track" : "No transmission"; wrapMode: Text.Wrap; maximumLineCount: 2; elide: Text.ElideRight; color: Theme.glow; font { family: Theme.fontNum; pixelSize: 17; weight: Font.Medium } }
+    Text { textFormat: Text.PlainText; x: 88; y: 49; width: parent.width - 88; text: Media.available ? Media.artist : "Start a player to connect"; elide: Text.ElideRight; color: Theme.glowDim; font { family: Theme.fontNum; pixelSize: 12 } }
     Row { x: 89; y: 71; spacing: 3; height: 12
         Repeater { model: 28
             Rectangle { required property int index; width: 5; height: root.spectrum ? Math.max(2, (Cava.bars[index] || 0) * 12) : 2; y: 12 - height; color: root.spectrum ? Theme.glowDim : Theme.glowFaint }

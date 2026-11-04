@@ -54,7 +54,9 @@ Singleton {
 
     Timer { id: debounce; interval: 450; onTriggered: root.search() }
 
+    Connections{target:Privacy;function onPolicyChanged(){searchProc.running=false;if(root.source!=="local"){root.items=[];root.busy=false}}}
     function search() {
+        if(source!=="local"&&!Privacy.allowed("wallpapers",true)){error="Online wallpapers disabled in Privacy";items=[];return}
         const args = ["ms-walls", "search", source, "--page", "" + page, "--sort", sort]
         if (query !== "") args.push("--query", query)
         if (color !== "") args.push("--color", color)

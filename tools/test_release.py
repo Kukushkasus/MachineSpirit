@@ -9,6 +9,30 @@ class SettingsTests(unittest.TestCase):
     def test_modifier_order_conflict(self):
         with self.assertRaises(ValueError): settings.validate({'version':1,'bindings':{'SUPER + E':'CTRL + SUPER + E','SUPER + W':'SUPER + CONTROL + E'}})
     def test_defaults_english(self): self.assertEqual(settings.validate({'version':1})['layouts'],['us'])
+    def test_old_settings_receive_input_and_appearance_defaults(self):
+        data = settings.validate({'version':1,'layouts':['us','ru'],'bindings':{'SUPER + E':'SUPER + ALT + E'}})
+        self.assertEqual(data['rounding'],14)
+        self.assertEqual(data['repeatRate'],25)
+        self.assertEqual(data['bindings'],{'SUPER + E':'SUPER + ALT + E'})
+    def test_input_and_appearance_reject_unsafe_values(self):
+        for patch in [{'rounding':31},{'gapsIn':-1},{'borderSize':0},{'sensitivity':float('nan')},
+                      {'sensitivity':True},{'dimStrength':float('inf')},{'repeatDelay':0},
+                      {'repeatRate':True},{'accelProfile':'bad'},{'tapToClick':1},{'layouts':['us','us']}]:
+            with self.subTest(patch=patch), self.assertRaises(ValueError):
+                settings.validate(dict(version=1,**patch))
+    def test_preferences_persist_and_generate_compositor_options(self):
+        with tempfile.TemporaryDirectory() as d:
+            env=dict(os.environ,HOME=d,XDG_CONFIG_HOME=d+'/config',XDG_STATE_HOME=d+'/state');env.pop('HYPRLAND_INSTANCE_SIGNATURE',None)
+            patch=dict(version=1,rounding=8,gapsIn=3,gapsOut=9,borderSize=1,sensitivity=-.25,
+                       accelProfile='flat',tapToClick=False,repeatRate=45,repeatDelay=350,lowPower=True)
+            result=subprocess.run([sys.executable,str(ROOT/'bin/ms-settings'),'write'],input=json.dumps(patch),text=True,env=env,capture_output=True)
+            self.assertEqual(result.returncode,0,result.stdout)
+            saved=json.loads((Path(d)/'config/machinespirit/settings.json').read_text())
+            for key,value in patch.items(): self.assertEqual(saved[key],value)
+            generated=(Path(d)/'config/machinespirit/generated.lua').read_text()
+            for value in ['["rounding"]=8','["gaps_in"]=3','["sensitivity"]=-0.25','["tap_to_click"]=false','["repeat_delay"]=350']:
+                self.assertIn(value,generated)
+            self.assertIn('["shadow"]={["enabled"]=false}',generated)
     def test_reject_injection(self):
         for patch in [{'layouts':['us; touch /tmp/bad']},{'monitors':[{'output':'X','mode':'1;bad'}]},{'bindings':{'SUPER + E':'$(bad)'}},{'version':2}]:
             with self.assertRaises(ValueError): settings.validate(dict(version=1,**{k:v for k,v in patch.items() if k!='version'}) if 'version' not in patch else patch)

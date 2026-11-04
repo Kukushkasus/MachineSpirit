@@ -55,13 +55,14 @@ with (state/'session.log').open('w') as log:
     if (conf/'hypr/hyprlock.conf').exists():
         import shutil
         if shutil.which('hypridle'): children.append(subprocess.Popen(['hypridle','-c',str(conf/'machinespirit/hypridle.conf')],stdout=log,stderr=log,start_new_session=True))
+    children.append(subprocess.Popen(['ms-privacy','daemon'],stdout=log,stderr=log,start_new_session=True))
     idleconf=conf/'machinespirit/hypridle.conf'
     stamp=idleconf.stat().st_mtime_ns if idleconf.exists() else 0
     try:
         while children[0].poll() is None:
             time.sleep(1)
             now=idleconf.stat().st_mtime_ns if idleconf.exists() else 0
-            if now != stamp and len(children)>1:
+            if now != stamp and len(children)>2:
                 children[1].terminate(); children[1].wait(timeout=3)
                 children[1]=subprocess.Popen(['hypridle','-c',str(idleconf)],stdout=log,stderr=log,start_new_session=True)
                 stamp=now

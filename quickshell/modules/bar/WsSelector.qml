@@ -43,7 +43,7 @@ Row {
             onFocusedChanged: if (focused && Theme.motionEnabled) thunk.restart()
             SequentialAnimation { id: thunk
                 NumberAnimation { target: key; property: "scale"; to: 0.88; duration: 70 }
-                NumberAnimation { target: key; property: "scale"; to: 1; duration: 180; easing.type: Easing.OutBack } }
+                NumberAnimation { target: key; property: "scale"; to: 1; duration: Theme.dMedium; easing.type: Easing.OutCubic } }
             anchors.verticalCenter: parent.verticalCenter
 
             Rectangle {   // only the engaged key has a cap: glass under a brass rim
@@ -85,7 +85,7 @@ Row {
             x: parent.slot * 24 + 7 - root.width
             Behavior on x { enabled: Theme.motionEnabled; SequentialAnimation {
                 ScriptAction { script: sparkFade.restart() }
-                XAnimator { duration: 240; easing.type: Easing.OutCubic }
+                XAnimator { duration: Theme.dLong; easing.type: Easing.OutCubic }
             } }
             Rectangle { anchors.centerIn: parent; width: 16; height: 5; radius: 2.5; color: Theme.glow; opacity: 0.25 }
             SequentialAnimation {

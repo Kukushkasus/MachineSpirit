@@ -138,8 +138,9 @@ Singleton {
 
     // ---- motion (Material 3)
     readonly property int dShort: Settings.data.reducedMotion ? 0 : 120
-    readonly property int dMedium: Settings.data.reducedMotion ? 0 : 200
-    readonly property int dLong: Settings.data.reducedMotion ? 0 : 280
+    readonly property int dMedium: Settings.data.reducedMotion ? 0 : lowPower ? 120 : 180
+    readonly property int dLong: Settings.data.reducedMotion ? 0 : lowPower ? 120 : 240
+    readonly property int dClose: Settings.data.reducedMotion ? 0 : lowPower ? 100 : 160
     readonly property var easeStandard: [0.2, 0, 0, 1, 1, 1]
     readonly property var easeDecel: [0.05, 0.7, 0.1, 1, 1, 1]
 

@@ -36,6 +36,6 @@ Item {
         visible: sweep.running; color: Qt.alpha(Theme.glow, 0.025)
     }
     NumberAnimation { id: sweep; target: scan; property: "y"; from: 35; to: root.height - 22; duration: 650 }
-    Timer { interval: 60000 + Math.random() * 60000; repeat: true; running: root.visible && !root.quiet && !Theme.lowPower && !DesktopWidgets.editing
+    Timer { interval: 60000 + Math.random() * 60000; repeat: true; running: root.visible && !root.quiet && Theme.motionEnabled && !DesktopWidgets.editing
         onTriggered: { sweep.restart(); interval = 60000 + Math.random() * 60000 } }
 }

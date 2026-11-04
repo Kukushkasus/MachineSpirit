@@ -17,7 +17,10 @@ CONF = Path(os.environ.get("XDG_CONFIG_HOME", HOME / ".config")) / "machinespiri
 CACHE = Path(os.environ.get("XDG_CACHE_HOME", HOME / ".cache")) / "machinespirit/thumbs"
 SAVE_DIR = HOME / "Pictures/Wallpapers"
 KEYS = CONF / "keys.conf"
-UA = {"User-Agent": "MachineSpirit/1.0 (+https://github.com/Kukushkasus)"}
+sys.path.insert(0,str(Path(__file__).resolve().parent.parent/'bin'))
+import ms_privacy as privacy
+import shutil
+UA = {"User-Agent": "MachineSpirit/1.0"}
 EXT = {".png", ".jpg", ".jpeg", ".webp", ".svg"}
 # the 29 colours Wallhaven can filter by
 LENSES = ["660000", "990000", "cc0000", "cc3333", "ea4c88", "993399", "663399", "333399", "0066cc", "0099cc",
@@ -51,9 +54,7 @@ def folders():
 
 
 def get_json(url, headers=None, timeout=25):
-    req = urllib.request.Request(url, headers={**UA, **(headers or {})})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read().decode())
+    return json.loads(privacy.fetch('wallpapers',url,True,headers))
 
 
 def rgb(h):
@@ -171,23 +172,20 @@ def search_pexels(a):
 
 
 def download(url):
-    SAVE_DIR.mkdir(parents=True, exist_ok=True)
-    name = os.path.basename(urllib.parse.urlparse(url).path) or "wallpaper"
-    if "." not in name:
-        name += ".jpg"
-    if "unsplash" in url:
-        name = "unsplash_" + hashlib.sha1(url.encode()).hexdigest()[:10] + ".jpg"
-    dst = SAVE_DIR / name
-    if not dst.exists():
-        req = urllib.request.Request(url, headers=UA)
-        with urllib.request.urlopen(req, timeout=60) as r, open(dst, "wb") as f:
-            while True:
-                b = r.read(1 << 16)
-                if not b:
-                    break
-                f.write(b)
+    cached=Path(urllib.parse.unquote(urllib.parse.urlsplit(privacy.fetch('wallpapers',url,True,image=True)).path))
+    SAVE_DIR.mkdir(parents=True,exist_ok=True)
+    dst=SAVE_DIR/(hashlib.sha256(url.encode()).hexdigest()[:20]+'.jpg')
+    shutil.copy2(cached,dst)
     return dst
 
+
+def remote_result(result):
+    # QML must never fetch remote thumbnails directly, bypassing routing/permissions.
+    for item in result.get('items',[]):
+        if not item.get('local'):
+            try: item['thumb']=privacy.fetch('wallpapers',item['thumb'],True,image=True)
+            except Exception: item['thumb']=''
+    return result
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -207,8 +205,8 @@ def main():
     a = p.parse_args()
     try:
         if a.cmd == "search":
-            out({"source": a.source, **{"local": search_local, "wallhaven": search_wallhaven, "openverse": search_openverse,
-                                         "unsplash": search_unsplash, "pexels": search_pexels}[a.source](a)})
+            out(remote_result({"source": a.source, **{"local": search_local, "wallhaven": search_wallhaven, "openverse": search_openverse,
+                                         "unsplash": search_unsplash, "pexels": search_pexels}[a.source](a)}))
         if a.cmd == "folders":
             out({"folders": [str(d) for d in folders()]})
         if a.cmd == "save":

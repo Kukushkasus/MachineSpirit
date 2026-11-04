@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-only
+import json,sys,urllib.parse
+from ms_privacy import *
+
+def main(r):
+    kind=r.get('kind');manual=r.get('manual',False) is True
+    if kind=='weatherCache':
+        try:return json.loads((CACHE/'weather.json').read_text())
+        except FileNotFoundError:return {'error':'No saved forecast'}
+    if kind=='weather':
+        p=read();city=p['city'].strip() if p['weatherMode']=='city' else ''
+        if p['weatherMode']=='city' and not city: raise ValueError('Choose a city in Privacy settings')
+        raw=fetch('weather','https://wttr.in/'+urllib.parse.quote(city,safe='')+'?format=j1',manual)
+        value=json.loads(raw);value['_msUpdatedAt']=int(time.time()*1000);atomic(CACHE/'weather.json',json.dumps(value));return value
+    if kind=='publicIp': return {'ip':fetch('publicIp','https://api.ipify.org',manual).strip()}
+    if kind=='proxyTest': return {'ip':fetch('proxyTest','https://api.ipify.org',True,force_proxy=True).strip()}
+    if kind=='coverSearch':
+        q=urllib.parse.urlencode({'term':str(r.get('artist',''))+' '+str(r.get('title','')),'media':'music','entity':'song','limit':1})
+        results=json.loads(fetch('coverSearch','https://itunes.apple.com/search?'+q,manual)).get('results',[])
+        return {'url':results[0]['artworkUrl100'].replace('100x100','300x300') if results else ''}
+    if kind in ('remoteArt','wallpapers'): return {'url':fetch(kind,r['url'],manual,image=True)}
+    raise ValueError('Unknown network operation')
+try: print(json.dumps(main(json.load(sys.stdin))))
+except Exception as e: print(json.dumps({'error':str(e)[:200]}));sys.exit(1)

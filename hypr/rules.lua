@@ -20,3 +20,6 @@ hl.layer_rule({ match = { namespace = "machinespirit-bar" }, blur = true, ignore
 hl.layer_rule({ match = { namespace = "machinespirit-popup" }, blur = true, ignore_alpha = 0.3 })
 hl.layer_rule({ match = { namespace = "machinespirit-toast" }, blur = true, ignore_alpha = 0.3 })
 hl.layer_rule({ match = { namespace = "machinespirit-overview" }, blur = true, ignore_alpha = 0.2 })
+
+-- Transparent settings: blur only the panel, leaving the desktop clear.
+hl.layer_rule({ match = { namespace = "machinespirit-settings" }, blur = true, ignore_alpha = 0.1 })

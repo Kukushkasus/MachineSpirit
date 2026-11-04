@@ -121,7 +121,7 @@ Variants {
                     width: 210; height: 210
                     spin: false; outline: true; filled: false; teeth: 12; hole: Theme.glass
                     rotation: win.sel * (360 / win.rites.length)
-                    Behavior on rotation { RotationAnimation { duration: Theme.dLong; direction: RotationAnimation.Shortest; easing.type: Easing.OutBack } }
+                    Behavior on rotation { RotationAnimation { duration: Theme.dLong; direction: RotationAnimation.Shortest; easing.type: Easing.OutCubic } }
                 }
                 // hub screen: name and hint of the chosen rite, pressure ring while holding
                 CrtScreen {

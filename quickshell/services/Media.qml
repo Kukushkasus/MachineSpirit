@@ -18,39 +18,55 @@ Singleton {
     readonly property bool playing: player?.isPlaying ?? false
     readonly property string title: player?.trackTitle ?? ""
     readonly property string artist: player?.trackArtist ?? ""
-    readonly property string art: (player?.trackArtUrl ?? "") !== "" ? player.trackArtUrl : (cache[key] ?? "")
+    readonly property string originalArt: (player?.trackArtUrl ?? "") || (cache[key] ?? "")
+    property string downloadedArt: ""
+    readonly property string art: originalArt.startsWith("file:") ? originalArt : (Privacy.allowed("remoteArt",true)?downloadedArt:"")
+    property string artRequest: ""
+    property bool manualArt:false
+    onOriginalArtChanged: loadArt(manualArt)
+    function loadArt(manual) {
+        artProc.running=false;downloadedArt="";
+        if(originalArt.startsWith("https://")&&Privacy.allowed("remoteArt",manual)){artRequest=JSON.stringify({kind:"remoteArt",url:originalArt,manual:!!manual});artProc.running=true}
+    }
+    Process{id:artProc;command:["ms-net"];stdinEnabled:true;onStarted:{write(root.artRequest);stdinEnabled=false}onExited:stdinEnabled=true
+        stdout:StdioCollector{onStreamFinished:{try{root.downloadedArt=JSON.parse(text).url||""}catch(e){}}}}
+    Connections{target:Privacy;function onPolicyChanged(){lookup.running=false;root.loadArt(false);root.maybeLookup()}function onReadyChanged(){root.loadArt(false);root.maybeLookup()}}
+    property bool manualLookup:false
+    function refreshCover(){const c=Object.assign({},cache);delete c[key];cache=c;manualLookup=true;manualArt=true;maybeLookup();loadArt(true)}
 
     readonly property string key: artist + "|" + title
     property var cache: ({})
     property string pendingKey: ""
-    readonly property bool lookupEnabled: Quickshell.env("MS_COVER_LOOKUP") !== "0"
+    readonly property bool lookupEnabled: Quickshell.env("MS_COVER_LOOKUP") !== "0" && Privacy.allowed("coverSearch",manualLookup)
 
     onPlayingChanged: Cava.playing = playing
     Component.onCompleted: Cava.playing = playing
-    onKeyChanged: maybeLookup()
+    onKeyChanged: {manualLookup=false;manualArt=false;maybeLookup()}
     onPlayerChanged: maybeLookup()
 
     function maybeLookup() {
         if (!lookupEnabled || !player || title === "" || (player.trackArtUrl ?? "") !== "") return
         if (cache[key] !== undefined || lookup.running) return
         pendingKey = key
-        lookup.command = ["curl", "-s", "-m", "8", "-G", "https://itunes.apple.com/search",
-            "--data-urlencode", "term=" + artist + " " + title, "-d", "media=music", "-d", "entity=song", "-d", "limit=1"]
+        lookupPayload=JSON.stringify({kind:"coverSearch",artist:artist,title:title,manual:manualLookup})
         lookup.running = true
     }
 
+    property string lookupPayload:""
     Process {
-        id: lookup
+        id: lookup;command:["ms-net"];stdinEnabled:true
+        onStarted:{write(root.lookupPayload);stdinEnabled=false}
+        onExited:stdinEnabled=true
         stdout: StdioCollector {
             onStreamFinished: {
                 let url = ""
                 try {
-                    const r = JSON.parse(text).results
-                    if (r && r.length > 0) url = r[0].artworkUrl100.replace("100x100", "300x300")
+                    url=JSON.parse(text).url||""
                 } catch (e) {}
                 const c = Object.assign({}, root.cache)
                 c[root.pendingKey] = url
                 root.cache = c
+                root.manualLookup=false
                 if (root.key !== root.pendingKey) root.maybeLookup()   // track changed meanwhile
             }
         }

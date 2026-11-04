@@ -32,8 +32,8 @@ PanelWindow {
                 x: 40
                 Component.onCompleted: { opacity = 1; x = 0; puff.puff() }
                 Sparks { id: puff; x: toast.width - 8; y: 10; spread: 14; z: 5 }
-                Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-                Behavior on x { NumberAnimation { duration: 280; easing.type: Easing.OutCubic } }
+                Behavior on opacity { NumberAnimation { duration: Theme.dLong; easing.type: Easing.OutCubic } }
+                Behavior on x { NumberAnimation { duration: Theme.dLong; easing.type: Easing.OutCubic } }
             }
         }
     }

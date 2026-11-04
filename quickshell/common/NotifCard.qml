@@ -26,9 +26,9 @@ Item {
         spacing: 10
         Item {
             width: 30; height: 30
-            Image {
+            PrivateImage {
                 anchors.fill: parent
-                source: root.notif?.image ? root.notif.image : (root.notif?.appIcon ? Quickshell.iconPath(root.notif.appIcon, true) : "")
+                requestSource: root.notif?.image ? root.notif.image : (root.notif?.appIcon ? Quickshell.iconPath(root.notif.appIcon, true) : "")
                 fillMode: Image.PreserveAspectFit
                 visible: status === Image.Ready && !root.critical
             }

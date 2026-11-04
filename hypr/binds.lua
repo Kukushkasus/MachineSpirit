@@ -1,4 +1,7 @@
 -- [ PURITY SEAL ] Keep the signal clear. Preserve the entrusted work.
+-- SPDX-License-Identifier: GPL-3.0-only
+-- Super-tap approach adapted from end-4/dots-hyprland (end-4 and contributors).
+-- Credits: THIRD-PARTY.md.
 -- Keybinds. Digits are bound by physical keycode so they work on any layout (en/ru).
 local mod = "SUPER"
 local terminal = "kitty"

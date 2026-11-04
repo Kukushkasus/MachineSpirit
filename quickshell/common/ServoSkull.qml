@@ -30,9 +30,9 @@ Item {
         transform: Scale { origin.x: 23; xScale: root.mirror ? -1 : 1 }
         // hover
         SequentialAnimation {
-            running: root.active && !Theme.lowPower; loops: Animation.Infinite
-            YAnimator { target: body; from: 0; to: -1; duration: 2400 + (root.mirror ? 500 : 0); easing.type: Easing.InOutSine }
-            YAnimator { target: body; from: -1; to: 0; duration: 2400 + (root.mirror ? 500 : 0); easing.type: Easing.InOutSine }
+            running: root.active && Theme.motionEnabled; loops: Animation.Infinite
+            YAnimator { target: body; from: 0; to: -1; duration: Theme.dLong0 + (root.mirror ? 500 : 0); easing.type: Easing.InOutSine }
+            YAnimator { target: body; from: -1; to: 0; duration: Theme.dLong0 + (root.mirror ? 500 : 0); easing.type: Easing.InOutSine }
         }
 
         Rectangle {   // clamp arm to the panel
@@ -94,7 +94,7 @@ Item {
             border { width: 1.2; color: Theme.brass }
             Rectangle { anchors.centerIn: parent; width: 13; height: 13; radius: 6.5; color: Qt.alpha("#ff3b2a", 0.22); z: -1 }
             SequentialAnimation {
-                running: root.active && !Theme.lowPower; loops: Animation.Infinite
+                running: root.active && Theme.motionEnabled; loops: Animation.Infinite
                 PauseAnimation { duration: 2600 + (root.mirror ? 900 : 0) }
                 OpacityAnimator { target: optic; from: 1; to: 0.25; duration: 80 }
                 OpacityAnimator { target: optic; from: 0.25; to: 1; duration: 140 }
