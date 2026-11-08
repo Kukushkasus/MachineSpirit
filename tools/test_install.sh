@@ -21,6 +21,6 @@ test ! -e "$HOME/.local/bin/ms-settings"
 test -x "$HOME/.local/bin/ms-settings"
 test -s "$XDG_CONFIG_HOME/quickshell/machinespirit/shell.qml"
 # The edit the previous uninstall preserved is replaced on reinstall, but must survive in the backup.
-! grep -q 'user edit' "$XDG_CONFIG_HOME/quickshell/machinespirit/shell.qml"
+if grep -q 'user edit' "$XDG_CONFIG_HOME/quickshell/machinespirit/shell.qml"; then echo 'FAIL: the preserved edit was not replaced on reinstall'; exit 1; fi
 grep -rq 'user edit' "$XDG_STATE_HOME/machinespirit/install"
 echo 'PASS: dry-run, install, update, uninstall, reinstall and preservation'
