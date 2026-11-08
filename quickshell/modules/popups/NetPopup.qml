@@ -41,7 +41,7 @@ Column {
                 model: [
                     { k: "Interface",        v: Net.iface },
                     { k: "Local address",    v: Net.localIp },
-                    { k: "Public address",   v: Net.publicIp !== "" ? Net.publicIp : (Privacy.allowed("publicIp",false)?"not fetched":"manual / blocked") },
+                    { k: "Public address",   v: Net.publicIp !== "" ? Net.publicIp : (Privacy.allowed("publicIp",false)?"not fetched":Privacy.allowed("publicIp",true)?"on request":"off in Privacy") },
                     { k: "Gateway",          v: Net.gateway },
                     { k: "Hardware address", v: Net.mac }
                 ]

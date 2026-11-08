@@ -76,7 +76,12 @@ def validate(d):
             values.append(normalized)
     return d
 
-def read(): return validate(json.loads(PATH.read_text())) if PATH.exists() else copy.deepcopy(DEFAULT)
+def read():
+    if not PATH.exists(): return copy.deepcopy(DEFAULT)
+    try: return validate(json.loads(PATH.read_text()))
+    except ValueError as e:
+        # The file is never rewritten automatically; tell the user how to recover it.
+        raise ValueError(f'Settings file {PATH} cannot be used ({str(e)[:120]}). It was left untouched; rename or delete it to restore the defaults.') from e
 def lua(value):
     if isinstance(value,bool): return str(value).lower()
     if isinstance(value,(int,float)): return str(value)
@@ -109,10 +114,13 @@ def reload():
         errors=subprocess.check_output(['hyprctl','configerrors'],text=True).strip()
         if errors: raise ValueError('Compositor rejected configuration: '+errors[:300])
 
-def rollback():
+def rollback(token=None):
     p = STATE / 'settings-preview.json'
     if p.exists():
-        old = json.loads(p.read_text())['old']; atomic(PATH,json.dumps(old,indent=2)); generate(old); p.unlink(); reload()
+        saved = json.loads(p.read_text())
+        # A watchdog from an already confirmed preview must not revert a newer one.
+        if token and saved.get('id') != token: return
+        old = saved['old']; atomic(PATH,json.dumps(old,indent=2)); generate(old); p.unlink(); reload()
 
 def main():
     cmd = sys.argv[1] if len(sys.argv)>1 else 'read'
@@ -120,7 +128,7 @@ def main():
         time.sleep(16)
         STATE.mkdir(parents=True,exist_ok=True)
         with (STATE/'settings.lock').open('w') as lock:
-            fcntl.flock(lock,fcntl.LOCK_EX); rollback()
+            fcntl.flock(lock,fcntl.LOCK_EX); rollback(sys.argv[2] if len(sys.argv)>2 else None)
         return {}
     if cmd == 'read': return {'data':read(), 'defaults':copy.deepcopy(DEFAULT)}
     if cmd == 'monitors': return {'monitors':json.loads(subprocess.check_output(['hyprctl','monitors','all','-j']))}
@@ -176,10 +184,11 @@ def main():
             if not enabled: raise ValueError('At least one connected display must remain enabled')
         preview=new['monitors'] != old['monitors']
         if preview:
-            atomic(pending,json.dumps({'old':old}))
-            subprocess.Popen([sys.executable,str(Path(__file__).resolve()),'watchdog'],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,stdin=subprocess.DEVNULL)
-        atomic(PATH,json.dumps(new,indent=2)); generate(new)
-        try: reload()
+            token = os.urandom(8).hex()
+            atomic(pending,json.dumps({'old':old,'id':token}))
+            subprocess.Popen([sys.executable,str(Path(__file__).resolve()),'watchdog',token],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,stdin=subprocess.DEVNULL)
+        try:
+            atomic(PATH,json.dumps(new,indent=2)); generate(new); reload()
         except Exception:
             atomic(PATH,json.dumps(old,indent=2)); generate(old)
             if pending.exists(): pending.unlink()

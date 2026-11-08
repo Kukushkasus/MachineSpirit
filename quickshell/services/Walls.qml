@@ -108,8 +108,10 @@ Singleton {
     function save(item) { saveProc.command = ["ms-walls", "save", item.full]; status = "Saving"; saveProc.running = true }
     Process { id: saveProc; stdout: StdioCollector { onStreamFinished: { root.status = text.includes("saved") ? "Saved to Pictures/Wallpapers" : "Could not save"; clearStatus.restart() } } }
 
-    function setKey(k) { keyProc.command = ["ms-walls", "setkey", source, k]; keyProc.running = true }
-    Process { id: keyProc; onExited: root.search() }
+    property string pendingKey: ""
+    // The key goes over stdin so it never appears in the process list.
+    function setKey(k) { if (keyProc.running) return; pendingKey = k; keyProc.command = ["ms-walls", "setkey", source]; keyProc.running = true }
+    Process { id: keyProc; stdinEnabled: true; onStarted: { write(root.pendingKey + "\n"); root.pendingKey = ""; stdinEnabled = false } onExited: { stdinEnabled = true; root.search() } }
 
     function openFolder() { Quickshell.execDetached(["xdg-open", Quickshell.env("HOME") + "/Pictures/Wallpapers"]) }
 }

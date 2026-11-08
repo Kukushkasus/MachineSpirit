@@ -6,7 +6,7 @@ about: Report a reproducible problem
 
 **Steps to reproduce:**
 
-**Versions:** distro, Hyprland, Quickshell, GPU/driver, selected components
+**Versions:** distro, Hyprland, Quickshell, GPU/driver, selected components, and the output of `./install.sh doctor`
 
 **Logs / real screenshot:** remove personal data, tokens and notification contents
 

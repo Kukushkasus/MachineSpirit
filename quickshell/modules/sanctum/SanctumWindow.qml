@@ -318,14 +318,14 @@ Variants {
             property bool lit: false
             signal hit()
             signal more()
-            width: 76; height: 38
+            width: 88; height: 38
             Rectangle { anchors.fill: parent; radius: 6; color: Qt.alpha(Theme.glow, lkm.containsMouse ? 0.1 : 0.04); border { width: 1; color: Qt.alpha(Theme.glow, lk.lit ? 0.4 : 0.18) } }
             Lamp { x: 4; anchors.verticalCenter: parent.verticalCenter; lit: lk.lit; size: 7 }
             Column {
                 x: 22; anchors.verticalCenter: parent.verticalCenter; width: parent.width - 26
                 Text { text: lk.label.toUpperCase(); color: lk.lit ? Theme.glow : Theme.glowDim; renderType: Text.NativeRendering
                     font { family: Theme.fontNum; pixelSize: 11; weight: Font.Bold; letterSpacing: 1.5 } }
-                Text { width: parent.width; elide: Text.ElideRight; text: lk.detail; color: Theme.glowFaint; renderType: Text.NativeRendering; font { family: Theme.fontMono; pixelSize: 9 } }
+                Text { width: parent.width; elide: Text.ElideRight; text: lk.detail; color: Theme.glowDim; renderType: Text.NativeRendering; font { family: Theme.fontMono; pixelSize: 9 } }
             }
             MouseArea { id: lkm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
                 onClicked: mouse => mouse.button === Qt.RightButton ? lk.more() : lk.hit() }

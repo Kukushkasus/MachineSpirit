@@ -1,11 +1,20 @@
 # Installation and recovery
 
-Run as your normal desktop user on Arch Linux or CachyOS. Python 3.11+ and Bash are required to start the installer. Runtime testing uses Hyprland 0.57.0 and Quickshell 0.3.2; older Hyprlang-only releases are not supported. Keep an existing working login method available.
+## Requirements
+
+- Arch Linux or CachyOS. Run the installer as your normal desktop user; it asks for `sudo` only for packages and system files.
+- Python 3.11+ and Bash to start the installer, and `pacman` for packages (AUR is optional).
+- Hyprland 0.55 or newer with the Lua configuration API (tested with 0.57) and Quickshell (tested with 0.3.2). Older Hyprland releases that only read the Hyprlang format are not supported.
+- Keep an existing working login method available: the installer does not change your login shell or display manager.
+
+## Install
 
 ```sh
 ./install.sh                        # component menu, including full installation
 ./install.sh --full --dry-run       # inspect; no files or packages changed
-./install.sh --full                 # all components, including boot
+./install.sh --full                 # all components; asks before changing GRUB/Plymouth
+./install.sh --full --with-boot     # same, and include the boot theme without asking
+./install.sh --components boot      # only the boot theme (explicit choice)
 ./install.sh --components shell,hyprland,terminal,apps,lock,wallpapers
 ```
 
@@ -19,9 +28,53 @@ Run as your normal desktop user on Arch Linux or CachyOS. Python 3.11+ and Bash 
 | wallpapers | Three original starter wallpapers |
 | boot | Plymouth theme and GRUB/mkinitcpio integration |
 
-The shell is included with every selection. `--no-packages` skips pacman for an already provisioned machine. `--yes` accepts the displayed installation without an interactive prompt. `--with-aur` additionally installs optional Darkly using an existing paru/yay; the default does not require AUR.
+The shell is included with every selection. `--no-packages` skips pacman for an already provisioned machine. `--yes` accepts the displayed installation without an interactive prompt. `--with-aur` additionally installs the optional Darkly theme using an existing paru/yay.
 
-The installer does not change your login shell. Start Hyprland through your existing login method. Your existing `hyprland.lua` is backed up when the Hyprland component replaces it. Shell-only installations require you to start `~/.local/bin/ms-session start` from your compositor session; use the supplied Hyprland configuration for the complete keybinding and display integration.
+Start Hyprland through your existing login method. Your existing `hyprland.lua` is backed up when the Hyprland component replaces it. Shell-only installations must start `~/.local/bin/ms-session start` from their own compositor session; use the supplied Hyprland configuration for the complete keybinding and display integration.
+
+## Updating
+
+### From Settings or `ms-update` (releases)
+
+**Settings, Updates** (or `ms-update` in a terminal) checks the latest published release on GitHub. Nothing is checked by itself: a request is sent only when you press the refresh button, and only if the Privacy permission "Update checks" allows it (the default is *On request*; Local only mode blocks it). **Update dots** opens a terminal that downloads the release archive and `SHA256SUMS`, shows the changelog and asks before it runs the normal installer, with backups and rollback. Packages are installed through pacman as usual, so it may ask for your password. The boot theme is never touched by an update.
+
+```sh
+ms-update status                                   # installed and last known version, no network
+ms-update check                                    # ask GitHub for the latest release
+ms-update install                                  # download, check, review, install
+ms-update install --from-file MachineSpirit-X.Y.Z.tar.gz   # offline: SHA256SUMS must sit next to the archive
+ms-update install --dry-run                        # check the archive and show the changelog only
+```
+
+What is checked: the archive must match its entry in `SHA256SUMS`, unpack as regular files under one folder within size limits, and its release tag, file name and inner `VERSION` must agree, otherwise nothing is installed. The checksum only protects against a damaged download: the file comes from the same release, so it cannot prove who published it, and releases are not signed. Going back to an older version needs `--force` and an explicit answer.
+
+### From a Git checkout
+
+```sh
+git pull
+./install.sh update --dry-run
+./install.sh update
+```
+
+Selected components are remembered. Both ways use the same installer, so the rules below apply to each.
+
+## Backups and recovery
+
+Every installation is a transaction recorded under `$XDG_STATE_HOME/machinespirit/install/` (default `~/.local/state/machinespirit/install/`). It keeps the original files and symlinks, permissions and the hashes of what was installed. Generated theme files use the same format.
+
+- **Your edits are preserved.** Updates keep files you changed since they were installed and list their paths; merge those by hand. Settings, widget positions and notes are never reset.
+- **Files a new version no longer ships** are removed only when MachineSpirit installed them, you did not change them and nothing in the new version refers to them. Otherwise they stay and a warning says why.
+- **Failures roll back.** A failed installation restores every file it can and says what is left and how to retry. Package installations are not rolled back.
+- **Interrupted installations** (crash, power loss) are recovered on the next installation, and only when the process that wrote the record is provably gone. `doctor` reports unfinished records and who owns them.
+- **Nothing is discarded silently.** Restore and uninstall keep files whose hashes no longer match the installed version and report them. Generated state, notes, API keys and wallpaper downloads remain after uninstall. Stop the shell before uninstalling it.
+
+```sh
+./install.sh doctor                 # check commands, versions, settings and unfinished records
+./install.sh restore BACKUP_ID      # guarded restore of one transaction
+./install.sh uninstall              # restore every recorded transaction
+```
+
+Keep the backup folder until you have verified a recovery.
 
 ## Boot component
 
@@ -36,30 +89,3 @@ sudo python3 installer/boot.py restore BACKUP_ID
 ```
 
 Restore the boot component separately before uninstalling user files. Packages are not automatically removed.
-
-## Updates and backups
-
-```sh
-./install.sh update --dry-run
-./install.sh update
-./install.sh doctor
-./install.sh restore BACKUP_ID
-./install.sh uninstall
-```
-
-Use the new source checkout for updates. Selected components are remembered. Each user-file transaction lives under `$XDG_STATE_HOME/machinespirit/install/` (default `~/.local/state/machinespirit/install/`). It records original files/symlinks, permissions and installed hashes. Generated theme files use the same transaction format.
-
-Updates preserve files changed since the recorded installation and report their paths. Merge changes to those files manually. Settings, widget positions and notes are not reset. A failed user-file transaction restores its originals. Package downloads/installations are not rolled back.
-
-Restore and uninstall preserve files whose hashes no longer match the installed version, reporting them rather than discarding changes. Backups remain available for manual recovery. Generated state, notes, API keys and wallpaper downloads remain after uninstall. The shell should be stopped before uninstalling it.
-
-Unfinished records marked `applying` indicate interruption. Inspect their manifest and original copies; run `restore BACKUP_ID` for a guarded restoration. Do not delete the backup directory until you have verified recovery.
-
-## Checks
-
-```sh
-python3 -m unittest discover -s tools -p 'test*.py'
-bash tools/test_install.sh
-```
-
-No command in these checks installs packages on the host. The installation smoke test uses disposable HOME/XDG directories.

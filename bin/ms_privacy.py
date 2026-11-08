@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-only
 """Shared privacy settings. No network activity on import."""
-import copy, ctypes, hashlib, json, os, re, signal, subprocess, tempfile, time, urllib.parse
+import copy, ctypes, hashlib, json, os, re, shutil, signal, subprocess, tempfile, time, urllib.parse
 from pathlib import Path
 CONF=Path(os.environ.get('XDG_CONFIG_HOME',Path.home()/'.config'))/'machinespirit'
 STATE=Path(os.environ.get('XDG_STATE_HOME',Path.home()/'.local/state'))/'machinespirit'
 CACHE=Path(os.environ.get('XDG_CACHE_HOME',Path.home()/'.cache'))/'machinespirit/private-network'
 RUNTIME=Path(os.environ.get('XDG_RUNTIME_DIR',f'/run/user/{os.getuid()}'))/'machinespirit-privacy'
-FEATURES=('weather','publicIp','coverSearch','remoteArt','wallpapers')
-DEFAULT={'mode':'custom','weather':'auto','publicIp':'auto','coverSearch':'auto','remoteArt':'auto','wallpapers':'auto',
+FEATURES=('weather','publicIp','coverSearch','remoteArt','wallpapers','updates')
+DEFAULT={'mode':'custom','weather':'auto','publicIp':'auto','coverSearch':'auto','remoteArt':'auto','wallpapers':'auto','updates':'manual',
          'weatherMode':'ip','city':'','proxy':{'enabled':False,'scheme':'socks5','host':'','port':1080,'username':'','shell':False}}
 
 if os.environ.get('MS_WEATHER_LOCATION'):
@@ -59,6 +59,16 @@ def proxy_endpoint():
     # Fixed loopback listener: no PAC/DIRECT fallback, no proxy credentials in browser policies.
     return 'http://127.0.0.1:17879'
 
+def prune_cache(limit=200,max_age=7*86400):
+    """Remove old remote images and leftovers of interrupted downloads from the private cache."""
+    now=time.time();files=[]
+    for f in CACHE.glob('*'):
+        try: st=f.stat()
+        except OSError: continue
+        if f.suffix!='.img' and now-st.st_mtime>3600 or f.suffix=='.img' and now-st.st_mtime>max_age: f.unlink(missing_ok=True)
+        elif f.suffix=='.img': files.append((st.st_mtime,f))
+    for _,f in sorted(files,reverse=True)[limit:]: f.unlink(missing_ok=True)
+
 def fetch(feature,url,manual=False,headers=None,image=False,force_proxy=False):
     if not allowed(feature,manual): raise ValueError('Network access disabled in Privacy settings')
     u=urllib.parse.urlsplit(url)
@@ -76,8 +86,12 @@ def fetch(feature,url,manual=False,headers=None,image=False,force_proxy=False):
     fd,tmp=tempfile.mkstemp(dir=CACHE);os.close(fd)
     proc=None
     try:
-        proc=subprocess.Popen(['curl','--disable','--config','-','--silent','--show-error','--fail','--location','--proto','=https','--proto-redir','=https',
-            '--connect-timeout','8','--max-time','45','--max-filesize','20971520','--output',tmp],stdin=subprocess.PIPE,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,env=env,preexec_fn=lambda:ctypes.CDLL(None).prctl(1,signal.SIGTERM))
+        # curl must die with us (settings change, panel closed, process killed). `setpriv` sets that up before exec, which keeps
+        # fetch() safe to call from several threads; `preexec_fn` is not, so it is only the fallback.
+        guard=['setpriv','--pdeathsig','TERM'] if shutil.which('setpriv') else []
+        extra={} if guard else {'preexec_fn':lambda:ctypes.CDLL(None).prctl(1,signal.SIGTERM)}
+        proc=subprocess.Popen([*guard,'curl','--disable','--config','-','--silent','--show-error','--fail','--location','--proto','=https','--proto-redir','=https',
+            '--connect-timeout','8','--max-time','45','--max-filesize','20971520','--output',tmp],stdin=subprocess.PIPE,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,env=env,**extra)
         proc.stdin.write(config.encode());proc.stdin.close()
         while proc.poll() is None:
             time.sleep(.1)
@@ -89,7 +103,7 @@ def fetch(feature,url,manual=False,headers=None,image=False,force_proxy=False):
             data=Path(tmp).read_bytes()[:16]
             if not (data.startswith(b'\x89PNG\r\n') or data.startswith(b'\xff\xd8\xff') or data.startswith(b'GIF8') or (data[:4]==b'RIFF' and data[8:12]==b'WEBP')):
                 raise ValueError('Unsupported remote image; expected PNG, JPEG, GIF or WebP')
-            dest=CACHE/(hashlib.sha256(url.encode()).hexdigest()+'.img');os.replace(tmp,dest);return dest.as_uri()
+            dest=CACHE/(hashlib.sha256(url.encode()).hexdigest()+'.img');os.replace(tmp,dest);prune_cache();return dest.as_uri()
         return Path(tmp).read_text()
     finally:
         if proc is not None and proc.poll() is None: proc.terminate();proc.wait()

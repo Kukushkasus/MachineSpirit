@@ -11,4 +11,4 @@ jobs:
       - run: python -m unittest discover -s tools -p 'test*.py'
       - run: bash tools/test_install.sh
       - run: shellcheck install.sh bin/ms-screenshot tools/test_install.sh
-      - run: python -m compileall -q installer tools quickshell/scripts bin/ms-settings bin/ms-session bin/ms-privacy bin/ms-net bin/ms_privacy.py privacy/ms-browser-policy scripts/ms-theme scripts/ms-walls
+      - run: python -m compileall -q installer tools quickshell/scripts bin/ms-settings bin/ms-session bin/ms-privacy bin/ms-net bin/ms-update bin/ms_privacy.py privacy/ms-browser-policy scripts/ms-theme scripts/ms-walls

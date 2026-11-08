@@ -6,11 +6,15 @@ def digest(path):
     if path.is_symlink(): return 'link:'+os.readlink(path)
     return hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else None
 
+def proc_start(pid):
+    try: return int(Path(f'/proc/{pid}/stat').read_text().rsplit(')',1)[1].split()[19])
+    except (OSError,ValueError,IndexError): return None
+
 @contextlib.contextmanager
 def transaction(paths, state):
     tx=state/'install'/(time.strftime('%Y%m%d-%H%M%S')+'-theme-'+str(os.getpid()))
     tx.mkdir(parents=True,exist_ok=True)
-    manifest={'version':1,'status':'applying','files':[]}
+    manifest={'version':1,'status':'applying','files':[],'pid':os.getpid(),'started':proc_start(os.getpid())}
     def save():
         temp=tx/'manifest.tmp'; temp.write_text(json.dumps(manifest,indent=2)); os.replace(temp,tx/'manifest.json')
     for p in dict.fromkeys(paths):
@@ -24,8 +28,10 @@ def transaction(paths, state):
     save()
     try:
         yield
+        before={e['dest']:e['installed'] for e in manifest['files']}
         for e in manifest['files']: e['installed']=digest(Path(e['dest']))
-        manifest['status']='complete'; save()
+        if all(e['installed']==before[e['dest']] for e in manifest['files']): shutil.rmtree(tx)   # nothing changed: no record to keep
+        else: manifest['status']='complete'; save()
     except BaseException:
         for e in reversed(manifest['files']):
             p=Path(e['dest'])

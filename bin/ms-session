@@ -50,7 +50,9 @@ subprocess.run(['ms-settings','generate'],stdout=subprocess.DEVNULL)
 env=dict(os.environ,MS_STARTUP='1')
 state=Path(os.environ.get('XDG_STATE_HOME',Path.home()/'.local/state'))/'machinespirit'
 state.mkdir(parents=True,exist_ok=True)
-with (state/'session.log').open('w') as log:
+logfile=state/'session.log'
+# Keep the previous run's output for diagnosis; start over only when the log has grown large.
+with logfile.open('a' if logfile.exists() and logfile.stat().st_size<1_000_000 else 'w') as log:
     children.append(subprocess.Popen(['quickshell','-c','machinespirit'],env=env,stdout=log,stderr=log,start_new_session=True))
     if (conf/'hypr/hyprlock.conf').exists():
         import shutil
@@ -58,12 +60,19 @@ with (state/'session.log').open('w') as log:
     children.append(subprocess.Popen(['ms-privacy','daemon'],stdout=log,stderr=log,start_new_session=True))
     idleconf=conf/'machinespirit/hypridle.conf'
     stamp=idleconf.stat().st_mtime_ns if idleconf.exists() else 0
+    daemon_started=time.monotonic()
     try:
         while children[0].poll() is None:
             time.sleep(1)
             now=idleconf.stat().st_mtime_ns if idleconf.exists() else 0
             if now != stamp and len(children)>2:
-                children[1].terminate(); children[1].wait(timeout=3)
+                children[1].terminate()
+                try: children[1].wait(timeout=3)
+                except subprocess.TimeoutExpired: children[1].kill(); children[1].wait()
                 children[1]=subprocess.Popen(['hypridle','-c',str(idleconf)],stdout=log,stderr=log,start_new_session=True)
                 stamp=now
+            # The privacy daemon owns the loopback proxy; without it the shell stays offline until the next login.
+            if children[-1].poll() is not None and time.monotonic()-daemon_started>5:
+                children[-1]=subprocess.Popen(['ms-privacy','daemon'],stdout=log,stderr=log,start_new_session=True)
+                daemon_started=time.monotonic()
     finally: stop()

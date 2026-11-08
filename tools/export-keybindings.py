@@ -9,4 +9,4 @@ for row in sorted(rows,key=lambda r:r['description']):
     key=row['keys'].replace('code:61','/')
     key=re.sub(r'code:(1[0-9])',lambda m:str((int(m[1])-9)%10),key)
     print('| '+(key or 'Disabled').replace('|',r'\|')+' | '+row['description'].replace('|',r'\|')+' |')
-print('\nSuper alone also opens the command console. Escape closes overlays. Remap registered actions in Settings → Keybindings; an empty replacement disables an action. Additional user Lua binds appear in the live manual when they have descriptions.')
+print('\nSuper alone also opens the command console. Escape closes overlays. Remap registered actions in Settings → Shortcuts; an empty replacement disables an action. Additional user Lua binds appear in the live manual when they have descriptions.')

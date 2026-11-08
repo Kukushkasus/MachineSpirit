@@ -6,10 +6,11 @@
         SOURCE: local | wallhaven | openverse | unsplash | pexels
   ms-walls apply PATH_OR_URL        download if needed, then `ms-theme apply`
   ms-walls save URL                 download into the wallpaper folder only
-  ms-walls setkey SOURCE KEY        store an API key (unsplash, pexels, wallhaven)
+  ms-walls setkey SOURCE [KEY]      store an API key (unsplash, pexels, wallhaven); without KEY it is read from stdin
   ms-walls folders                  print the local wallpaper folders
 """
-import argparse, colorsys, hashlib, json, os, random, re, subprocess, sys, urllib.parse, urllib.request
+from concurrent.futures import ThreadPoolExecutor
+import argparse, colorsys, hashlib, json, os, random, re, subprocess, sys, tempfile, urllib.parse, urllib.request
 from pathlib import Path
 
 HOME = Path.home()
@@ -181,10 +182,12 @@ def download(url):
 
 def remote_result(result):
     # QML must never fetch remote thumbnails directly, bypassing routing/permissions.
-    for item in result.get('items',[]):
-        if not item.get('local'):
-            try: item['thumb']=privacy.fetch('wallpapers',item['thumb'],True,image=True)
-            except Exception: item['thumb']=''
+    # Up to four at a time: twenty thumbnails one after another could take minutes on a slow proxy. Every fetch still
+    # checks the permission itself, so a policy change cancels all of them; map() keeps the original order.
+    def load(item):
+        try: item['thumb']=privacy.fetch('wallpapers',item['thumb'],True,image=True)
+        except Exception: item['thumb']=''
+    with ThreadPoolExecutor(max_workers=4) as pool: list(pool.map(load,[i for i in result.get('items',[]) if not i.get('local')]))
     return result
 
 def main():
@@ -200,7 +203,7 @@ def main():
     s.add_argument("--atleast", default="")
     ap = sub.add_parser("apply"); ap.add_argument("target")
     sv = sub.add_parser("save"); sv.add_argument("url")
-    sk = sub.add_parser("setkey"); sk.add_argument("source"); sk.add_argument("key")
+    sk = sub.add_parser("setkey"); sk.add_argument("source"); sk.add_argument("key", nargs="?", help="omit to read the key from stdin")
     sub.add_parser("folders")
     a = p.parse_args()
     try:
@@ -213,9 +216,10 @@ def main():
             out({"saved": str(download(a.url))})
         if a.cmd == "setkey":
             CONF.mkdir(parents=True, exist_ok=True)
-            k = keys(); k[a.source] = a.key.strip()
-            KEYS.write_text("".join(f"{x}={y}\n" for x, y in k.items()))
-            os.chmod(KEYS, 0o600)
+            k = keys(); k[a.source] = (a.key if a.key is not None else sys.stdin.readline()).strip()
+            fd, tmp = tempfile.mkstemp(dir=CONF)
+            with os.fdopen(fd, "w") as f: f.write("".join(f"{x}={y}\n" for x, y in k.items()))
+            os.replace(tmp, KEYS)
             out({"ok": True})
         if a.cmd == "apply":
             path = download(a.target) if a.target.startswith("http") else Path(a.target).expanduser()
@@ -228,4 +232,5 @@ def main():
         fail(str(e)[:200])
 
 
-main()
+if __name__ == "__main__":
+    main()

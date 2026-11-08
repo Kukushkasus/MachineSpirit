@@ -15,4 +15,12 @@ printf '\n// user edit\n' >> "$XDG_CONFIG_HOME/quickshell/machinespirit/shell.qm
 grep -q 'user edit' "$XDG_CONFIG_HOME/quickshell/machinespirit/shell.qml"
 "$root/install.sh" uninstall --no-system --yes > "$work/uninstall.log"
 grep -q 'user edit' "$XDG_CONFIG_HOME/quickshell/machinespirit/shell.qml"
-echo 'PASS: dry-run, install, update, uninstall and preservation'
+test ! -e "$HOME/.local/bin/ms-settings"
+# Installing again after uninstall must restore every removed file instead of treating them as user deletions.
+"$root/install.sh" --components shell --no-packages --no-system --yes > "$work/reinstall.log"
+test -x "$HOME/.local/bin/ms-settings"
+test -s "$XDG_CONFIG_HOME/quickshell/machinespirit/shell.qml"
+# The edit the previous uninstall preserved is replaced on reinstall, but must survive in the backup.
+! grep -q 'user edit' "$XDG_CONFIG_HOME/quickshell/machinespirit/shell.qml"
+grep -rq 'user edit' "$XDG_STATE_HOME/machinespirit/install"
+echo 'PASS: dry-run, install, update, uninstall, reinstall and preservation'

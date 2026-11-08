@@ -1,6 +1,6 @@
 # User settings
 
-Open **Super+,** or the Settings button in the control panel. **Super+/** opens the shortcut manual. Use the sidebar or search to find controls. Appearance includes a live geometry preview and Balanced, Compact and Square presets. Changes stay in a draft until **Apply changes**; **Discard** restores saved values, and **Defaults** resets the current section. Closing with a modified draft asks whether to keep editing or discard it.
+Open **Super+,** or the Settings button in the control panel. **Super+/** opens the shortcut manual. The pages are Appearance, Displays, Keyboard, Pointer, Session, Shortcuts, Privacy, Browsers and Updates; use the sidebar or search to find controls. Appearance includes a live geometry preview and Balanced, Compact and Square presets. Changes stay in a draft until **Apply changes**; **Discard** restores saved values, and **Reset page** returns the current page to its defaults. Closing with a modified draft asks whether to keep editing or discard it.
 
 Settings are stored in `$XDG_CONFIG_HOME/machinespirit/settings.json` (default `~/.config/machinespirit/settings.json`). The file is versioned JSON. Missing supported fields receive defaults; unsupported versions and invalid values are rejected. After manual edits, run `ms-settings generate` and reload Hyprland. The settings UI watches the file.
 
@@ -23,8 +23,19 @@ Settings are stored in `$XDG_CONFIG_HOME/machinespirit/settings.json` (default `
 | lockSeconds | 600 | Idle lock timeout |
 | screenOffSeconds | 900 | Screen-off timeout, at least lockSeconds |
 | bindings | `{}` | Original combination → replacement; empty string disables |
+| privacy | see below | Network permissions and proxy; edited on the Privacy page |
 
-The English interface is not translated in this beta. Keyboard layouts are independent of interface language. User overrides in `hypr/local.lua` remain outside the shipped configuration; settings-managed values are applied after the standard look configuration.
+The `privacy` object:
+
+| Field | Default | Meaning |
+|---|---|---|
+| mode | `custom` | `normal`, `recommended` or `local` (the presets), or `custom` |
+| weather, publicIp, coverSearch, remoteArt, wallpapers | `auto` | `auto`, `manual` (on request) or `off` for each network feature |
+| updates | `manual` | The same three values for update checks |
+| weatherMode / city | `ip` / empty | Locate weather by exit IP, or use `city` |
+| proxy | disabled | `enabled`, `scheme` (`http`, `https`, `socks5`), `host`, `port`, `username` and `shell` (route shell requests through it); the password is stored separately |
+
+The English interface is not translated yet. Keyboard layouts are independent of interface language. User overrides in `hypr/local.lua` remain outside the shipped configuration; settings-managed values are applied after the standard look configuration.
 
 ## Displays
 
@@ -60,11 +71,11 @@ Theme policy remains in `theme.conf` next to settings. `ms-theme apply IMAGE` ap
 
 ## First launch and privacy
 
-The first launch opens a six-step setup flow: privacy preset, network/weather, browsers, appearance, keyboard and review. Background shell requests remain paused until **Finish setup**. Existing installations are offered setup once without replacing their saved preferences. Closing setup postpones it; **Privacy → Run setup again** opens it later.
+The first launch opens a six-step setup flow: privacy preset, network/weather, browsers, appearance, keyboard and review. Background shell requests remain paused until **Finish setup**. Existing installations are offered setup once without replacing their saved preferences. **Skip setup** finishes at once with safe defaults (weather and public-IP lookups stay off). Closing setup postpones it; **Privacy → Run setup again** opens it later.
 
 **Normal** enables optional shell networking. **Recommended** keeps weather and wallpapers, asks for a city, and makes public-IP and track-cover lookups manual. **Local only** blocks the shell's external requests, including remote notification images, artwork and wallpaper thumbnails. Local instruments, playback controls, notes and local wallpapers remain available. Cached weather is marked saved. These modes do not isolate the whole computer.
 
-Each network feature can be allowed, manual or blocked. Manual weather, public-IP and cover requests are available in Privacy. Online wallpaper searches are initiated in the wallpaper archive. Weather uses wttr.in; public IP uses ipify; cover search sends artist/title to iTunes. Remote artwork and notification images contact their originating hosts. Wallpaper requests contact the selected provider. Notifications are not uploaded by the shell. Text metadata is displayed as plain text rather than executable image markup.
+Each network feature can be allowed, manual or blocked. Manual weather, public-IP and cover requests are available in Privacy. Online wallpaper searches are initiated in the wallpaper archive. Weather uses wttr.in; public IP uses ipify; cover search sends artist/title to iTunes. Remote artwork and notification images contact their originating hosts. Wallpaper requests contact the selected provider. Update checks contact GitHub, only when you press refresh. Notifications are not uploaded by the shell. Text metadata is displayed as plain text rather than executable image markup.
 
 Weather can use a city entered manually or the connection's exit IP. With a proxy, IP location is the proxy's location. A city avoids IP-based geolocation but does not hide the connection's IP. `MS_COVER_LOOKUP=0` remains a hard opt-out; the city setting replaces `MS_WEATHER_LOCATION` after migration.
 
@@ -87,3 +98,7 @@ Supported controls cover usage telemetry, Firefox studies, automatic crash uploa
 Existing conflicting administrator policies are not overwritten. **Restore previous** removes only unchanged MachineSpirit-owned values and restores their originals. External modifications are reported as conflicts. Updates, certificate checks, malicious-site protection, browser profiles and saved passwords are not disabled or erased. Package upgrades may replace vendor policy files: refresh browser status after updates.
 
 The installer installs an administrator-owned helper at `/usr/local/libexec/ms-browser-policy` and its Polkit action. User-writable scripts never run as root during browser Apply. Browser operations accept only fixed browser IDs and whitelisted boolean controls. Uninstall restores managed browser values before removing the helper; conflicts stop restoration rather than overwrite later edits.
+
+## Updates
+
+The last page shows the installed version and whether a newer release exists. The refresh button asks GitHub (permission "Update checks" under Privacy, default *On request*; blocked in Local only mode, and routed through your proxy if you route shell requests through it). **Update dots** opens a terminal that checks the downloaded archive against the release's `SHA256SUMS`, shows what is new and asks before installing (details and limits in [Installation and recovery](INSTALL.md#updating)). The installed version is recorded in `~/.local/share/machinespirit/VERSION`; the last answer is cached in `~/.local/state/machinespirit/update.json`.

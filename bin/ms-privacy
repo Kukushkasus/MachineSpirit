@@ -14,13 +14,28 @@ def proxy_config():
     return {'services':[{'name':'machinespirit','addr':'127.0.0.1:17879','handler':{'type':'http','chain':'upstream'},'listener':{'type':'tcp'}}],
             'chains':[{'name':'upstream','hops':[{'name':'upstream','nodes':[node]}]}], 'log':{'level':'fatal'}}
 
+def reap_stale_gost():
+    """A daemon killed with SIGKILL could not stop its gost. Only one daemon runs (we hold the lock), so any gost still
+    using our runtime config is a leftover; it would hold the proxy port with an old configuration."""
+    marker=b'\0'.join([b'-C',str(RUNTIME/'gost.json').encode()])
+    for entry in Path('/proc').iterdir():
+        if not entry.name.isdigit() or int(entry.name)==os.getpid(): continue
+        try:
+            if entry.stat().st_uid!=os.getuid() or marker not in (entry/'cmdline').read_bytes(): continue
+            os.kill(int(entry.name),signal.SIGTERM)
+        except (OSError,ValueError): continue
+    time.sleep(.3)
+
 def daemon():
     import fcntl
     RUNTIME.mkdir(mode=0o700,parents=True,exist_ok=True)
     lock=(RUNTIME/'proxy.lock').open('w')
     try: fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
     except BlockingIOError: return {}
-    child=None;stamp=None
+    reap_stale_gost()
+    child=None;stamp=None;fails=0;started=0.0;retry_at=0.0
+    # `setpriv` makes gost die with this process even on SIGKILL; there is no preexec_fn in a program with a loop and signals.
+    guard=['setpriv','--pdeathsig','TERM'] if shutil.which('setpriv') else []
     def stop(*_):
         if child and child.poll() is None: child.terminate();child.wait(timeout=3)
         (RUNTIME/'gost.json').unlink(missing_ok=True)
@@ -30,13 +45,20 @@ def daemon():
         while True:
             try:
                 p=read();cfg=proxy_config();new=json.dumps(cfg) if p['proxy']['enabled'] else ''
-                if new!=stamp or (new and child and child.poll() is not None):
+                exited=new and child is not None and child.poll() is not None
+                if exited:   # gost stopped by itself: a quick death means a real problem (port taken, bad config), so wait longer each time
+                    fails=fails+1 if time.monotonic()-started<5 else 0; retry_at=time.monotonic()+min(30,2**fails); child=None   # count each death once
+                if new!=stamp or (new and (child is None or child.poll() is not None) and time.monotonic()>=retry_at):
                     if child and child.poll() is None: child.terminate();child.wait(timeout=3)
-                    child=None;stamp=new
+                    child=None;stamp=None
                     if new and shutil.which('gost'):
                         atomic(RUNTIME/'gost.json',new)
-                        child=subprocess.Popen(['gost','-C',str(RUNTIME/'gost.json')],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
-                    else: (RUNTIME/'gost.json').unlink(missing_ok=True)
+                        child=subprocess.Popen([*guard,'gost','-C',str(RUNTIME/'gost.json')],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+                        stamp=new;started=time.monotonic()
+                    else:
+                        # No proxy wanted, or gost is not installed yet: stay closed and retry when it appears.
+                        (RUNTIME/'gost.json').unlink(missing_ok=True)
+                        if not new: stamp=new
             except Exception: pass
             time.sleep(1)
     finally: stop()

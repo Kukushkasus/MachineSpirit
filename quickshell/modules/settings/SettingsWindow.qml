@@ -36,11 +36,13 @@ Variants {
             {name:"Session", icon:"shield", tag:"WATCH & REST", detail:"A quieter machine. A secure workspace."},
             {name:"Shortcuts", icon:"keyboard_command_key", tag:"INSTRUMENT MANUAL", detail:"Find an action. Give it a combination you remember."},
             {name:"Privacy",icon:"shield_lock",tag:"YOUR DATA / YOUR CHOICE",detail:"Choose what connects, what is shared, and how requests travel."},
-            {name:"Browsers",icon:"language",tag:"BROWSER POLICIES",detail:"Review supported controls before applying changes."}
+            {name:"Browsers",icon:"language",tag:"BROWSER POLICIES",detail:"Review supported controls before applying changes."},
+            {name:"Updates",icon:"update",tag:"UPKEEP / RITES",detail:"Keep MachineSpirit current. Nothing is checked until you ask."}
         ]
         readonly property var searchItems: [
             {title:"Privacy, proxy & setup",hint:"telemetry offline city weather network",page:6},
             {title:"Browser privacy",hint:"firefox chrome chromium librewolf zen telemetry",page:7},
+            {title:"Updates",hint:"update upgrade dots release version check",page:8},
             {title:"Window shape & spacing", hint:"rounding corners gaps borders", page:0},
             {title:"Effects & shadows", hint:"blur dim transparency", page:0},
             {title:"Wallpaper & desktop instruments", hint:"background widgets colors", page:0},
@@ -67,7 +69,7 @@ Variants {
         Timer { id: reviewScroll; interval: 100; onTriggered: scroll.contentItem.contentY = Math.max(0, scroll.contentItem.contentHeight - scroll.contentItem.height) }
         Component.onCompleted:if(Privacy.onboarding){page=6;Settings.open=true}
         Connections { target: Settings; function onManualChanged() { if (Settings.manual) win.page = 5 } }
-        function go(index) { if(index===6)Privacy.run("status"); if (index === 1) Settings.refreshDevices(); page = index; pageFade.restart(); query = ""; search.text = ""; scroll.contentItem.contentY = 0 }
+        function go(index) { if(index===6)Privacy.run("status"); if(index===8)Updates.refresh(); if (index === 1) Settings.refreshDevices(); page = index; pageFade.restart(); query = ""; search.text = ""; scroll.contentItem.contentY = 0 }
         function applyChanges() {
             if (Settings.countdown > 0) Settings.run("confirm")
             else if (Settings.dirty) Settings.run("write", Settings.draft)
@@ -107,42 +109,57 @@ Variants {
         MouseArea {anchors.fill:parent;onClicked:Settings.requestClose()}
         FocusScope {
             id:focus;anchors.fill:parent;enabled:win.mine
+            // A light veil keeps the panel readable over bright wallpapers without hiding the desktop.
+            // Keep it below the layer rule's ignore_alpha (0.1) in hypr/rules.lua, or the whole screen gets blurred.
+            Rectangle {
+                anchors.fill:parent;color:"black";opacity:win.mine?0.08:0
+                Behavior on opacity { NumberAnimation { duration:win.mine?Theme.dLong:Theme.dClose;easing.type:Easing.OutCubic } }
+            }
             Keys.onEscapePressed: { if(win.captureOriginal){win.captureOriginal="";win.recording=false} else if(Settings.closeRequested) Settings.closeRequested=false;else Settings.requestClose() }
             Rectangle {
                 id:frame
                 opacity:win.mine?1:0;scale:win.mine?1:0.98
                 Behavior on opacity { NumberAnimation { duration:win.mine?Theme.dLong:Theme.dClose;easing.type:Easing.OutCubic } }
                 Behavior on scale { NumberAnimation { duration:win.mine?Theme.dLong:Theme.dClose;easing.type:Easing.OutCubic } }
-                anchors.centerIn:parent;width:Math.min(1120,parent.width-40);height:Math.min(790,parent.height-48)
-                radius:14;color:Qt.alpha(Theme.glass,0.62);border.color:Qt.alpha(Theme.metalHi,0.65)
+                // Small screens (for example 1280x720 at scale 2 is 640x360): keep the panel usable instead of clipping it.
+                readonly property bool compact:height<520
+                readonly property bool narrow:width<700
+                anchors.centerIn:parent;width:Math.min(1120,parent.width-(parent.width<720?16:40));height:Math.min(790,parent.height-(parent.height<520?16:48))
+                radius:14;color:Qt.alpha(Theme.glass,0.44);border.color:Qt.alpha(Theme.metalHi,0.65)
                 MouseArea {anchors.fill:parent}
                 RowLayout {
                     anchors.fill:parent;spacing:0
                     Rectangle {
-                        Layout.preferredWidth:frame.width>950?220:174;Layout.fillHeight:true;color:Qt.alpha(Theme.surfaceContainerLowest,0.35);radius:10
+                        Layout.preferredWidth:frame.narrow?64:frame.width>950?220:174;Layout.fillHeight:true;color:Qt.alpha(Theme.surfaceContainerLowest,0.26);radius:10;clip:true
                         ColumnLayout {
-                            anchors.fill:parent;anchors.margins:18;spacing:8
-                            RowLayout { spacing:10; Layout.topMargin:12
+                            anchors.fill:parent;anchors.margins:frame.narrow?8:18;spacing:8
+                            RowLayout { spacing:10; Layout.topMargin:frame.compact?0:12;Layout.alignment:frame.narrow?Qt.AlignHCenter:Qt.AlignLeft
                                 Icon {name:"settings";size:26;color:Theme.glow}
-                                ColumnLayout {spacing:1
+                                ColumnLayout {spacing:1;visible:!frame.narrow
                                     DeckText {text:"MACHINE";font.family:Theme.fontMono;font.pixelSize:12;font.letterSpacing:2;color:Theme.glow}
                                     DeckText {text:"SPIRIT";font.family:Theme.fontMono;font.pixelSize:12;font.letterSpacing:4;color:Theme.glow}
                                 }
                             }
-                            DeckText {text:"CONFIGURATION DECK";color:Theme.outline;font.family:Theme.fontMono;font.pixelSize:9;font.letterSpacing:1;Layout.topMargin:10;Layout.bottomMargin:18}
-                            Repeater { model:win.pages
-                                Basic.Button {
-                                    id:nav;required property var modelData;required property int index
-                                    Layout.fillWidth:true;implicitHeight:46;hoverEnabled:true;onClicked:win.go(index)
-                                    contentItem:RowLayout {spacing:11;Icon{name:nav.modelData.icon;size:20;color:win.page===nav.index?Theme.glow:Theme.outline} DeckText{text:nav.modelData.name;color:win.page===nav.index?Theme.glow:Theme.surfaceVariantOn;Layout.fillWidth:true;font.weight:win.page===nav.index?Font.DemiBold:Font.Normal}}
-                                    background:Rectangle {radius:7;color:win.page===nav.index?Qt.alpha(Theme.glow,0.09):nav.hovered?Theme.surfaceContainerLow:"transparent";border.color:nav.activeFocus?Theme.glow:"transparent"
-                                        Rectangle{anchors.left:parent.left;anchors.verticalCenter:parent.verticalCenter;width:3;height:18;radius:1;color:Theme.glow;visible:win.page===nav.index}
+                            DeckText {visible:!frame.compact&&!frame.narrow;text:"CONFIGURATION DECK";color:Theme.outline;font.family:Theme.fontMono;font.pixelSize:9;font.letterSpacing:1;Layout.topMargin:10;Layout.bottomMargin:18}
+                            Flickable {   // the page list scrolls when the panel is short
+                                Layout.fillWidth:true;Layout.fillHeight:true;clip:true;contentHeight:navColumn.implicitHeight;interactive:contentHeight>height;boundsBehavior:Flickable.StopAtBounds
+                                ColumnLayout {
+                                    id:navColumn;width:parent.width;spacing:frame.compact?4:8
+                                Repeater { model:win.pages
+                                    Basic.Button {
+                                        id:nav;required property var modelData;required property int index
+                                        Layout.fillWidth:true;implicitHeight:frame.compact?38:46;hoverEnabled:true;ToolTip.visible:frame.narrow&&hovered;ToolTip.text:modelData.name;onClicked:win.go(index)
+                                        contentItem:RowLayout {spacing:11;Icon{name:nav.modelData.icon;size:20;color:win.page===nav.index?Theme.glow:Theme.outline} DeckText{visible:!frame.narrow;text:nav.modelData.name;color:win.page===nav.index?Theme.glow:Theme.surfaceVariantOn;Layout.fillWidth:true;font.weight:win.page===nav.index?Font.DemiBold:Font.Normal}}
+                                        background:Rectangle {radius:7;color:win.page===nav.index?Qt.alpha(Theme.glow,0.09):nav.hovered?Theme.surfaceContainerLow:"transparent";border.color:nav.activeFocus?Theme.glow:"transparent"
+                                            Rectangle{anchors.left:parent.left;anchors.verticalCenter:parent.verticalCenter;width:3;height:18;radius:1;color:Theme.glow;visible:win.page===nav.index}
+                                        }
+                                        leftPadding:frame.narrow?14:14
                                     }
-                                    leftPadding:14
+                                }
+
                                 }
                             }
-                            Item{Layout.fillHeight:true}
-                            Rectangle {Layout.fillWidth:true;implicitHeight:65;radius:7;color:Theme.surfaceContainerLow;border.color:Theme.outlineVariant
+                            Rectangle {visible:!frame.compact&&!frame.narrow;Layout.fillWidth:true;implicitHeight:65;radius:7;color:Theme.surfaceContainerLow;border.color:Theme.outlineVariant
                                 Column {anchors.centerIn:parent;spacing:6
                                     DeckText{text:Settings.unsaved?"●  UNSAVED CHANGES":"●  SYSTEM IN SYNC";color:Settings.unsaved?Theme.hazard:Theme.glowDim;font.family:Theme.fontMono;font.pixelSize:9}
                                     DeckText{text:"Super+,  settings";color:Theme.outline;font.pixelSize:11}
@@ -151,7 +168,7 @@ Variants {
                         }
                     }
                     ColumnLayout {
-                        Layout.fillWidth:true;Layout.fillHeight:true;Layout.margins:26;spacing:16
+                        Layout.fillWidth:true;Layout.fillHeight:true;Layout.margins:frame.compact?14:26;spacing:frame.compact?8:16
                         ColumnLayout{visible:Privacy.onboarding;Layout.fillWidth:true;spacing:6
                             DeckText{text:"FIRST LAUNCH · "+(win.setupStep+1)+" / 6 · "+win.setupTitles[win.setupStep];color:Theme.glow;font.pixelSize:13;Layout.fillWidth:true}
                             Rectangle { Layout.fillWidth:true;implicitHeight:3;radius:2;color:Theme.surfaceContainerHigh
@@ -161,7 +178,8 @@ Variants {
                             }
                             RowLayout{Layout.fillWidth:true
                                 DeckButton{text:"Back";enabled:win.setupStep>0;onClicked:{win.setupStep--;win.go(win.setupPages[win.setupStep])}}
-                                DeckText{text:win.setupStep===5?"One last look, then you’re ready.":"Choose what works for you. You can change these settings later.";Layout.fillWidth:true;font.pixelSize:12;color:Theme.surfaceVariantOn}
+                                DeckText{visible:!frame.compact;text:win.setupStep===5?"One last look, then you’re ready.":"Choose what works for you, or skip: lookups that send data online stay off until you decide.";Layout.fillWidth:true;font.pixelSize:12;color:Theme.surfaceVariantOn}
+                                DeckButton{visible:!win.finalStep;text:"Skip setup";enabled:!Settings.busy&&!Privacy.busy;onClicked:Privacy.skipSetup()}
                                 DeckButton{visible:!win.finalStep;text:"Next";accent:true;onClicked:{if(win.setupStep<5){win.setupStep++;win.go(win.setupPages[win.setupStep])}else Settings.finishSetup()}}
                             }
                         }
@@ -172,17 +190,18 @@ Variants {
                         RowLayout {Layout.fillWidth:true
                             ColumnLayout {Layout.fillWidth:true;spacing:5
                                 DeckText{text:win.query?"SEARCH / CONFIGURATION":win.pages[win.page].tag;color:Theme.glowDim;font.family:Theme.fontMono;font.pixelSize:10;font.letterSpacing:1.5;Layout.fillWidth:true}
-                                DeckText{text:win.query?"Find your controls":win.pages[win.page].name;font.pixelSize:30;font.weight:Font.DemiBold;Layout.fillWidth:true}
-                                DeckText{text:win.query?"Jump straight to the setting you need.":win.pages[win.page].detail;color:Theme.surfaceVariantOn;font.pixelSize:13;Layout.fillWidth:true}
+                                DeckText{text:win.query?"Find your controls":win.pages[win.page].name;font.pixelSize:frame.compact?22:30;font.weight:Font.DemiBold;Layout.fillWidth:true}
+                                DeckText{visible:!frame.compact;text:win.query?"Jump straight to the setting you need.":win.pages[win.page].detail;color:Theme.surfaceVariantOn;font.pixelSize:13;Layout.fillWidth:true}
                             }
-                            DeckButton {visible:!win.query&&win.page!==1&&win.page!==5&&win.page<6;text:"Defaults";onClicked:win.resetPage()}
+                            DeckButton {visible:!win.query&&win.page!==1&&win.page!==5&&win.page<6;text:"Reset page";onClicked:win.resetPage()}
                         }
                         ScrollView {
-                            id:scroll;Layout.fillWidth:true;Layout.fillHeight:true;clip:true;contentWidth:availableWidth
+                            id:scroll;Layout.fillWidth:true;Layout.fillHeight:true;Layout.minimumHeight:120;clip:true;contentWidth:availableWidth
                             ColumnLayout {
                                 width:scroll.availableWidth;spacing:14
                                 PrivacyPage{stage:Privacy.onboarding?win.setupStep:-1;visible:!win.query&&win.page===6;Layout.fillWidth:true}
                                 BrowserPage{visible:!win.query&&win.page===7;Layout.fillWidth:true}
+                                UpdatesPage{visible:!win.query&&win.page===8;Layout.fillWidth:true}
                                 ColumnLayout {
                                     visible:win.query!=="";Layout.fillWidth:true;spacing:8
                                     Repeater {model:win.searchItems.filter(x=>(x.title+" "+x.hint).toLowerCase().includes(win.query.toLowerCase()))
@@ -265,7 +284,7 @@ Variants {
                                             function update(key,value){const m=Object.assign({},saved);m[key]=value;Settings.set("monitors",(win.d.monitors||[]).filter(x=>x.output!==modelData.name).concat([m]))}
                                             DeckToggle{title:"Enable display";hint:"At least one connected display must stay enabled";checked:!display.saved.disabled;onChanged:v=>display.update("disabled",!v)}
                                             RowLayout{Layout.fillWidth:true;DeckText{text:"Resolution & refresh rate";Layout.fillWidth:true} DeckChoice{Layout.maximumWidth:300;model:["preferred"].concat((display.modelData.availableModes||[]).map(x=>x.replace("Hz","")));currentIndex:Math.max(0,model.indexOf(display.saved.mode));onActivated:display.update("mode",currentText)}}
-                                            RowLayout{Layout.fillWidth:true;DeckText{text:"Scale";Layout.fillWidth:true} DeckChoice{model:["0.75","1","1.25","1.5","1.75","2","2.5","3","4"].concat([String(display.saved.scale)]).filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>Number(a)-Number(b));currentIndex:model.indexOf(String(display.saved.scale));onActivated:display.update("scale",Number(currentText))}}
+                                            RowLayout{Layout.fillWidth:true;DeckText{text:"Scale (1 = normal, higher = bigger)";Layout.fillWidth:true} DeckChoice{model:["0.75","1","1.25","1.5","1.75","2","2.5","3","4"].concat([String(display.saved.scale)]).filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>Number(a)-Number(b));currentIndex:model.indexOf(String(display.saved.scale));onActivated:display.update("scale",Number(currentText))}}
                                             RowLayout{Layout.fillWidth:true;DeckText{text:"Rotation";Layout.fillWidth:true} DeckChoice{model:["Normal","90°","180°","270°","Flipped","Flipped 90°","Flipped 180°","Flipped 270°"];currentIndex:display.saved.transform||0;onActivated:display.update("transform",currentIndex)}}
                                             RowLayout{Layout.fillWidth:true;DeckText{text:"Position";Layout.fillWidth:true} DeckField{Layout.preferredWidth:140;text:display.saved.position;placeholderText:"0x0";onEditingFinished:display.update("position",text)} DeckButton{text:"Auto";onClicked:display.update("position","auto")}}
                                         }
@@ -302,7 +321,7 @@ Variants {
                                     visible:!win.query&&win.page===3;Layout.fillWidth:true;spacing:14
                                     DeckCard {title:"Pointer response"
                                         DeckRange{title:"Sensitivity";value:win.d.sensitivity??0;from:-1;to:1;step:0.05;decimals:2;onChanged:v=>Settings.set("sensitivity",Math.round(v*100)/100)}
-                                        RowLayout{Layout.fillWidth:true;DeckText{text:"Acceleration";Layout.fillWidth:true} DeckChoice{model:["Adaptive","Flat / precise"];currentIndex:win.d.accelProfile==="flat"?1:0;onActivated:Settings.set("accelProfile",currentIndex?"flat":"adaptive")}}
+                                        RowLayout{Layout.fillWidth:true;DeckText{text:"Acceleration (adaptive speeds up with fast movement)";Layout.fillWidth:true} DeckChoice{model:["Adaptive","Flat / precise"];currentIndex:win.d.accelProfile==="flat"?1:0;onActivated:Settings.set("accelProfile",currentIndex?"flat":"adaptive")}}
                                         DeckDivider{}
                                         DeckToggle{title:"Left-handed mouse";hint:"Swap the primary and secondary buttons";checked:!!win.d.leftHanded;onChanged:v=>Settings.set("leftHanded",v)}
                                         DeckDivider{}
@@ -358,7 +377,11 @@ Variants {
                         DeckDivider{}
                         RowLayout {Layout.fillWidth:true;spacing:10
                             ColumnLayout{Layout.fillWidth:true;spacing:3
-                                DeckText{text:Settings.error||Privacy.error||BrowserPrivacy.error||(BrowserPrivacy.dirty?"Browser choices not yet applied":"")||Settings.status||(Settings.dirty?"Changes are ready to apply":"All changes saved");color:Settings.error?Theme.rustText:Settings.dirty?Theme.hazard:Theme.surfaceVariantOn;font.pixelSize:12;Layout.fillWidth:true}
+                                DeckText{id:statusLine;text:Settings.error||Privacy.error||BrowserPrivacy.error||(BrowserPrivacy.dirty?"Browser choices not yet applied":"")||Settings.status||(Settings.dirty?"Changes are ready to apply":"All changes saved");color:(Settings.error||Privacy.error||BrowserPrivacy.error)?Theme.rustText:Settings.dirty?Theme.hazard:Theme.surfaceVariantOn;font.pixelSize:12;Layout.fillWidth:true
+                                    // One short pulse when a change lands, so "saved" is felt as well as read. Instant with reduced motion (dMedium is 0).
+                                    onTextChanged:if(statusLine.text==="All changes saved"||statusLine.text==="Settings applied")savedPulse.restart()
+                                    NumberAnimation{id:savedPulse;target:statusLine;property:"opacity";from:0.3;to:1;duration:Theme.dMedium;easing.type:Easing.OutCubic}
+                                }
                                 DeckText{visible:Settings.countdown>0;text:"Reverting displays in "+Settings.countdown+" seconds";color:Theme.hazard;font.pixelSize:12;Layout.fillWidth:true}
                             }
                             DeckButton{text:Settings.countdown>0?"Revert":"Discard";visible:!win.finalStep&&(Settings.unsaved||Settings.countdown>0);enabled:!Settings.busy&&!BrowserPrivacy.busy;onClicked:Settings.countdown>0?Settings.run("revert"):Settings.discard()}
@@ -380,20 +403,24 @@ Variants {
                     DeckText { text:"✓";font.pixelSize:64;color:Theme.glow;Layout.alignment:Qt.AlignHCenter }
                     DeckText { text:"Setup complete";font.pixelSize:32;font.weight:Font.DemiBold;Layout.alignment:Qt.AlignHCenter }
                     DeckText { text:"Your choices are saved. Your desktop is ready.";Layout.fillWidth:true;horizontalAlignment:Text.AlignHCenter;color:Theme.surfaceVariantOn }
+                    DeckText { text:"Good to know: tap Super to open the launcher · Super+Enter opens a terminal · Super+/ lists every shortcut · Super+, brings these settings back.";Layout.fillWidth:true;horizontalAlignment:Text.AlignHCenter;color:Theme.glowDim;font.pixelSize:13 }
                     DeckText { visible:BrowserPrivacy.dirty;text:"Unapplied browser changes are still waiting in Browsers.";Layout.fillWidth:true;horizontalAlignment:Text.AlignHCenter;color:Theme.hazard }
                     DeckButton { text:"Go to desktop";accent:true;Layout.alignment:Qt.AlignHCenter;onClicked:{win.setupDone=false;Settings.open=false} }
                     DeckButton { text:"Open settings";Layout.alignment:Qt.AlignHCenter;onClicked:{win.setupDone=false;win.go(0)} }
                 }
             }
             Rectangle {
-                anchors.fill:frame;radius:frame.radius;visible:Settings.closeRequested||win.captureOriginal!=="";color:Qt.alpha("black",0.45)
+                anchors.fill:frame;radius:frame.radius;color:Qt.alpha("black",0.45)
+                readonly property bool shown:Settings.closeRequested||win.captureOriginal!==""
+                opacity:shown?1:0;visible:opacity>0.01   // fade in and out instead of popping
+                Behavior on opacity { NumberAnimation { duration:shown?Theme.dShort:Theme.dClose;easing.type:Easing.OutCubic } }
                 MouseArea{anchors.fill:parent}
                 Rectangle {
                     anchors.centerIn:parent;width:Math.min(500,parent.width-60);height:dialog.implicitHeight+48;radius:12;color:Theme.surfaceContainerLow;border.color:Theme.metalEdge
                     ColumnLayout {
                         id:dialog;anchors{left:parent.left;right:parent.right;top:parent.top;margins:24}spacing:16
-                        DeckText{text:Settings.closeRequested?"Keep your changes?":"Choose a shortcut";font.pixelSize:24;font.weight:Font.DemiBold;Layout.fillWidth:true}
-                        DeckText{text:Settings.closeRequested?"You have changes that have not been applied.":win.captureLabel;color:Theme.surfaceVariantOn;Layout.fillWidth:true}
+                        DeckText{text:Settings.closeRequested?"Close without applying?":"Choose a shortcut";font.pixelSize:24;font.weight:Font.DemiBold;Layout.fillWidth:true}
+                        DeckText{text:Settings.closeRequested?"Your changes have not been applied yet. Keep editing to apply them, or discard them and close.":win.captureLabel;color:Theme.surfaceVariantOn;Layout.fillWidth:true}
                         DeckField {
                             id:recorder;visible:!Settings.closeRequested;Layout.fillWidth:true;readOnly:win.recording;text:win.captured;placeholderText:win.recording?"Press a combination…":"SUPER + ALT + E";onTextEdited:win.captured=text
                             Keys.onPressed:event=>{
@@ -409,7 +436,7 @@ Variants {
                         RowLayout{Layout.fillWidth:true
                             DeckButton{text:Settings.closeRequested?"Keep editing":win.recording?"Stop recording":"Record keys";onClicked:{if(Settings.closeRequested)Settings.closeRequested=false;else {win.recording=!win.recording;recorder.forceActiveFocus()}}}
                             Item{Layout.fillWidth:true}
-                            DeckButton{text:Settings.closeRequested?"Discard & close":"Disable";onClicked:{if(Settings.closeRequested){Settings.discard();Settings.closeRequested=false;Settings.open=false}else{win.remap(win.captureOriginal,"");win.captureOriginal="";win.recording=false}}}
+                            DeckButton{text:Settings.closeRequested?"Discard changes":"Disable";onClicked:{if(Settings.closeRequested){Settings.discard();Settings.closeRequested=false;Settings.open=false}else{win.remap(win.captureOriginal,"");win.captureOriginal="";win.recording=false}}}
                             DeckButton{visible:!Settings.closeRequested;text:"Use shortcut";accent:true;enabled:win.captured!==""&&!win.recording;onClicked:{win.remap(win.captureOriginal,win.captured);win.captureOriginal=""}}
                         }
                         DeckButton{visible:!Settings.closeRequested;text:"Cancel";onClicked:{win.captureOriginal="";win.recording=false}}

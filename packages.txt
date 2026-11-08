@@ -15,6 +15,7 @@ fastfetch
 firefox
 fish
 gnome-keyring
+gost
 grim
 hypridle
 hyprland

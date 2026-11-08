@@ -1,0 +1,218 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-only
+"""Check for a new MachineSpirit release and update to it.
+
+Nothing here runs by itself: every network request needs a button press (or this command) and
+follows the Privacy permission "updates". Updating MachineSpirit downloads a published release,
+checks its SHA-256 against the release's SHA256SUMS (protects against a damaged download, not against a
+tampered release: nothing here is signed), shows what changed and asks before it runs the installer,
+which keeps backups and rolls back on failure.
+"""
+import argparse, hashlib, json, os, re, shutil, subprocess, sys, tarfile, tempfile, time, urllib.parse
+from pathlib import Path
+from ms_privacy import *
+
+REPO = 'Kukushkasus/MachineSpirit'
+API = f'https://api.github.com/repos/{REPO}/releases/latest'
+HOSTS = ('github.com', 'githubusercontent.com')
+DATA = Path(os.environ.get('XDG_DATA_HOME', Path.home() / '.local/share')) / 'machinespirit'
+INSTALL_STATE = STATE / 'install'
+CACHE_FILE = STATE / 'update.json'
+MAX_MEMBERS, MAX_TOTAL, MAX_FILE = 5000, 300 * 1024**2, 100 * 1024**2   # a real release is ~250 entries and ~17 MiB
+CONTROL = re.compile(r'[\x00-\x08\x0b-\x1f\x7f-\x9f]')
+TERMINALS = {'kitty': lambda t: ['kitty', '--title', t], 'foot': lambda t: ['foot', '-T', t], 'alacritty': lambda t: ['alacritty', '-t', t, '-e'],
+             'konsole': lambda t: ['konsole', '-e'], 'xterm': lambda t: ['xterm', '-T', t, '-e']}
+
+def vkey(text):
+    m = re.fullmatch(r'v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?', text.strip())
+    if not m: raise ValueError(f'Unrecognised version: {text[:40]}')
+    return (int(m[1]), int(m[2]), int(m[3]), 0 if m[4] else 1, m[4] or '')
+
+def newer(candidate, installed):
+    return bool(installed) and vkey(candidate) > vkey(installed)
+
+def installed_version():
+    try: return (DATA / 'VERSION').read_text().strip() or None
+    except OSError: return None
+
+def clean(text, limit=2000):
+    """Text from a release is untrusted: drop terminal control characters so it cannot rewrite what the user reads."""
+    return CONTROL.sub('', str(text).replace('\r', ''))[:limit]
+
+def cache():
+    try: data = json.loads(CACHE_FILE.read_text())
+    except (OSError, ValueError): return {}
+    return data if isinstance(data, dict) else {}
+
+def terminal():
+    return next((n for n in TERMINALS if shutil.which(n)), None)
+
+def status():
+    c = cache(); inst = installed_version(); latest = c.get('latest') or ''
+    try: is_newer = bool(inst and latest and newer(latest, inst))
+    except ValueError: latest, is_newer = '', False   # a damaged cache must not break the page
+    return {'installed': inst or '', 'latest': latest, 'newer': is_newer,
+            'notes': clean(c.get('notes', '')), 'checked': c.get('checked', 0) if isinstance(c.get('checked'), (int, float)) else 0,
+            'terminal': terminal() or '', 'allowed': allowed('updates', True)}
+
+def require_permission():
+    if not allowed('updates', True): raise ValueError('Update checks are turned off. Allow them under Privacy, Network permissions (On request is enough).')
+
+def check():
+    require_permission()
+    try: data = json.loads(fetch('updates', API, manual=True, headers={'Accept': 'application/vnd.github+json', 'User-Agent': 'MachineSpirit-updater'}))
+    except ValueError as e:
+        if 'privacy' in str(e).lower() or 'cancelled' in str(e).lower(): raise
+        raise ValueError('Could not read the release list. GitHub may be unreachable, or no release has been published yet.') from e
+    if not isinstance(data, dict): raise ValueError('GitHub sent an answer in an unexpected shape.')
+    tag = str(data.get('tag_name', '')); vkey(tag)
+    assets = {}
+    for a in data.get('assets') if isinstance(data.get('assets'), list) else []:
+        if not isinstance(a, dict): continue
+        url = str(a.get('browser_download_url', '')); host = urllib.parse.urlsplit(url).hostname or ''
+        if url.startswith('https://') and any(host == h or host.endswith('.' + h) for h in HOSTS): assets[str(a.get('name', ''))] = url
+    c = cache(); c.update({'latest': tag.lstrip('v'), 'notes': clean(data.get('body') or ''), 'assets': assets, 'checked': int(time.time())})
+    atomic(CACHE_FILE, json.dumps(c, indent=2)); return status()
+
+def launch():
+    term = terminal()
+    if not term: raise ValueError('No terminal found (kitty, foot, alacritty, konsole or xterm). Run "ms-update install" in any terminal.')
+    cmd = [*TERMINALS[term]('MachineSpirit · Update dots'), sys.executable, str(Path(__file__).resolve()), 'install']
+    subprocess.Popen(cmd, start_new_session=True, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return {'launched': term}
+
+def pause():
+    if sys.stdin.isatty():
+        try: input('\nPress Enter to close this window.')
+        except EOFError: pass
+
+def confirm(question):
+    try: return input(question + ' [y/N] ').strip().lower() == 'y'
+    except EOFError: return False   # no terminal to answer on: never assume yes
+
+def sha256sum(path):
+    h = hashlib.sha256()
+    with open(path, 'rb') as f:
+        for block in iter(lambda: f.read(1 << 20), b''): h.update(block)
+    return h.hexdigest()
+
+def verify(archive, sums):
+    found = set()
+    for line in Path(sums).read_text(errors='replace').splitlines():
+        parts = line.split()
+        if len(parts) == 2 and parts[1].lstrip('*') == archive.name: found.add(parts[0].lower())
+    if not found: raise ValueError(f'{archive.name} is not listed in the checksums file')
+    if len(found) > 1: raise ValueError(f'The checksums file lists {archive.name} with different values. Nothing was installed.')
+    want = found.pop()
+    if not re.fullmatch(r'[0-9a-f]{64}', want): raise ValueError('The checksums file has an invalid SHA-256 value. Nothing was installed.')
+    if sha256sum(archive) != want: raise ValueError('Checksum mismatch: the archive is damaged or was changed. Nothing was installed.')
+
+def download(url, dest):
+    host = urllib.parse.urlsplit(url).hostname or ''
+    if not url.startswith('https://') or not any(host == h or host.endswith('.' + h) for h in HOSTS): raise ValueError('Refusing a download outside GitHub')
+    p = read(); via = p['proxy']['enabled'] and p['proxy']['shell']
+    env = {k: v for k, v in os.environ.items() if k.lower() not in ('http_proxy', 'https_proxy', 'all_proxy', 'no_proxy')}
+    config = ''.join(k + ' = ' + json.dumps(v) + '\n' for k, v in {'url': url, 'proxy': proxy_endpoint() if via else '', 'noproxy': ''}.items())
+    r = subprocess.run(['curl', '--disable', '--config', '-', '--silent', '--show-error', '--fail', '--location', '--proto', '=https', '--proto-redir', '=https',
+                        '--connect-timeout', '15', '--max-time', '900', '--max-filesize', str(200 * 1024**2), '--output', str(dest)],
+                       input=config.encode(), env=env, capture_output=True)
+    if r.returncode: raise ValueError('Download failed' + (' (check your proxy)' if via else '') + f': {r.stderr.decode()[:120].strip()}')
+
+def extract(archive, work):
+    """Unpack by hand: regular files and directories only, under one top folder, bounded size, no duplicates.
+    Done manually so the result does not depend on the Python version's tarfile filters."""
+    work = Path(work).resolve(); seen = set(); total = 0
+    with tarfile.open(archive) as t:
+        members = t.getmembers()
+        if not members or len(members) > MAX_MEMBERS: raise ValueError('The archive has an unexpected number of entries. Nothing was installed.')
+        for m in members:
+            parts = Path(m.name).parts
+            if (m.name.startswith('/') or not parts or parts[0] != 'MachineSpirit' or '/'.join(parts) != m.name.rstrip('/') or any(x in ('.', '..') or '\x00' in x or '\\' in x for x in parts)
+                    or len(m.name) > 512 or not (m.isreg() or m.isdir()) or m.name in seen or m.size > MAX_FILE):
+                raise ValueError('The archive has an unexpected layout. Nothing was installed.')
+            seen.add(m.name); total += m.size if m.isreg() else 0
+        if total > MAX_TOTAL: raise ValueError('The archive is larger than any MachineSpirit release. Nothing was installed.')
+        for m in members:
+            dest = (work / m.name).resolve()
+            if work not in dest.parents and dest != work: raise ValueError('The archive has an unexpected layout. Nothing was installed.')
+            if m.isdir(): dest.mkdir(parents=True, exist_ok=True); continue
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            with t.extractfile(m) as src, open(dest, 'wb') as out: shutil.copyfileobj(src, out)
+            dest.chmod(0o755 if m.mode & 0o111 else 0o644)   # never carry setuid/setgid/sticky or group/other write bits
+    return work / 'MachineSpirit'
+
+def changelog_top(root, version):
+    try: text = (root / 'CHANGELOG.md').read_text(errors='replace')
+    except OSError: return ''
+    sections = text.split('\n## ')
+    top = ('## ' + sections[1]) if len(sections) > 1 else ''
+    return clean(top.strip(), 1800) if top.startswith('## ' + version) else ''
+
+def install(a):
+    print('⚙  MachineSpirit update\n')
+    work = Path(tempfile.mkdtemp(prefix='ms-update-'))
+    try:
+        if a.from_file:
+            archive = Path(a.from_file).expanduser().resolve(); sums = Path(a.sums).expanduser() if a.sums else archive.with_name('SHA256SUMS')
+            if not archive.is_file(): raise ValueError(f'Archive not found: {archive}')
+            if not sums.is_file(): raise ValueError('Checksums file not found. Put SHA256SUMS next to the archive or pass --sums FILE.')
+        else:
+            require_permission()
+            c = cache()
+            if not c.get('assets'): check(); c = cache()
+            tag = str(c.get('latest', '')); vkey(tag)
+            name = f"MachineSpirit-{tag}.tar.gz"; assets = c.get('assets') if isinstance(c.get('assets'), dict) else {}
+            if name not in assets or 'SHA256SUMS' not in assets: raise ValueError('The latest release has no downloadable archive with checksums yet.')
+            print('Downloading', name, '...')
+            archive, sums = work / name, work / 'SHA256SUMS'
+            download(assets[name], archive); download(assets['SHA256SUMS'], sums)
+        verify(archive, sums); print("Checksum matches the release's SHA256SUMS (integrity only: the release itself is not signed).")
+        root = extract(archive, work / 'src')
+        if not (root / 'install.sh').is_file() or not (root / 'VERSION').is_file(): raise ValueError('The archive is not a MachineSpirit release.')
+        version = (root / 'VERSION').read_text().strip(); vkey(version)
+        if archive.name != f'MachineSpirit-{version}.tar.gz': raise ValueError('The archive name and its VERSION file disagree. Nothing was installed.')
+        if not a.from_file and version != tag.lstrip('v'): raise ValueError(f'The release is tagged {tag} but contains version {version}. Nothing was installed.')
+        have = installed_version()
+        print(f'Installed: {have or "unknown"}    Available: {version}')
+        downgrade = bool(have) and vkey(version) < vkey(have)
+        if have and not newer(version, have) and not a.force: print('You already have this version or a newer one. Nothing to do (use --force to reinstall).'); return 0
+        if downgrade: print(f'WARNING: this is a DOWNGRADE from {have} to {version}. Settings written by the newer version may not be understood.')
+        notes = changelog_top(root, version)
+        if notes: print('\nWhat is new:\n' + notes + '\n')
+        try: chosen = json.loads((INSTALL_STATE / 'components.json').read_text())
+        except (OSError, ValueError): chosen = ['shell']
+        comps = [c for c in chosen if c != 'boot'] or ['shell']
+        if 'boot' in chosen: print('Note: the boot theme is not touched by updates. Re-run the installer manually if you want it refreshed.')
+        print('Components to update:', ', '.join(comps)); print('Your files are backed up first; if anything fails the previous setup is restored.\n')
+        if a.dry_run: print('Dry run: everything checked, nothing installed.'); return 0
+        if (downgrade or not a.yes) and not confirm('Downgrade to ' + version + '?' if downgrade else 'Install this update?'): print('Nothing was changed.'); return 0
+        cmd = ['bash', str(root / 'install.sh'), 'update', '--yes', '--components', ','.join(comps), *(['--no-packages'] if a.no_packages else []), *(['--no-system'] if a.no_system else [])]
+        rc = subprocess.run(cmd, cwd=root).returncode
+        if rc: print(f'\nThe update failed (code {rc}). The installer restored your previous setup where it could; see the messages above.'); return rc
+        c = cache(); c['installed_at'] = int(time.time()); atomic(CACHE_FILE, json.dumps(c, indent=2))
+        print(f'\nUpdated to {version}. Restarting the shell...')
+        if shutil.which('ms-session') and not os.environ.get('MS_UPDATE_NO_RESTART'): subprocess.run(['ms-session', 'restart'])
+        return 0
+    finally: shutil.rmtree(work, ignore_errors=True)
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument('cmd', choices=['status', 'check', 'launch', 'install'])
+    p.add_argument('--from-file'); p.add_argument('--sums'); p.add_argument('--yes', action='store_true'); p.add_argument('--dry-run', action='store_true')
+    p.add_argument('--force', action='store_true'); p.add_argument('--no-packages', action='store_true'); p.add_argument('--no-system', action='store_true')
+    a = p.parse_args()
+    machine = a.cmd in ('status', 'check', 'launch')
+    try:
+        if a.cmd == 'status': out = status()
+        elif a.cmd == 'check': out = check()
+        elif a.cmd == 'launch': out = launch()
+        else:
+            rc = install(a)
+            if not a.yes and rc is not None: pause()
+            return rc
+        print(json.dumps(out)); return 0
+    except (ValueError, OSError, subprocess.SubprocessError, tarfile.TarError) as e:
+        if machine: print(json.dumps({'error': str(e)[:240]})); return 1
+        print('Error:', e, file=sys.stderr); pause(); return 1
+
+if __name__ == '__main__': sys.exit(main())

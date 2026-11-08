@@ -11,7 +11,7 @@ Rectangle {
     property string subtitle:""
     default property alias contents:body.data
     Layout.fillWidth:true; Layout.minimumWidth:0; implicitHeight:content.implicitHeight+36
-    color:Qt.alpha(Theme.surfaceContainerLow,0.45); radius:10; border.color:Qt.alpha(Theme.outlineVariant,0.65)
+    color:Qt.alpha(Theme.surfaceContainerLow,0.34); radius:10; border.color:Qt.alpha(Theme.outlineVariant,0.65)
     ColumnLayout {
         id:content; anchors { left:parent.left; right:parent.right; top:parent.top; margins:18 } spacing:14
         ColumnLayout { Layout.fillWidth:true; spacing:4; visible:card.title!==""

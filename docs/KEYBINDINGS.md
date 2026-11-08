@@ -92,4 +92,4 @@ Generated from the same registration catalog as the Super+/ manual. See [setting
 | SUPER + 8 | Workspaces: Switch to 8 |
 | SUPER + 9 | Workspaces: Switch to 9 |
 
-Super alone also opens the command console. Escape closes overlays. Remap registered actions in Settings → Keybindings; an empty replacement disables an action. Additional user Lua binds appear in the live manual when they have descriptions.
+Super alone also opens the command console. Escape closes overlays. Remap registered actions in Settings → Shortcuts; an empty replacement disables an action. Additional user Lua binds appear in the live manual when they have descriptions.

@@ -60,7 +60,7 @@ Variants {
 
         // ---------------- usage statistics
         readonly property string stateDir: (Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state")) + "/machinespirit"
-        FileView { path: win.stateDir + "/launcher.json"; onLoaded: { try { win.usage = JSON.parse(text()) } catch (e) {} } }
+        FileView { path: win.stateDir + "/launcher.json"; printErrors: false; onLoaded: { try { win.usage = JSON.parse(text()) } catch (e) {} } }
         function bump(id) {
             const u = Object.assign({}, usage); u[id] = (u[id] || 0) + 1; usage = u
             saveUsage.restart()
@@ -227,7 +227,8 @@ Variants {
                                         NumberAnimation { to: 1; duration: 1 } PauseAnimation { duration: 520 } NumberAnimation { to: 0; duration: 1 } PauseAnimation { duration: 420 } }
                                 }
                                 Text { anchors.fill: parent; leftPadding: 14; verticalAlignment: Text.AlignVCenter; visible: field.text === ""
-                                    text: "name a machine, sum a number, search the web or > run a rite"; color: Theme.glowFaint; font: field.font }
+                                    elide: Text.ElideRight; rightPadding: 14   // the long form is cut mid-word on a narrow console, so offer a short one
+                                    text: field.width > 740 ? "name a machine, sum a number, search the web or > run a rite" : "name a machine, sum a number or > run a rite"; color: Theme.glowFaint; font: field.font }
                             }
                         }
                         ListView {

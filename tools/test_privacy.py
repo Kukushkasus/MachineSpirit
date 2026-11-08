@@ -114,3 +114,89 @@ class BrowserTests(unittest.TestCase):
             p=Path(tmp)/'policies.json';p.symlink_to('/etc/passwd')
             with self.assertRaises(ValueError):browser.secure(p)
 if __name__=='__main__':unittest.main()
+
+class ThumbnailTests(unittest.TestCase):
+    def setUp(self):
+        import importlib.machinery, importlib.util
+        loader = importlib.machinery.SourceFileLoader('ms_walls_t', str(ROOT / 'scripts/ms-walls')); spec = importlib.util.spec_from_loader('ms_walls_t', loader)
+        self.walls = importlib.util.module_from_spec(spec); loader.exec_module(self.walls)
+    def run_with(self, fetch, count=12):
+        self.walls.privacy.fetch, saved = fetch, self.walls.privacy.fetch
+        try:
+            items = [{'local': False, 'thumb': f'https://example.com/{i}.jpg'} for i in range(count)] + [{'local': True, 'thumb': '/home/x/local.png'}]
+            return self.walls.remote_result({'items': items})['items']
+        finally: self.walls.privacy.fetch = saved
+    def test_order_failures_and_local_items(self):
+        import threading, time
+        def fetch(feature, url, manual=False, image=False, **k):
+            time.sleep(0.02)
+            if url.endswith('/3.jpg'): raise ValueError('Request cancelled')
+            return 'file://' + url.rsplit('/', 1)[1]
+        items = self.run_with(fetch)
+        self.assertEqual([i['thumb'] for i in items[:3]], ['file://0.jpg', 'file://1.jpg', 'file://2.jpg'])
+        self.assertEqual(items[3]['thumb'], ''); self.assertEqual(items[11]['thumb'], 'file://11.jpg'); self.assertEqual(items[12]['thumb'], '/home/x/local.png')
+    def test_loads_in_parallel_but_never_more_than_four_at_once(self):
+        import threading, time
+        lock = threading.Lock(); now = peak = 0
+        def fetch(*a, **k):
+            nonlocal now, peak
+            with lock: now += 1; peak = max(peak, now)
+            time.sleep(0.05)
+            with lock: now -= 1
+            return 'file://x'
+        start = time.monotonic(); self.run_with(fetch, 12); elapsed = time.monotonic() - start
+        self.assertGreater(peak, 1); self.assertLessEqual(peak, 4); self.assertLess(elapsed, 12 * 0.05 * 0.7, 'twelve 50 ms loads must overlap')
+    def test_curl_dies_with_its_parent_without_preexec_fn(self):
+        import ms_privacy
+        src = Path(ms_privacy.__file__).read_text(); self.assertIn("setpriv','--pdeathsig','TERM'", src)
+
+class DaemonLifecycleTests(unittest.TestCase):
+    """The privacy daemon with a stand-in for gost: it must not leave the proxy behind when it is killed."""
+    def setUp(self):
+        import tempfile, stat
+        self.tmp = tempfile.TemporaryDirectory(); d = Path(self.tmp.name); self.d = d
+        (d / 'bin').mkdir(); fake = d / 'bin/gost'
+        fake.write_text('#!/usr/bin/env python3\nimport time\ntime.sleep(300)\n'); fake.chmod(fake.stat().st_mode | stat.S_IXUSR)   # keeps its arguments visible in /proc like the real gost
+        (d / 'c/machinespirit').mkdir(parents=True); (d / 'r').mkdir(mode=0o700)
+        (d / 'c/machinespirit/settings.json').write_text(json.dumps({'version': 1, 'privacy': {'proxy': {'enabled': True, 'scheme': 'socks5', 'host': '127.0.0.1', 'port': 1, 'username': '', 'shell': False}}}))
+        self.env = dict(os.environ, HOME=str(d), XDG_CONFIG_HOME=str(d / 'c'), XDG_STATE_HOME=str(d / 's'), XDG_RUNTIME_DIR=str(d / 'r'), PATH=f'{d}/bin:/usr/bin:/bin', FAKE_GOST_LOG=str(d / 'gost.log'))
+    def tearDown(self):
+        import subprocess
+        subprocess.run(['pkill', '-f', f'{self.d}/'], capture_output=True)
+        self.tmp.cleanup()
+    def gost_pids(self):
+        mine = []
+        for entry in Path('/proc').iterdir():
+            if not entry.name.isdigit(): continue
+            try:
+                if str(self.d / 'bin/gost').encode() in (entry / 'cmdline').read_bytes() and not (entry / 'stat').read_text().rsplit(')', 1)[1].split()[0] == 'Z': mine.append(int(entry.name))
+            except OSError: pass
+        return mine
+    def wait_for(self, cond, seconds=8):
+        import time
+        end = time.monotonic() + seconds
+        while time.monotonic() < end:
+            if cond(): return True
+            time.sleep(.1)
+        return cond()
+    def test_gost_dies_with_a_killed_daemon_and_stale_ones_are_reaped(self):
+        import subprocess, signal
+        if not shutil_which('setpriv'): self.skipTest('setpriv is not available')
+        daemon = subprocess.Popen([sys.executable, str(ROOT / 'bin/ms-privacy'), 'daemon'], env=self.env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.assertTrue(self.wait_for(lambda: len(self.gost_pids()) == 1), 'gost should start once the proxy is enabled')
+        gost = self.gost_pids()[0]
+        daemon.kill(); daemon.wait()
+        self.assertTrue(self.wait_for(lambda: not Path(f'/proc/{gost}').exists()), 'gost must die with the daemon (SIGKILL included)')
+    def test_leftover_gost_from_an_older_daemon_is_stopped_on_start(self):
+        import subprocess
+        # an orphan that still uses the daemon's runtime config, as after a crash on a system without setpriv
+        cfg = self.d / 'r/machinespirit-privacy'; cfg.mkdir(mode=0o700, exist_ok=True)
+        orphan = subprocess.Popen([str(self.d / 'bin/gost'), '-C', str(cfg / 'gost.json')], env=self.env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.assertTrue(self.wait_for(lambda: Path(f'/proc/{orphan.pid}/cmdline').exists()))
+        daemon = subprocess.Popen([sys.executable, str(ROOT / 'bin/ms-privacy'), 'daemon'], env=self.env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try: self.assertTrue(self.wait_for(lambda: orphan.poll() is not None), 'the stale gost must be stopped so the new one can bind')
+        finally: daemon.kill(); daemon.wait()
+
+def shutil_which(name):
+    import shutil
+    return shutil.which(name)

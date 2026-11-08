@@ -8,7 +8,7 @@ def check():
     if not Path('/etc/default/grub').exists() or not Path('/boot/grub/grub.cfg').exists(): raise ValueError('Boot component currently supports GRUB + mkinitcpio only; omit boot on this system.')
     p=Path('/etc/mkinitcpio.conf')
     if not p.exists() or not re.search(r'^HOOKS=\([^)]*\b(?:systemd|udev)\b',p.read_text(),re.M): raise ValueError('Unsupported mkinitcpio HOOKS syntax; omit boot on this system.')
-    if Path('/etc/systemd/system/display-manager.service').exists(): raise ValueError('Existing display manager is preserved. Omit boot; installing a login theme is not supported in this beta.')
+    if Path('/etc/systemd/system/display-manager.service').exists(): raise ValueError('Existing display manager is preserved. Omit boot; installing a login theme is not supported with a display manager.')
     print('Boot: GRUB + mkinitcpio + existing Plymouth supported')
 def main():
     cmd=sys.argv[1]
@@ -18,11 +18,20 @@ def main():
         tx=BACKUP/sys.argv[2]
         if tx.parent != BACKUP: raise ValueError('Invalid backup ID')
         current=BACKUP/('before-restore-'+time.strftime('%Y%m%d-%H%M%S'));current.mkdir(parents=True,mode=0o700)
-        for index,(name,original) in enumerate(json.loads((tx/'files.json').read_text()).items()):
-            if Path(name).exists(): shutil.copy2(name,current/str(index))
-            p=Path(name)
-            if original is None: p.unlink(missing_ok=True)
-            else: shutil.copy2(tx/original,p)
+        saved={}
+        try:
+            for index,(name,original) in enumerate(json.loads((tx/'files.json').read_text()).items()):
+                p=Path(name)
+                if p.exists(): shutil.copy2(p,current/str(index)); saved[name]=index
+                else: saved[name]=None
+                if original is None: p.unlink(missing_ok=True)
+                else: shutil.copy2(tx/original,p)
+        except BaseException:
+            # Undo a half-finished restore so GRUB, initramfs and Plymouth stay consistent.
+            for name,index in saved.items():
+                if index is None: Path(name).unlink(missing_ok=True)
+                else: shutil.copy2(current/str(index),name)
+            raise
     elif cmd=='install':
         check(); tx=BACKUP/time.strftime('%Y%m%d-%H%M%S'); tx.mkdir(parents=True,mode=0o700)
         files={}

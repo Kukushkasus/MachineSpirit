@@ -43,5 +43,7 @@ Basic.ComboBox {
         enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.dShort } }
         exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: Theme.dShort } }
     }
-    background:Rectangle { radius:6; color:c.hovered?Theme.surfaceContainerHigh:Theme.surfaceContainerLow; border.color:c.activeFocus?Theme.glow:Theme.outlineVariant }
+    background:Rectangle { radius:6; color:c.hovered?Theme.surfaceContainerHigh:Theme.surfaceContainerLow; border.color:c.activeFocus?Theme.glow:Theme.outlineVariant
+        Behavior on color { ColorAnimation { duration:Theme.dShort } }
+        Behavior on border.color { ColorAnimation { duration:Theme.dShort } } }
 }
