@@ -28,7 +28,7 @@ Then reboot and sign in on the login screen with the Hyprland session.
 
 Idle usage in the test VM (4 vCPUs): about 2 to 3% CPU and 600 MiB RAM.
 
-<p align="center"><img src="docs/media/showcase.gif" alt="36-second MachineSpirit demo recorded in a VM: SDDM login screen, sign-in, desktop, launcher, control panel, calendar and network popups, wallpaper archive, settings, desktop instruments and the power menu" width="100%"></p>
+<p align="center"><img src="docs/media/showcase.gif?v=0.2.0" alt="36-second MachineSpirit demo recorded in a VM: SDDM login screen, sign-in, desktop, launcher, control panel, calendar and network popups, wallpaper archive, settings, desktop instruments and the power menu" width="100%"></p>
 
 ## Screenshots
 
