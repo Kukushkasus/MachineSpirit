@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # [ PURITY SEAL ] Touch only the spirit entrusted to this session.
-import fcntl, os, signal, subprocess, sys, time
+import fcntl, json, os, signal, subprocess, sys, time
 from pathlib import Path
 run=Path(os.environ.get('XDG_RUNTIME_DIR','/tmp')) / ('machinespirit-'+str(os.getuid()))
 run.mkdir(mode=0o700,exist_ok=True)
@@ -11,12 +11,47 @@ if cmd == 'resume':
         time.sleep(delay)
         subprocess.run(['hyprctl','eval','hl.dispatch(hl.dsp.dpms({ state = "on" }))'],stdout=subprocess.DEVNULL)
     sys.exit(0)
+PAM_SERVICE=os.environ.get('MS_PAM_SERVICE','/etc/pam.d/hyprlock')   # the stack both lock screens authenticate against (hyprlock package)
+def lock_ipc(*args):
+    try: r=subprocess.run(['quickshell','ipc','-c','machinespirit','call','lock',*args],capture_output=True,text=True,timeout=3)
+    except (OSError,subprocess.TimeoutExpired): return None
+    return r.stdout.strip() if r.returncode==0 else None
+def quickshell_lock():
+    """'ok': locked (or already), 'fallback': nothing was captured, hyprlock may be used, 'held': a lock may be held, start no other locker."""
+    if not os.access(PAM_SERVICE,os.R_OK): return 'fallback'
+    phase=lock_ipc('state')
+    if phase in ('secure','locking'): return 'ok'
+    if phase is None:
+        # Quickshell does not answer. If it held the lock when it died, the compositor still keeps the screen locked and the
+        # shell takes it over again when the supervisor restarts it; a second locker must not be started on top of that.
+        return 'held' if (run/'locked').exists() else 'fallback'
+    lock_ipc('lock')
+    for _ in range(int(float(os.environ.get('MS_LOCK_WAIT','4'))*10)):
+        time.sleep(.1)
+        if lock_ipc('state')=='secure': return 'ok'
+    # Not confirmed by the compositor: withdraw the request and prove nothing is held before falling back.
+    after=lock_ipc('cancel')
+    if after=='secure': return 'ok'
+    return 'fallback' if after=='unlocked' else 'held'
+def lock_held():
+    """True while the screen is locked, or while a lock that outlived its shell may still be held."""
+    phase=lock_ipc('state')
+    return phase in ('secure','locking') or (phase is None and (run/'locked').exists())
+LOCK_REFUSAL='The screen is locked. Unlock it first: changing or restarting the shell now could leave the lock without its screen. Nothing was changed.'
+if cmd == 'locked': sys.exit(0 if lock_held() else 1)
 if cmd == 'lock':
     with (run/'lockscreen.lock').open('w') as f:
         try: fcntl.flock(f,fcntl.LOCK_EX|fcntl.LOCK_NB)
         except BlockingIOError: sys.exit(0)
+        try: backend=json.loads((Path(os.environ.get('XDG_CONFIG_HOME',Path.home()/'.config'))/'machinespirit/settings.json').read_text()).get('lockBackend','quickshell')
+        except (OSError,ValueError,AttributeError): backend='quickshell'
+        if backend=='quickshell':
+            result=quickshell_lock()
+            if result=='ok': sys.exit(0)
+            if result=='held': sys.exit('The screen may be locked by a locker that is not running. It stays locked. Start the shell again with ms-session start and it takes the lock over (a passphrase is still required); no second locker was started.')
         sys.exit(subprocess.call(['hyprlock']))
 if cmd == 'restart':
+    if lock_held(): sys.exit(LOCK_REFUSAL)
     restart_env=dict(os.environ)
     p=run/'supervisor.pid'
     if p.exists():
@@ -31,7 +66,7 @@ if cmd == 'restart':
         time.sleep(.1)
     subprocess.Popen([sys.executable,__file__,'start'],env=restart_env,start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     sys.exit(0)
-if cmd != 'start': sys.exit('Use start, restart or lock')
+if cmd != 'start': sys.exit('Use start, restart, lock or locked')
 f=(run/'session.lock').open('w')
 try: fcntl.flock(f,fcntl.LOCK_EX|fcntl.LOCK_NB)
 except BlockingIOError: sys.exit(0)
@@ -47,13 +82,15 @@ def stop(*_):
 signal.signal(signal.SIGTERM,stop);signal.signal(signal.SIGINT,stop)
 conf=Path(os.environ.get('XDG_CONFIG_HOME',Path.home()/'.config'))
 subprocess.run(['ms-settings','generate'],stdout=subprocess.DEVNULL)
-env=dict(os.environ,MS_STARTUP='1')
+env=dict(os.environ,MS_STARTUP='1',MS_RUN=str(run))
 state=Path(os.environ.get('XDG_STATE_HOME',Path.home()/'.local/state'))/'machinespirit'
 state.mkdir(parents=True,exist_ok=True)
 logfile=state/'session.log'
 # Keep the previous run's output for diagnosis; start over only when the log has grown large.
 with logfile.open('a' if logfile.exists() and logfile.stat().st_size<1_000_000 else 'w') as log:
-    children.append(subprocess.Popen(['quickshell','-c','machinespirit'],env=env,stdout=log,stderr=log,start_new_session=True))
+    def start_shell(env): return subprocess.Popen(['quickshell','-c','machinespirit'],env=env,stdout=log,stderr=log,start_new_session=True)
+    children.append(start_shell(env))
+    shell_starts=[time.monotonic()]
     if (conf/'hypr/hyprlock.conf').exists():
         import shutil
         if shutil.which('hypridle'): children.append(subprocess.Popen(['hypridle','-c',str(conf/'machinespirit/hypridle.conf')],stdout=log,stderr=log,start_new_session=True))
@@ -62,7 +99,13 @@ with logfile.open('a' if logfile.exists() and logfile.stat().st_size<1_000_000 e
     stamp=idleconf.stat().st_mtime_ns if idleconf.exists() else 0
     daemon_started=time.monotonic()
     try:
-        while children[0].poll() is None:
+        while True:
+            if children[0].poll() is not None:
+                # A shell that died on its own is started again (a lock it held is taken over at once); a clean exit ends the session helpers.
+                now_=time.monotonic(); shell_starts=[t for t in shell_starts if now_-t<60]
+                if children[0].returncode==0 or len(shell_starts)>=5: break
+                print('The shell exited with',children[0].returncode,'and is started again',file=log,flush=True)
+                time.sleep(.5); children[0]=start_shell({k:v for k,v in env.items() if k!='MS_STARTUP'}); shell_starts.append(time.monotonic())
             time.sleep(1)
             now=idleconf.stat().st_mtime_ns if idleconf.exists() else 0
             if now != stamp and len(children)>2:

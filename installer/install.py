@@ -9,8 +9,9 @@ CONF = Path(os.environ.get('XDG_CONFIG_HOME', HOME / '.config'))
 DATA = Path(os.environ.get('XDG_DATA_HOME', HOME / '.local/share'))
 STATE = Path(os.environ.get('XDG_STATE_HOME', HOME / '.local/state')) / 'machinespirit/install'
 BIN = HOME / '.local/bin'
+USER = os.environ.get('USER') or Path.home().name
 HELPER = Path('/usr/local/libexec/ms-browser-policy')
-COMPONENTS = ['shell', 'hyprland', 'terminal', 'apps', 'lock', 'wallpapers', 'boot']
+COMPONENTS = ['shell', 'hyprland', 'terminal', 'apps', 'lock', 'wallpapers', 'login', 'boot']
 MANIFEST = json.loads((Path(__file__).parent / 'components.json').read_text())
 PACKAGES = {name:' '.join(item['packages']) for name,item in MANIFEST.items()}
 
@@ -204,20 +205,30 @@ def main():
     p.add_argument('--no-system',action='store_true',help='Skip privileged privacy helper installation/removal (for isolated tests)')
     p.add_argument('--yes', action='store_true'); p.add_argument('--with-aur', action='store_true')
     p.add_argument('--with-boot', action='store_true', help='Allow --full to change GRUB/Plymouth (otherwise asked, or skipped with --yes)')
+    p.add_argument('--with-autologin', action='store_true', help='With the login component: sign in without a password (off by default)')
     a = p.parse_args()
     if any(not path.is_absolute() for path in [HOME,CONF,DATA,STATE]): p.error('HOME and XDG paths must be absolute')
     if os.geteuid() == 0: p.error('Run as your normal desktop user, not root.')
+    if a.operation != 'doctor' and not a.dry_run:
+        helper = BIN / 'ms-session'
+        # Changing the shell's files while the screen is locked could leave the lock without its screen: stop before anything changes.
+        if helper.exists() and subprocess.run([str(helper), 'locked'], capture_output=True).returncode == 0:
+            raise ValueError('The screen is locked. Unlock it first: changing or restarting the shell now could leave the lock without its screen. Nothing was changed.')
     if a.operation == 'doctor':
         failures = []
         selected_file=STATE/'components.json'
         selected=json.loads(selected_file.read_text()) if selected_file.exists() else ['shell']
-        commands={'shell':['quickshell','python3','matugen','grim','slurp','wpctl','playerctl'], 'hyprland':['Hyprland'], 'terminal':['kitty','fish','fastfetch'], 'apps':['dolphin','firefox','btop'], 'lock':['hyprlock','hypridle'], 'boot':['plymouth'], 'wallpapers':[]}
+        commands={'shell':['quickshell','python3','matugen','grim','slurp','wpctl','playerctl'], 'hyprland':['Hyprland'], 'terminal':['kitty','fish','fastfetch'], 'apps':['dolphin','firefox','btop'], 'lock':['hyprlock','hypridle'], 'boot':['plymouth'], 'login':[], 'wallpapers':[]}
         for tool in sorted({tool for c in selected for tool in commands[c]}):
             found = shutil.which(tool); print(f'{tool}: {found or "MISSING"}')
             if not found: failures.append(tool)
         optional={'shell':{'gost':'private proxy','ddcutil':'monitor brightness','brightnessctl':'laptop brightness','cava':'audio spectrum'}}
         for tool, purpose in sorted({i for c in selected for i in optional.get(c,{}).items()}):
             if not shutil.which(tool): print(f'{tool}: not installed (optional, needed for {purpose}). Install the package of the same name.')
+        if 'login' in selected:
+            r = subprocess.run([sys.executable, str(ROOT / 'installer/login.py'), 'check', '--user', USER], capture_output=True, text=True)
+            print((r.stdout.strip() or r.stderr.strip() or 'Login: no report'))
+            if r.returncode: failures.append('login')
         for tool in ('quickshell','Hyprland'):
             if shutil.which(tool):
                 try: out = subprocess.run([tool,'--version'],capture_output=True,text=True,timeout=5).stdout.strip()
@@ -253,6 +264,7 @@ def main():
             else:
                 incomplete = False
                 if HELPER.exists() and not a.no_system: subprocess.run(['sudo',str(HELPER),'uninstall'],check=True)
+                if not a.no_system and Path('/var/lib/machinespirit/login').is_dir(): subprocess.run(['sudo',sys.executable,str(ROOT/'installer/login.py'),'uninstall'],check=True)
                 for tx in sorted(STATE.glob('*/manifest.json'), reverse=True):
                     if json.loads(tx.read_text()).get('status') != 'complete': continue
                     if restore(tx.parent): incomplete = True
@@ -265,6 +277,8 @@ def main():
     if a.full and a.components: p.error('Choose --full or --components, not both')
     selected = COMPONENTS[:] if a.full else (a.components.split(',') if a.components else None)
     if selected is None and previous.exists(): selected = json.loads(previous.read_text())
+    if a.operation == 'update' and selected and 'boot' in selected and not a.components:
+        selected = [c for c in selected if c != 'boot']; print('The boot theme is not touched by an update. Refresh it with --components boot.')
     answer_full = False
     if selected is None:
         if a.yes or not sys.stdin.isatty(): p.error('Choose --full or --components shell,hyprland,...')
@@ -276,6 +290,11 @@ def main():
         if a.yes or a.dry_run or not sys.stdin.isatty() or input('Full install includes the boot theme: it edits GRUB, mkinitcpio and Plymouth and rebuilds initramfs. Include it? [y/N] ').lower() != 'y':
             selected.remove('boot'); print('Boot theme skipped. Add it later with --components boot, or pass --with-boot.')
     if not selected or any(c not in COMPONENTS for c in selected): p.error('Unknown component')
+    if a.no_system and 'login' in selected:
+        if not (a.full or answer_full): p.error('--no-system cannot install the login component')
+        selected.remove('login'); print('Login component skipped (--no-system).')
+    if 'login' in selected and (a.full or answer_full) and not (a.with_autologin or a.yes or a.dry_run) and sys.stdin.isatty():
+        a.with_autologin = input('Sign in automatically, without a password? Anyone who can switch this computer on gets your session. [y/N] ').lower() == 'y'
     selected = sorted(set(selected) | {'shell'})
     if a.no_system and 'boot' in selected: p.error('--no-system cannot install boot components')
     pairs = mappings(selected)
@@ -291,6 +310,8 @@ def main():
     if 'shell' in selected and not a.no_system: print('System privacy helper: /usr/local/libexec/ms-browser-policy (Polkit authorization)')
     if 'boot' in selected:
         subprocess.run([sys.executable, str(ROOT / 'installer/boot.py'), 'check'], check=True)
+    if 'login' in selected:
+        subprocess.run([sys.executable, str(ROOT / 'installer/login.py'), 'check', '--user', USER, *(['--autologin'] if a.with_autologin else []), *([] if a.no_packages else ['--packages-pending'])], check=True)
     if shutil.which('Hyprland'):
         version = subprocess.run(['Hyprland','--version'],capture_output=True,text=True).stdout
         import re
@@ -355,6 +376,8 @@ def main():
             helper_added = not HELPER.exists()
             subprocess.run(['sudo',sys.executable,str(ROOT/'privacy/install.py')],check=True)
         if 'boot' in selected: subprocess.run(['sudo', sys.executable, str(ROOT / 'installer/boot.py'), 'install'], check=True)
+        # After boot, whose own check refuses a system that already has a display manager.
+        if 'login' in selected: subprocess.run(['sudo', sys.executable, str(ROOT / 'installer/login.py'), 'install', '--user', USER, *(['--autologin'] if a.with_autologin else [])], check=True)
     except BaseException:
         # A helper installed by this run must not outlive the user files that were rolled back.
         if helper_added and HELPER.exists():
@@ -370,7 +393,11 @@ def main():
         else: atomic(previous, previous_text)
         raise
     if not changed: print('Already up to date: no files needed changing.')
-    else: print('Installed. Backup ID:', tx.name, '\nSelect the MachineSpirit Hyprland configuration on your next login.')
+    else:
+        running = bool(os.environ.get('HYPRLAND_INSTANCE_SIGNATURE'))
+        after = ('The running session was left alone: apply the new shell with ms-session restart, or reboot and sign in with the Hyprland session.' if running
+                 else 'Reboot, then sign in with the Hyprland session.') if 'login' in selected else 'Select the MachineSpirit Hyprland configuration on your next login.'
+        print('Installed. Backup ID:', tx.name, '\n' + after)
     return 0
 if __name__ == '__main__':
     try: sys.exit(main())

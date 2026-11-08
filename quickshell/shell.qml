@@ -14,6 +14,7 @@ import qs.modules.desktop
 import qs.modules.wallpaper
 import qs.modules.launcher
 import qs.modules.power
+import qs.modules.lock
 import qs.modules.wallpapers
 import qs.modules.sanctum
 import qs.services
@@ -21,9 +22,12 @@ import QtQuick
 
 ShellRoot {
     id: root
+    // A reload while the screen is locked would destroy the lock without unlocking it; files are watched again after unlocking.
+    settings.watchFiles: !lockScreen.held
     readonly property bool privacyLoaded: Privacy.loaded
     SettingsWindow {}
     Startup {}
+    LockScreen { id: lockScreen }
     IpcHandler { target: "settings"; function toggle(): void { Settings.toggle(false) } function setup(): void { Privacy.restartSetup() } }
     IpcHandler { target: "manual"; function toggle(): void { Settings.toggle(true) } }
     Wallpaper {}

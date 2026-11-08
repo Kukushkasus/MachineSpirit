@@ -22,6 +22,7 @@ Settings are stored in `$XDG_CONFIG_HOME/machinespirit/settings.json` (default `
 | repeatRate / repeatDelay | 25 / 600 | Key repeat rate per second and initial delay in milliseconds |
 | lockSeconds | 600 | Idle lock timeout |
 | screenOffSeconds | 900 | Screen-off timeout, at least lockSeconds |
+| lockBackend | quickshell | Lock screen: `quickshell` (the shell's own) or `hyprlock`. The shell falls back to hyprlock only when it is not running, never on top of a lock that is held |
 | bindings | `{}` | Original combination → replacement; empty string disables |
 | privacy | see below | Network permissions and proxy; edited on the Privacy page |
 

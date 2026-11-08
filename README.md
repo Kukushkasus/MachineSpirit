@@ -1,13 +1,34 @@
 <p align="center"><img src="docs/media/banner.svg" alt="MachineSpirit: phosphor instruments and forged metal" width="100%"></p>
 <p align="center"><b>English</b> · <a href="README.ru.md">Русский</a> · <a href="docs/INSTALL.md">Installation & recovery</a> · <a href="docs/SETTINGS.md">Settings</a> · <a href="docs/KEYBINDINGS.md">Keybindings</a></p>
 
+<details>
+<summary><b>I'm not reading all that. Just give me the install command.</b></summary>
+
+Fine. On Arch Linux or CachyOS, as your normal user (not root, not through `sudo`):
+
+```bash
+git clone https://github.com/Kukushkasus/MachineSpirit.git
+cd MachineSpirit
+./install.sh --full --yes
+```
+
+Then reboot and sign in on the login screen with the Hyprland session.
+
+- It works from a plain text console and from a Hyprland session you already run. Nothing that is running gets restarted.
+- You need `git`. The installer asks for `sudo` and installs the rest, including the SDDM login screen if you have no login manager yet.
+- Your existing files are backed up first. A login manager you already use is left alone.
+- Autologin is off by default. The GRUB/Plymouth boot theme is a separate option.
+- Details, options and recovery: [Installation and recovery](docs/INSTALL.md).
+
+</details>
+
 **MachineSpirit** is a desktop shell for Hyprland, built with Quickshell: phosphor screens, Nixie clocks and machined housings, with colours taken from your wallpaper. It is an unofficial fan project in the style of the Warhammer 40,000 Adeptus Mechanicus.
 
-**0.1.0** · Arch Linux / CachyOS · Wayland · [GPL-3.0-only](LICENSE) · Author: [Kukushkasus](https://github.com/Kukushkasus)
+**0.2.0** · Arch Linux / CachyOS · Wayland · [GPL-3.0-only](LICENSE) · Author: [Kukushkasus](https://github.com/Kukushkasus)
 
 Idle usage in the test VM (4 vCPUs): about 2 to 3% CPU and 600 MiB RAM.
 
-<p align="center"><img src="docs/media/showcase.gif" alt="20-second MachineSpirit demo recorded in a VM: desktop, launcher, control panel, wallpaper archive, settings and updates" width="100%"></p>
+<p align="center"><img src="docs/media/showcase.gif" alt="36-second MachineSpirit demo recorded in a VM: SDDM login screen, sign-in, desktop, launcher, control panel, calendar and network popups, wallpaper archive, settings, desktop instruments and the power menu" width="100%"></p>
 
 ## Screenshots
 
@@ -23,7 +44,8 @@ Idle usage in the test VM (4 vCPUs): about 2 to 3% CPU and 600 MiB RAM.
 - Five movable desktop instruments: clock, weather, resources, media player and persistent notes.
 - Nine searchable settings pages: live window preview, display arrangement with automatic rollback, pointer controls, shortcut recording and updates. Unsaved changes are protected.
 - First-launch setup with privacy presets, per-feature network permissions and an optional authenticated proxy. Browser policy changes have their own preview, administrator authorization and restore.
-- Wallpaper colours flow through the shell and the components you choose to install. Short, consistent transitions; reduced-motion and low-power modes. A lock screen and an optional Plymouth boot theme.
+- Wallpaper colours flow through the shell and the components you choose to install. Short, consistent transitions; reduced-motion and low-power modes.
+- Login and lock: an SDDM login screen in the same style (set up by `--full`, autologin only if you ask), a lock screen drawn by the shell with hyprlock as the fallback, and an optional Plymouth boot theme.
 - **Super+/** opens the searchable shortcut manual, **Super+,** opens Settings, **Super+Alt+W** edits the desktop instruments. The interface is English; keyboard layouts are configurable.
 
 ## Requirements
@@ -32,11 +54,9 @@ Arch Linux or CachyOS, Hyprland 0.55 or newer with the Lua configuration API (te
 
 ## Install
 
-Clone or download this repository, enter its directory and run:
+The quickest way is the box at the top: `./install.sh --full --yes`, reboot, sign in. The same command works from a text console and from a Hyprland session that is already running. It installs the packages, the shell, the Hyprland configuration, the lock screen and, when no login manager is present, the SDDM login screen.
 
-```sh
-./install.sh
-```
+## Advanced installation
 
 Choose individual components or a full installation. To inspect the changes first:
 
@@ -45,7 +65,7 @@ Choose individual components or a full installation. To inspect the changes firs
 ./install.sh --components shell,hyprland,terminal,apps,lock,wallpapers
 ```
 
-Existing files are backed up, and your own edits are preserved on update. The optional boot component supports GRUB with mkinitcpio and no display manager, and asks before it changes anything. Package installation needs `sudo`, but the installer itself runs as your normal user. AUR is optional. Read [installation and recovery](docs/INSTALL.md) before installing.
+Existing files are backed up, and your own edits are preserved on update. The optional boot component supports GRUB with mkinitcpio and no display manager, and asks before it changes anything. Package installation needs `sudo`, but the installer itself runs as your normal user. AUR is optional. Options such as `--with-autologin`, `--with-boot` and `--no-packages`, the rules for an existing login manager and recovery are in [Installation and recovery](docs/INSTALL.md).
 
 ## Update
 

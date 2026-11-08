@@ -8,7 +8,7 @@ HOME = Path.home()
 CONF = Path(os.environ.get('XDG_CONFIG_HOME', HOME / '.config'))
 STATE = Path(os.environ.get('XDG_STATE_HOME', HOME / '.local/state')) / 'machinespirit'
 PATH = CONF / 'machinespirit/settings.json'
-DEFAULT = dict(version=1, layouts=['us'], layoutSwitch='grp:alt_shift_toggle', primaryOutput='', monitors=[], reducedMotion=False, lowPower=False, blur=True, lockSeconds=600, screenOffSeconds=900, bindings={})
+DEFAULT = dict(version=1, layouts=['us'], layoutSwitch='grp:alt_shift_toggle', primaryOutput='', monitors=[], reducedMotion=False, lowPower=False, blur=True, lockSeconds=600, screenOffSeconds=900, lockBackend='quickshell', bindings={})
 DEFAULT.update(rounding=14, gapsIn=6, gapsOut=12, borderSize=2, shadows=True,
                dimInactive=True, dimStrength=0.10, sensitivity=0.0,
                accelProfile='adaptive', naturalScroll=True, tapToClick=True,
@@ -49,6 +49,7 @@ def validate(d):
         if type(d[key]) is not int or not low <= d[key] <= high: raise ValueError(f'{key} must be {low}–{high}')
     for key, low, high in [('sensitivity',-1,1),('dimStrength',0,0.5)]:
         if type(d[key]) not in (int,float) or not math.isfinite(d[key]) or not low <= d[key] <= high: raise ValueError(f'{key} must be {low}–{high}')
+    if d['lockBackend'] not in ('quickshell','hyprlock'): raise ValueError('lockBackend must be quickshell or hyprlock')
     if d['accelProfile'] not in ('adaptive','flat'): raise ValueError('Choose adaptive or flat pointer acceleration')
     if len(set(d['layouts'])) != len(d['layouts']): raise ValueError('Keyboard layouts must be unique')
     for key in ['lockSeconds','screenOffSeconds']:

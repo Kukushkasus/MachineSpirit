@@ -148,8 +148,14 @@ def changelog_top(root, version):
     top = ('## ' + sections[1]) if len(sections) > 1 else ''
     return clean(top.strip(), 1800) if top.startswith('## ' + version) else ''
 
+def screen_locked():
+    helper = shutil.which('ms-session')
+    return bool(helper) and subprocess.run([helper, 'locked'], capture_output=True).returncode == 0
+
 def install(a):
     print('⚙  MachineSpirit update\n')
+    if not a.dry_run and screen_locked():
+        print('The screen is locked. Unlock it first, then run the update again: changing the shell now could leave the lock without its screen. Nothing was changed.'); return 1
     work = Path(tempfile.mkdtemp(prefix='ms-update-'))
     try:
         if a.from_file:

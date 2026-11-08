@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.2.0 - 2026-11-08
+
+One command now gives a working desktop: `./install.sh --full --yes`, reboot, sign in.
+
+### Added
+
+- Login screen: the `login` component installs and enables SDDM with a MachineSpirit theme (phosphor housing, clock, user and session choice, keyboard layout, error feedback; it needs no shell, matugen or Hyprland and carries its own font). It is part of `--full`, but only when no login manager is present: an existing SDDM or any other login manager is left as it is and the installer says which session to pick (Hyprland, not UWSM). The theme is switched on only after the SDDM greeter has loaded it; otherwise the default theme stays. sddm.service is enabled but not started, so a running session is never interrupted.
+- Passwordless autologin, only on request: `--with-autologin` or the answer to a question in an interactive `--full`. An autologin you already have is not overridden.
+- Lock screen drawn by the shell (Quickshell session lock with PAM), in the style of the login screen: blurred wallpaper, housing, nixie clock, shake on a wrong passphrase. The lock is reported as held only after the compositor confirms it. If the shell dies while locked, the screen stays locked and the restarted shell takes the lock over. hyprlock stays as the fallback and is chosen with the new `lockBackend` setting (`quickshell` by default). It is used automatically only when the shell is not running and nothing is locked; a second locker is never started on top of a held lock.
+- The installer works from a plain text console (no graphical environment) and from a running Hyprland session, where nothing is restarted.
+
+### Changed
+
+- While the screen is locked, `ms-session restart`, `./install.sh` and `ms-update install` refuse to run and change nothing, and the shell stops reloading its files (`ms-session locked` reports the state). A reload or restart under a lock used to end on Hyprland's "lockscreen app died" screen.
+- `--full` includes the login component. The boot theme stays a separate choice (`--with-boot`). The boot component still refuses a machine that already has a login manager; `--full --with-boot` installs the boot theme first and the login screen after it.
+- An update, from Settings or `./install.sh update`, never touches the boot theme.
+- The session supervisor starts the shell again if it crashes (at most five times a minute); `ms-session lock` returns when the lock is confirmed.
+- hyprlock was restyled to match.
+- Hyprland's "updated to x.y.z" notes window no longer covers the first screen of a new install (`ecosystem:no_update_news`); its donation reminder is left to upstream.
+- Uninstall also removes what the login component wrote and disables sddm.service if the installer enabled it.
+
+### Known limitations
+
+- Tested in a QEMU/KVM guest: text console and running Hyprland installs with a reboot and sign-in, an existing SDDM, lightdm as another login manager, autologin, uninstall and restore, the boot theme together with SDDM, lock and unlock with PAM, a wrong passphrase, missing PAM configuration, two outputs, a killed shell while locked, and suspend with the lock held. After resuming, the QEMU window stayed black (the guest logged `virtio_gpu` errors); this also happens on a bare Hyprland without MachineSpirit, so it comes from QEMU's virtual GPU, not from the shell, and the lock screen after suspend was not seen. Physical hardware, NVIDIA and other login managers are untested. The Plymouth splash itself was not looked at.
+- If the shell cannot restart while the screen is locked, Hyprland shows its own recovery screen; follow what it says (`hyprctl --instance 0 eval 'hl.clear_crashed_lockscreen()'` from another console).
+
 ## 0.1.0 - 2026-11-08
 
 First release.

@@ -1,0 +1,13 @@
+[SddmGreeterTheme]
+Name=MachineSpirit
+Description=Phosphor login screen for the MachineSpirit desktop
+Author=Kukushkasus
+License=GPL-3.0-only
+Type=sddm-theme
+Version=0.2.0
+Website=https://github.com/Kukushkasus/MachineSpirit
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=machinespirit
+Theme-API=2.0
+QtVersion=6

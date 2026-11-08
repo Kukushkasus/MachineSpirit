@@ -35,6 +35,7 @@ python
 qt6-svg
 qt6ct
 quickshell
+sddm
 slurp
 ttf-jetbrains-mono-nerd
 ttf-material-symbols-variable

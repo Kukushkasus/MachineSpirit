@@ -9,7 +9,7 @@ python3 -m unittest discover -s tools -p 'test*.py'
 bash tools/test_install.sh
 ```
 
-Neither command installs packages or touches your real configuration: the installer tests run in a disposable `HOME`. For QML changes, also run the actual Quickshell session, restart it from inside the Hyprland session (a hot reload does not reload every window) and read its log. Include screenshots from the running implementation, the dependency versions and any untested hardware assumptions in the pull request.
+Neither command installs packages or touches your real configuration: the installer tests run in a disposable `HOME`. The login and lock tests run against a fake root and fake `systemctl`, `quickshell` and `hyprlock`, so they prove the logic but not the real thing: a change to `installer/login.py`, the SDDM theme (`assets/sddm/`) or the lock screen (`quickshell/modules/lock/`) also needs a run in a VM with a real reboot and sign-in. The shell stops watching its files while the screen is locked, so a reload cannot drop the lock: unlock before testing a change to the shell. Check the SDDM theme without installing it with `sddm-greeter-qt6 --test-mode --theme assets/sddm/machinespirit` inside a Wayland session. For QML changes, also run the actual Quickshell session, restart it from inside the Hyprland session (a hot reload does not reload every window) and read its log. Include screenshots from the running implementation, the dependency versions and any untested hardware assumptions in the pull request.
 
 ## Do not commit
 

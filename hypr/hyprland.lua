@@ -9,6 +9,10 @@ pcall(require, "local")
 if FX and FX.low_power then hl.env("MS_LOW_POWER", "1") end
 
 hl.env("PATH", os.getenv("HOME") .. "/.local/bin:" .. (os.getenv("PATH") or "/usr/bin"))
+-- Hyprland's own "updated to x.y.z" notes window would cover the first screen of a new install; the donation reminder is left to upstream.
+pcall(hl.config, { ecosystem = { no_update_news = true } })
+-- If the lock screen dies while the screen is locked, the shell is started again and takes the lock over; without this the screen stays locked for good.
+pcall(hl.config, { misc = { allow_session_lock_restore = true } })
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
 

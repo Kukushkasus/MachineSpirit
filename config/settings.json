@@ -11,6 +11,7 @@
   "blur": true,
   "lockSeconds": 600,
   "screenOffSeconds": 900,
+  "lockBackend": "quickshell",
   "bindings": {},
   "rounding": 14,
   "gapsIn": 6,

@@ -115,10 +115,23 @@ class SettingsRecoveryTests(unittest.TestCase):
 class InstallerArgumentTests(unittest.TestCase):
     def test_full_install_skips_boot_without_explicit_consent(self):
         with tempfile.TemporaryDirectory() as d:
-            env=dict(os.environ,HOME=d,XDG_CONFIG_HOME=d+'/c',XDG_DATA_HOME=d+'/d',XDG_STATE_HOME=d+'/s')
+            fs=Path(d)/'fs'   # the login component looks at the machine's SDDM and sessions: give it a disposable one
+            for rel in ('usr/share/wayland-sessions/hyprland.desktop','usr/bin/sddm'): (fs/rel).parent.mkdir(parents=True,exist_ok=True);(fs/rel).write_text('')
+            (fs/'usr/lib/qt6/qml/QtQuick').mkdir(parents=True)
+            env=dict(os.environ,HOME=d,XDG_CONFIG_HOME=d+'/c',XDG_DATA_HOME=d+'/d',XDG_STATE_HOME=d+'/s',MS_LOGIN_ROOT=str(fs))
             r=subprocess.run([sys.executable,str(ROOT/'installer/install.py'),'--full','--yes','--dry-run'],env=env,capture_output=True,text=True,stdin=subprocess.DEVNULL)
-            self.assertEqual(r.returncode,0,r.stderr);self.assertIn('Boot theme skipped',r.stdout)
+            self.assertEqual(r.returncode,0,r.stderr);self.assertIn('Boot theme skipped',r.stdout);self.assertIn('login',r.stdout.split('Components:')[1].split('\n')[0])
             self.assertNotIn('boot',[c.strip() for c in r.stdout.split('Components:')[1].split('\n')[0].split(',')])
+class UpdateKeepsBootTests(unittest.TestCase):
+    def test_a_plain_update_does_not_pull_the_boot_theme_back_in(self):
+        """The login component adds a display manager, which the boot check refuses; an update must not touch boot anyway."""
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d)/'s/machinespirit').mkdir(parents=True); (Path(d)/'s/machinespirit/install').mkdir(parents=True)
+            (Path(d)/'s/machinespirit/install/components.json').write_text(json.dumps(['shell','boot']))
+            env=dict(os.environ,HOME=d,XDG_CONFIG_HOME=d+'/c',XDG_DATA_HOME=d+'/d',XDG_STATE_HOME=d+'/s')
+            r=subprocess.run([sys.executable,str(ROOT/'installer/install.py'),'update','--dry-run','--yes'],env=env,capture_output=True,text=True,stdin=subprocess.DEVNULL)
+            self.assertEqual(r.returncode,0,r.stderr);self.assertIn('not touched by an update',r.stdout)
+            self.assertNotIn('boot',r.stdout.split('Components:')[1].split('\n')[0])
 class LifecycleTests(unittest.TestCase):
     """Files that disappear from a release, empty updates and interrupted installations, in a disposable HOME."""
     @classmethod
@@ -252,7 +265,7 @@ class ReleaseArchiveTests(unittest.TestCase):
             with tarfile.open(archive) as t: names = set(t.getnames())
             installer = load('inst_cov', repo / 'installer/install.py')
             wanted = {p.relative_to(repo).as_posix() for src, _ in installer.mappings(installer.COMPONENTS) for p in [src]}
-            wanted |= {p.relative_to(repo).as_posix() for p in (repo / 'assets/plymouth').iterdir()} | {'install.sh', 'installer/boot.py', 'privacy/install.py', 'packages.txt', 'VERSION', 'LICENSE'}
+            wanted |= {p.relative_to(repo).as_posix() for p in (repo / 'assets/plymouth').iterdir()} | {p.relative_to(repo).as_posix() for p in (repo / 'assets/sddm').rglob('*') if p.is_file()} | {'install.sh', 'installer/boot.py', 'installer/login.py', 'privacy/install.py', 'packages.txt', 'VERSION', 'LICENSE'}
             missing = sorted(w for w in wanted if 'MachineSpirit/' + w not in names)
             self.assertEqual(missing, [], 'add these paths to the list in tools/build-release.py')
     def test_clean_install_from_the_archive_alone(self):

@@ -17,7 +17,7 @@ DIRS = {
     'hypridle': {'.conf'}, 'hyprlock': {'.conf'}, 'installer': {'.py', '.json'}, 'kitty': {'.conf'},
     'matugen': {'', '.json', '.jsonc', '.toml', '.fish', '.css', '.lua', '.conf'},
     'privacy': {'', '.py', '.policy'}, 'quickshell': {'.qml', '.svg', '.png', '.conf', '.py'},
-    'assets/fonts': {'.ttf', '.txt'}, 'assets/plymouth': {'.plymouth', '.script'}, 'assets/wallpapers': {'.png'}, 'docs': {'.md'},
+    'assets/fonts': {'.ttf', '.txt'}, 'assets/plymouth': {'.plymouth', '.script'}, 'assets/sddm': {'.qml', '.conf', '.desktop', '.png', '.ttf', '.txt'}, 'assets/wallpapers': {'.png'}, 'docs': {'.md'},
 }
 # Safety net inside the allowed directories: never ship runtime state, credentials or private images.
 SKIP_PARTS = {'__pycache__', 'wallpapers-local'}

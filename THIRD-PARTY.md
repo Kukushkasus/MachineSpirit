@@ -6,7 +6,7 @@
 | Quickshell | [LGPL-3.0](https://github.com/quickshell-mirror/quickshell) | Shell framework |
 | Matugen | [GPL-2.0](https://github.com/InioX/matugen) | External palette generator |
 | GOST v3 | [MIT](https://github.com/go-gost/gost) | Optional local proxy forwarder; system package, not bundled |
-| IBM Plex Sans / Condensed | OFL-1.1, `assets/fonts/OFL-IBMPlex.txt` | Bundled fonts |
+| IBM Plex Sans / Condensed | OFL-1.1, `assets/fonts/OFL-IBMPlex.txt` | Bundled fonts; the SDDM login theme carries its own copy with the licence in `assets/sddm/machinespirit/fonts/` |
 | UnifrakturCook | OFL-1.1, `assets/fonts/OFL-UnifrakturCook.txt` | Bundled display font |
 | JetBrainsMono Nerd Font | OFL-1.1; system package | Monospace glyphs |
 | Material Symbols | Apache-2.0; system package | UI icons |
