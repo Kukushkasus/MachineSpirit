@@ -20,7 +20,7 @@ Variants {
 
         readonly property bool mine: Popups.active !== "" && Popups.screenName === modelData.name
         property string shown: ""
-        readonly property var titles: ({ calendar: "Chronometer", resources: "Cogitator", network: "Vox-caster", weather: "Augury", notifs: "Vox Log" })   // panels without a title get no plate
+        readonly property var titles: ({ calendar: Theme.lex("clock", "Chronometer"), resources: Theme.lex("resources", "Cogitator"), network: Theme.kit === "mechanicus" ? "Vox-caster" : "Network", weather: Theme.lex("weather", "Augury"), notifs: Theme.lex("logTitle", "Vox Log") })   // panels without a title get no plate
         Connections {
             target: Popups
             function onActiveChanged() {
@@ -80,7 +80,31 @@ Variants {
             height: Math.max(0, (card.y - win.rodTop + 3) * Math.min(1, card.open * 2))
             clip: true
             readonly property real full: card.y - win.rodTop + 3
+            // other liveries: two gilt rods with a brace (ultramarines), a beam of light (necrons), a short chain (khorne)
+            Item {
+                visible: Skin.bar === "ultramarines"
+                width: 20; height: leads.full
+                Repeater { model: 2; Rectangle { required property int index; x: index ? 13 : 5; width: 2.5; height: parent.height
+                    gradient: Gradient { orientation: Gradient.Horizontal; GradientStop { position: 0; color: Theme.brassHi } GradientStop { position: 1; color: Theme.brassLo } } } }
+                Rectangle { x: 5; y: parent.height * 0.45; width: 10.5; height: 2; color: Theme.brass }
+            }
+            Item {
+                visible: Skin.bar === "necrons"
+                width: 20; height: leads.full
+                Rectangle { x: 7.5; width: 5; height: parent.height; color: Qt.alpha(Theme.glow, 0.18) }
+                Rectangle { x: 9.5; width: 1; height: parent.height; color: Theme.glow }
+            }
             Shape {
+                visible: Skin.bar === "khorne"
+                width: 20; height: leads.full
+                preferredRendererType: Shape.CurveRenderer
+                ShapePath { fillColor: "transparent"; strokeColor: Theme.metalHi; strokeWidth: 3.2; strokeStyle: ShapePath.DashLine; dashPattern: [2.0, 3.25]; dashOffset: 3.08
+                    startX: 10; startY: 0; PathLine { x: 10; y: leads.full } }
+                ShapePath { fillColor: "transparent"; strokeColor: Theme.metalEdge; strokeWidth: 7; strokeStyle: ShapePath.DashLine; dashPattern: [0.5, 1.92]; capStyle: ShapePath.RoundCap
+                    startX: 10; startY: 0; PathLine { x: 10; y: leads.full } }
+            }
+            Shape {
+                visible: Skin.bar === "mechanicus"
                 width: 20; height: leads.full
                 preferredRendererType: Shape.CurveRenderer
                 ShapePath {   // insulated lead, sagging a little to the left
@@ -111,6 +135,7 @@ Variants {
             }
             Item {   // the arc on the bare copper when the panel connects
                 id: arc
+                visible: Skin.bar === "mechanicus"
                 x: 11; y: leads.full * 0.38; width: 10; height: leads.full * 0.24
                 opacity: 0
                 Rectangle { anchors.horizontalCenter: parent.horizontalCenter; width: 7; height: parent.height; radius: 3.5; color: Qt.alpha(Theme.spark, 0.35) }
@@ -145,14 +170,14 @@ Variants {
             property bool vented: false
             onOpenChanged: {
                 if (open === 0 && !win.mine) { win.shown = ""; vented = false }
-                if (open > 0.5 && win.mine && !vented) { vented = true; if (!Theme.lowPower && Math.random() < 0.35) { steam.jet(); arcAnim.restart() } }   // the leads reached the panel; now and then they spark
+                if (open > 0.5 && win.mine && !vented) { vented = true; if (Theme.fxOn("discharge") && Math.random() < 0.35) { steam.jet(); arcAnim.restart() } }   // the leads reached the panel; now and then they spark
             }
             readonly property real unfold: Math.max(0, (open - 0.25) / 0.75)
             opacity: Math.min(1, unfold * 1.4)
             transform: Scale { origin.x: win.pipeX - card.x; origin.y: 0; yScale: 0.55 + 0.45 * card.unfold; xScale: 0.9 + 0.1 * card.unfold }
 
             // a cogitator screen: forged bezel, recessed glass that powers on like a CRT, phosphor heading
-            Bezel { anchors.fill: parent; radius: 12; inset: 0; boltSize: 5 }
+            Bezel { anchors.fill: parent; radius: 12; inset: 0; boltSize: 5; role: "window" }
             CrtScreen {
                 id: glass
                 anchors { fill: parent; margins: 7 }

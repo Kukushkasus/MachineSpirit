@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.5.0 - 2026-11-12
+
+Road to 1.0. Four complete faction liveries on one shell, a Settings Center that reaches every part of it, and new wallpapers.
+
+### Added
+
+- Four theme packs: Adeptus Mechanicus (still the default), Ultramarines, Necrons and Chaos: Khorne. Each redraws the whole shell, not only its accents: the bar's silhouette (plates clamped to the edge, one armour band, floating shards, toothed iron slabs), window housings and their glass, section cards and titles, keys, icon wells, level strips, switches and sliders, workspace marks, the console, the power wheel, popups and the way they hang from the bar, toasts, desktop instruments and the lock screen's housing. Each has its own motion, rare effects and display face (Cinzel, Michroma, Grenze Gotisch; OFL, shipped with the shell). One layout for all: no control moves and no click area shrinks.
+- New wallpapers for all four factions, 3840×2160, rendered in Blender from the scene scripts in `tools/wallpapers/`: a machine temple, a command bridge, a tomb plain and a war forge. Each pack offers its own; picking a theme never changes your wallpaper unless you ask.
+- Settings → Themes: preview for 30 s (nothing permanent is written; it ends by itself, on cancel and if the shell crashes), Apply, return to the previous theme, reset to Mechanicus, recommended wallpapers applied on request, previews of each pack, and the reason a pack cannot be used.
+- Your own packs in `~/.local/share/machinespirit/themes/`: JSON and pictures only, validated against a versioned schema (now 2, with a `skin` section that picks a built-in livery per part; schema 1 packs still load). A pack cannot run code.
+- `ms-theme packs | preview | preview-end | revert` and `apply --pack ID --save`; the `theme` IPC target. A theme applied while the screen is locked waits for unlock.
+- Settings pages: Themes, Animations & effects, Bar & panels, Desktop & widgets, Notifications; Session became Session & controls. Grouped sidebar; search finds individual controls and highlights them.
+- New settings: panel opacity, glow strength, density, decoration level, bar modules and their order, weather and network rate on the bar, bar on every screen, widget scan line, effect intensity, frequency and kinds, animation speed, pop-up time and count, urgent messages through quiet mode, log size, hold time for dangerous actions, tap Super for the console. Files from 0.2.0 are read as they are; new keys take their defaults.
+- Mechanicus: the control desk unlatches when it opens and its plates take a brief charge; large windows carry brass corner straps and a riveted band; scorched cable smokes after some strikes; steam vents with the sparks on a real overheat; the Cogitator's scanlines thicken under real load; serial plates show a burst of binary now and then; a greeting at start and a line after purging the log.
+
+### Changed
+
+- Colour modes are named `faction`, `guarded` and `follow`. `fixed` and `strict` still work and mean the same as before; `theme.conf` is not rewritten.
+- Reduced motion also stops lamp flicker, sparks and the cog; low power still stops everything ambient. Ambient effects take turns: never more than one at a time across the shell.
+- Settings: the sidebar status card was dropped (the status line at the bottom says the same); Motion & power moved to Animations & effects.
+- The release archive carries the four packs, their wallpapers and the faction faces; it is larger than before (see Install).
+
+### Fixed
+
+- With reduced motion, the console's sector doors stayed shut over the workspace previews.
+
+### Known limitations
+
+- Tested in a QEMU/KVM guest (virgl). Physical hardware and NVIDIA are untested.
+- The wallpapers are rendered 3D scenes built from code, not hand-painted art.
+- None of the three faction faces has Cyrillic; such text is set in IBM Plex.
+
 ## 0.2.0 - 2026-11-08
 
 One command now gives a working desktop: `./install.sh --full --yes`, reboot, sign in.

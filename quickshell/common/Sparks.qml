@@ -20,7 +20,7 @@ Item {
     Timer { id: jetBack; interval: 16; onTriggered: { root.dir = 340; root.burst(4) } }
 
     function burst(n) {
-        if (Theme.lowPower) return
+        if (!Theme.fxOn("particles")) return
         sys.running = true
         stopper.restart()
         hot.burst(Math.round(n * power))

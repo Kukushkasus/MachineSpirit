@@ -16,7 +16,7 @@ Item {
     Row {
         x: -root.height
         Repeater {
-            model: Math.ceil((root.width + root.height * 2) / (root.stripe * 2)) + 1
+            model: Math.max(0, Math.ceil((root.width + root.height * 2) / (root.stripe * 2)) + 1)
             Item {
                 width: root.stripe * 2; height: root.height
                 Rectangle { width: root.stripe; height: root.height * 2; y: -root.height / 2; color: Theme.hazard; rotation: 35; antialiasing: true }

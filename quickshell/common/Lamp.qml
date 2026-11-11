@@ -18,11 +18,22 @@ Item {
         border { width: 1; color: Qt.alpha(root.tone, root.lit ? 0.9 : 0.35) }
         Rectangle { x: parent.width * 0.22; y: parent.height * 0.18; width: parent.width * 0.32; height: width; radius: width / 2; color: Qt.rgba(1, 1, 1, root.lit ? 0.55 : 0.12) }
     }
-    onLitChanged: if (lit && !Theme.lowPower) warm.restart()
+    // coming on: an old lamp warms up with a flicker, a disciplined one blinks once, living metal fades in,
+    // a forge lamp smoulders up. Reduced motion: it is simply on.
+    onLitChanged: if (lit && Theme.motionEnabled) (Skin.control === "ultramarines" ? blink : Skin.control === "necrons" ? fade : Skin.control === "khorne" ? smoulder : warm).restart()
     SequentialAnimation {
         id: warm
         OpacityAnimator { target: bead; from: 0.3; to: 1; duration: 60 }
         OpacityAnimator { target: bead; from: 1; to: 0.55; duration: 50 }
         OpacityAnimator { target: bead; from: 0.55; to: 1; duration: 120 }
     }
+    SequentialAnimation {
+        id: blink
+        OpacityAnimator { target: bead; from: 0.2; to: 1; duration: 40 }
+        PauseAnimation { duration: 90 }
+        OpacityAnimator { target: bead; from: 1; to: 0.5; duration: 30 }
+        OpacityAnimator { target: bead; from: 0.5; to: 1; duration: 30 }
+    }
+    OpacityAnimator { id: fade; target: bead; from: 0.15; to: 1; duration: 520; easing.type: Easing.InOutSine }
+    OpacityAnimator { id: smoulder; target: bead; from: 0.25; to: 1; duration: 420; easing.type: Easing.InQuad }
 }

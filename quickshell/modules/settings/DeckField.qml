@@ -11,6 +11,6 @@ Basic.TextField {
     font.family:Theme.fontUi; font.pixelSize:14
     hoverEnabled:true; opacity:enabled?1:0.5
     Behavior on opacity { NumberAnimation { duration:Theme.dShort } }
-    background:Rectangle { radius:6; color:Theme.surfaceContainerLowest; border.color:f.activeFocus?Theme.glow:f.hovered?Theme.outline:Theme.outlineVariant
-        Behavior on border.color { ColorAnimation { duration:Theme.dShort } } }
+    background:Face { radius:6; solid:true; usePlain:true; hovered:f.hovered; on:f.activeFocus
+        plainColor:Theme.surfaceContainerLowest; plainBorder:f.activeFocus?Theme.glow:f.hovered?Theme.outline:Theme.outlineVariant }
 }

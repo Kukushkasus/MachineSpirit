@@ -120,14 +120,62 @@ Singleton {
     Behavior on glowDim { ColorAnimation { duration: 900; easing.type: Easing.InOutQuad } }
     Behavior on glowFaint { ColorAnimation { duration: 900; easing.type: Easing.InOutQuad } }
 
-    // ---- identity anchors: never follow the wallpaper
-    readonly property color spark: "#5ab8ff"        // lightning on the conduit
-    readonly property color rust: "#9a2a1a"         // power, destructive actions
-    readonly property color rustText: "#ef6a50"     // rust readable on dark surfaces
-    readonly property color hazard: "#e0a800"       // warning stripes
-    readonly property color wax: "#8e1b14"          // purity seals
-    readonly property color brassLight: "#f0cf7a"   // the cog
-    readonly property color brassDark: "#8d6a27"
+    // ---- identity anchors: never follow the wallpaper. They belong to the theme pack (ms-theme writes them
+    // into colors.json); the names are the Mechanicus ones, the roles are the same in every faction.
+    property color spark: "#5ab8ff"        // energy: lightning on the conduit
+    property color rust: "#9a2a1a"         // danger: power, destructive actions
+    property color rustText: "#ef6a50"     // danger readable on dark surfaces
+    property color hazard: "#e0a800"       // warning stripes
+    property color wax: "#8e1b14"          // seals
+    property color brassLight: "#f0cf7a"   // trim: the cog
+    property color brassDark: "#8d6a27"
+    Behavior on spark { ColorAnimation { duration: 900 } }
+    Behavior on rust { ColorAnimation { duration: 900 } }
+    Behavior on rustText { ColorAnimation { duration: 900 } }
+    Behavior on hazard { ColorAnimation { duration: 900 } }
+    Behavior on wax { ColorAnimation { duration: 900 } }
+
+    // ---- the theme pack: a decor kit built into the shell, tuned by the pack's data. A pack is validated
+    // by ms-theme before it gets here and holds no code. Until one is read, this is Mechanicus as it always was.
+    readonly property var packDefault: ({
+        id: "mechanicus", name: "Adeptus Mechanicus", kit: "mechanicus", lexicon: {}, litanies: [],
+        motion: {character: "mechanical", scale: 1, overshoot: 2.4},
+        effects: {discharge: [3.5, 8.5], screenLife: [40, 120], particles: true, messages: true, glyphs: [90, 240]}
+    })
+    property var pack: packDefault
+    readonly property var kits: ["mechanicus", "ultramarines", "necrons", "khorne"]
+    readonly property string kit: kits.includes(pack.kit) ? pack.kit : "mechanicus"
+    readonly property bool previewing: previewMeta !== null
+    property var previewMeta: null
+    // a decorative word from the pack, or the plain one. Never used for functions that must stay clear.
+    function lex(key, fallback) { const v = pack.lexicon ? pack.lexicon[key] : undefined; return typeof v === "string" && v !== "" ? v : fallback }
+    function litany() { const l = pack.litanies || []; return l.length ? l[Math.floor(Math.random() * l.length)] : "" }
+
+    // ---- effects: how much ambient life the user wants (Settings), and how often the pack's effects come.
+    // fxLevel 0 off, 1 subtle, 2 normal, 3 lively. Reduced motion and low power silence all of it.
+    readonly property int fxLevel: !motionEnabled ? 0 : Math.max(0, Math.min(3, Settings.data.fxLevel ?? 2))
+    readonly property real fxSlow: [1, 2.2, 1, 0.6][fxLevel] / Math.max(0.25, Math.min(2, Settings.data.fxFrequency ?? 1))
+    function fxOn(kind) {
+        if (fxLevel === 0) return false
+        const user = {discharge: "fxDischarge", screenLife: "fxScreens", particles: "fxParticles", messages: "fxMessages", glyphs: "fxMessages"}[kind]
+        if (user && Settings.data[user] === false) return false
+        const e = pack.effects ? pack.effects[kind] : true
+        return e !== false
+    }
+    // ms until the next occurrence of an ambient effect, from the pack's [min, max] seconds
+    function fxDelay(kind, lo, hi) {
+        const e = pack.effects ? pack.effects[kind] : null
+        const a = Array.isArray(e) ? e[0] : lo, b = Array.isArray(e) ? e[1] : hi
+        return (a + Math.random() * (b - a)) * 1000 * fxSlow
+    }
+    // One decorative effect at a time per screen-wide scheduler: ask before starting, so effects never pile up.
+    property real fxBusyUntil: 0
+    function fxClaim(ms) {
+        const now = Date.now()
+        if (now < fxBusyUntil) return false
+        fxBusyUntil = now + ms + 400
+        return true
+    }
 
     // ---- shape: radius grows with the size of the thing
     readonly property int rPill: 999
@@ -137,12 +185,26 @@ Singleton {
     readonly property int r28: 28
 
     // ---- motion (Material 3)
-    readonly property int dShort: Settings.data.reducedMotion ? 0 : 120
-    readonly property int dMedium: Settings.data.reducedMotion ? 0 : lowPower ? 120 : 180
-    readonly property int dLong: Settings.data.reducedMotion ? 0 : lowPower ? 120 : 240
-    readonly property int dClose: Settings.data.reducedMotion ? 0 : lowPower ? 100 : 160
+    // the pack sets the character (a heavy faction moves slower), the user sets the overall speed
+    readonly property real speed: Math.max(0.5, Math.min(2, Settings.data.animSpeed ?? 1))
+    readonly property real tempo: (pack.motion?.scale ?? 1) / speed
+    readonly property string motionChar: pack.motion?.character ?? "mechanical"
+    readonly property real overshoot: pack.motion?.overshoot ?? 0
+    readonly property int dShort: Settings.data.reducedMotion ? 0 : Math.round(120 * tempo)
+    readonly property int dMedium: Settings.data.reducedMotion ? 0 : lowPower ? 120 : Math.round(180 * tempo)
+    readonly property int dLong: Settings.data.reducedMotion ? 0 : lowPower ? 120 : Math.round(240 * tempo)
+    readonly property int dClose: Settings.data.reducedMotion ? 0 : lowPower ? 100 : Math.round(160 * tempo)
+    // how a panel arrives: mechanical settles with a small overshoot, precise stops dead, phase eases both ways, heavy lands late
+    readonly property int easeEnter: motionChar === "precise" ? Easing.OutQuart : motionChar === "phase" ? Easing.InOutSine : motionChar === "heavy" ? Easing.OutQuint : Easing.OutCubic
     readonly property var easeStandard: [0.2, 0, 0, 1, 1, 1]
     readonly property var easeDecel: [0.05, 0.7, 0.1, 1, 1, 1]
+
+    // ---- the user's own trim (Settings > Appearance)
+    readonly property real panelOpacity: Math.max(0.6, Math.min(1, Settings.data.panelOpacity ?? 1))
+    readonly property real glowStrength: Math.max(0, Math.min(1.5, Settings.data.glowStrength ?? 1))
+    readonly property bool compact: Settings.data.density === "compact"
+    // 2 full: seals, heraldry, guardians, everything. 1 reduced: the structural decor only. 0 off: plain instruments.
+    readonly property int ornaments: Settings.data.ornaments === "off" ? 0 : Settings.data.ornaments === "reduced" ? 1 : 2
 
     // ---- state layers
     readonly property real hoverLayer: 0.08
@@ -174,6 +236,7 @@ Singleton {
         return on ? camel + "On" : camel
     }
     function applyColors(text) {
+        if (!text || !text.trim()) return      // caught between two writes; the finished file follows
         try {
             const j = JSON.parse(text)
             for (const k in j) {
@@ -183,11 +246,62 @@ Singleton {
         } catch (e) { console.warn("theme: bad colors.json", e) }
     }
 
+    // ---- sources. The applied theme lives in the state folder; a preview lives in the runtime folder
+    // (XDG_RUNTIME_DIR), apart from every permanent file, and wins while it is there.
+    readonly property string previewDir: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/machinespirit/preview"
+    property string appliedColors: ""
+    property string appliedPack: ""
+    function applyPack(text) {
+        try {
+            const j = JSON.parse(text)
+            if (!j || typeof j !== "object" || !kits.includes(j.kit)) throw new Error("unknown kit")
+            pack = Object.assign({}, packDefault, j)
+        } catch (e) { console.warn("theme: bad pack, keeping Mechanicus", e); pack = packDefault }
+    }
+    function restoreApplied() {
+        previewMeta = null
+        if (appliedPack) applyPack(appliedPack); else pack = packDefault
+        if (appliedColors) applyColors(appliedColors)
+    }
     FileView {
         path: root.stateDir + "/colors.json"
         watchChanges: true
         onFileChanged: reload()
-        onLoaded: root.applyColors(text())
+        onLoaded: { root.appliedColors = text(); if (!root.previewing) root.applyColors(text()) }
+    }
+    FileView {
+        path: root.stateDir + "/pack.json"
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: { root.appliedPack = text(); if (!root.previewing) root.applyPack(text()) }
+        onLoadFailed: { root.appliedPack = ""; if (!root.previewing) root.pack = root.packDefault }
+    }
+    // meta.json is written last and removed first, so the other two are whole whenever it is seen.
+    // A preview is shown only when this very shell asked for it (ThemePacks arms it): one left behind by a
+    // crashed shell is never picked up, it is discarded at start.
+    property bool previewArmed: false
+    function loadPreview() { previewArmed = true; pvMeta.reload() }
+    function endPreview() { previewArmed = false; if (previewing) restoreApplied() }
+    FileView { id: pvColors; path: root.previewDir + "/colors.json"; blockLoading: true; printErrors: false }
+    FileView { id: pvPack; path: root.previewDir + "/pack.json"; blockLoading: true; printErrors: false }
+    FileView {
+        id: pvMeta
+        path: root.previewDir + "/meta.json"
+        watchChanges: true; printErrors: false
+        onFileChanged: reload()
+        onLoaded: {
+            if (!root.previewArmed) return
+            try {
+                const m = JSON.parse(text())
+                if (!m.token || (m.expires || 0) * 1000 < Date.now()) throw new Error("stale")
+                pvColors.reload(); pvPack.reload()
+                const c = pvColors.text(), k = pvPack.text()
+                JSON.parse(c); JSON.parse(k)
+                root.previewMeta = m
+                root.applyPack(k); root.applyColors(c)
+            } catch (e) { console.warn("theme: preview dropped", e); root.endPreview() }
+        }
+        onLoadFailed: if (root.previewing) root.endPreview()
     }
     FileView {
         path: root.stateDir + "/theme.json"

@@ -2,17 +2,25 @@
 # [ PURITY SEAL ] Keep the signal clear. Preserve the entrusted work.
 """ms-theme: derive the MachineSpirit colour scheme from a wallpaper and push it to every app.
 
-  ms-theme apply [WALLPAPER] [--mode strict|loose|fixed]
+  ms-theme apply [WALLPAPER] [--pack ID] [--mode follow|guarded|faction] [--save]
+  ms-theme packs                     list theme packs as JSON (valid or not, with the reason)
+  ms-theme preview ID [--mode M]     try a pack in the running shell only; nothing permanent changes
+  ms-theme preview-end               drop the preview
+  ms-theme revert                    go back to the last theme that worked
   ms-theme status
 
-Modes
-  follow  (default)  Material You: surfaces and accent take the wallpaper's colour as it is
-  strict             take the wallpaper's colour, but keep its hue inside the rust-to-brass band,
-                     so the theme stays Mechanicus whatever wallpaper you pick
-  fixed              ignore the wallpaper; the built-in rust/brass scheme (needs no matugen)
+Colour modes
+  follow   (default)  Material You: surfaces and accent take the wallpaper's colour as it is
+  guarded             take the wallpaper's colour, but keep its hue inside the pack's own band,
+                      so the faction stays recognisable whatever wallpaper you pick  (old name: strict)
+  faction             ignore the wallpaper; the pack's own palette                    (old name: fixed)
+
+A theme pack never changes the wallpaper. `--save` records the pack and mode in theme.conf.
 """
-import argparse, colorsys, configparser, fcntl, hashlib, json, os, re, shutil, subprocess, sys, time, tomllib
+import argparse, colorsys, configparser, fcntl, hashlib, json, os, re, shutil, subprocess, sys, tempfile, time, tomllib
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "bin"))
+import ms_packs
 
 HOME = Path.home()
 CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", HOME / ".config"))
@@ -21,14 +29,31 @@ DATA = SHARE / "machinespirit"
 STATE = Path(os.environ.get("XDG_STATE_HOME", HOME / ".local/state")) / "machinespirit"
 CONF = CONFIG / "machinespirit/theme.conf"
 FIXED_SEED = "#b0702a"
-BAND = (6.0, 46.0)            # degrees of hue a strict theme may use (rust .. brass)
+RUNTIME = Path(os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}") / "machinespirit"
+PREVIEW = RUNTIME / "preview"          # a preview lives here only: gone with the session, never in the config
+PREVIEW_SECONDS = 30
+MODES = {"follow": "follow", "guarded": "guarded", "strict": "guarded", "faction": "faction", "fixed": "faction"}
+LEGACY = {"follow": "follow", "guarded": "strict", "faction": "fixed"}
+# what the shell had before packs existed; also the last resort when no pack can be read
+FALLBACK_PACK = {
+    "schema": 2, "id": "mechanicus", "name": "Adeptus Mechanicus", "tagline": "", "author": "MachineSpirit", "version": "1",
+    "kit": "mechanicus", "skin": {k: "mechanicus" for k in ("frame", "card", "control", "screen", "bar", "instrument", "glyph", "type")},
+    "palette": {"seed": FIXED_SEED, "band": [6, 46], "accept": [350, 52], "lightness": [0.38, 0.62], "minSaturation": 0.45,
+                "scheme": "scheme-tonal-spot",
+                "anchors": {"energy": "#5ab8ff", "danger": "#9a2a1a", "dangerText": "#ef6a50", "warn": "#e0a800",
+                            "seal": "#8e1b14", "trimLight": "#f0cf7a", "trimDark": "#8d6a27"}},
+    "materials": {}, "lexicon": {}, "litanies": [], "motion": {"character": "mechanical", "scale": 1, "overshoot": 0},
+    "effects": {}, "wallpapers": [], "preview": "",
+}
+ANCHOR_KEYS = {"energy": "spark", "danger": "rust", "dangerText": "rust_text", "warn": "hazard", "seal": "wax",
+               "trimLight": "brass_light", "trimDark": "brass_dark"}
 
 
 def say(*a): print("ms-theme:", *a, file=sys.stderr)
 
 
 def read_conf():
-    cfg = {"mode": "follow", "type": "auto", "darkness": "-0.05"}
+    cfg = {"mode": "follow", "type": "auto", "darkness": "-0.05", "pack": ms_packs.DEFAULT_ID}
     if CONF.exists():
         for line in CONF.read_text().splitlines():
             if "=" in line and not line.strip().startswith("#"):
@@ -46,15 +71,70 @@ def rgb_to_hex(r, g, b):
     return "#%02x%02x%02x" % tuple(round(max(0, min(1, c)) * 255) for c in (r, g, b))
 
 
-def clamp_hue(seed):
-    """Keep the wallpaper's character but move the hue into the Mechanicus band."""
+def in_arc(deg, lo, hi):
+    return lo <= deg <= hi if lo <= hi else (deg >= lo or deg <= hi)
+
+
+def clamp_hue(seed, palette=None):
+    """Keep the wallpaper's character but move the hue into the pack's own band."""
+    pal = palette or FALLBACK_PACK["palette"]
+    (b0, b1), (a0, a1) = pal["band"], pal["accept"]
     h, l, s = colorsys.rgb_to_hls(*hex_to_rgb(seed))
     deg = h * 360
-    if not (deg >= 350 or deg <= 52):                 # outside the warm arc: fold it in
-        deg = BAND[0] + (deg / 360) * (BAND[1] - BAND[0])
-    s = max(s, 0.45)                                  # grey wallpapers still get a warm accent
-    l = min(max(l, 0.38), 0.62)
+    if not in_arc(deg, a0, a1):                       # outside the faction's arc: fold it in
+        width = (b1 - b0) % 360
+        deg = b0 + (deg / 360) * width
+    s = max(s, pal["minSaturation"])                  # grey wallpapers still get the faction's accent
+    l = min(max(l, pal["lightness"][0]), pal["lightness"][1])
     return rgb_to_hex(*colorsys.hls_to_rgb((deg % 360) / 360, l, s))
+
+
+def luminance(h):
+    return sum(w * (c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4) for w, c in zip((0.2126, 0.7152, 0.0722), hex_to_rgb(h)))
+
+
+def contrast(a, b):
+    la, lb = sorted((luminance(a), luminance(b)), reverse=True)
+    return (la + 0.05) / (lb + 0.05)
+
+
+def readable(fg, bg, want):
+    """Lighten fg until it reads on bg. Readings must stay legible on any palette."""
+    r, g, b = hex_to_rgb(fg)
+    for _ in range(24):
+        if contrast(rgb_to_hex(r, g, b), bg) >= want: break
+        r, g, b = (c + (1 - c) * 0.12 for c in (r, g, b))
+    return rgb_to_hex(r, g, b)
+
+
+def dress(colors, pack, mode):
+    """Lay the pack over a generated scheme: its anchors always, its materials unless the wallpaper leads."""
+    for role, key in ANCHOR_KEYS.items():
+        colors[key] = pack["palette"]["anchors"][role]
+    if mode != "follow":
+        colors.update(pack["materials"])
+    else:   # the wallpaper leads, but the trim (brass, gilt, the necron alloy) is the faction's own in every mode
+        colors.update({k: v for k, v in pack["materials"].items() if k.startswith("brass")})
+    glass = colors.get("glass", "#101010")
+    for key, want in (("glow", 7.0), ("glow_dim", 4.5), ("rust_text", 4.5)):
+        if key in colors: colors[key] = readable(colors[key], glass, want)
+    return colors
+
+
+def active_pack(wanted):
+    """The pack to use and a note when it is not the one asked for. Never raises: a broken pack must not break the desk."""
+    tried = []
+    last = STATE / "theme-lastgood.json"
+    fallback = None
+    try: fallback = json.loads(last.read_text()).get("pack")
+    except (OSError, ValueError): pass
+    for pid in dict.fromkeys([wanted, fallback, ms_packs.DEFAULT_ID]):
+        if not pid: continue
+        try:
+            return ms_packs.find(pid), ("; ".join(tried) if tried else "")
+        except ms_packs.PackError as e:
+            tried.append(f"{pid}: {e}")
+    return json.loads(json.dumps(FALLBACK_PACK)), "; ".join(tried)
 
 
 def colourfulness(wallpaper):
@@ -85,6 +165,16 @@ def pick_type(wallpaper, configured):
 
 def tone(palette, t):
     return palette[str(t)]["color"] if isinstance(palette[str(t)], dict) else palette[str(t)]
+
+
+def atomic(path, text):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=path.parent)
+    try:
+        with os.fdopen(fd, "w") as f: f.write(text)
+        os.replace(tmp, path)
+    finally:
+        if os.path.exists(tmp): os.unlink(tmp)
 
 
 def materials(seed, scheme, darkness):
@@ -212,35 +302,81 @@ def reload_apps(env, selected):
         subprocess.run(["hyprctl", "reload"], env=env, capture_output=True)
 
 
+def current_wallpaper():
+    cur = STATE / "theme.json"
+    try: w = Path(json.loads(cur.read_text()).get("source_wallpaper", ""))
+    except (OSError, ValueError): w = None
+    if not w or not w.is_file(): w = DATA / "wallpapers/forge.png"
+    return w
+
+
+def choose(pack, mode, wallpaper, cfg, have_matugen):
+    """(seed, scheme, wallpaper colour) for a pack in a colour mode."""
+    pal = pack["palette"]
+    source = None
+    if mode == "faction" or not have_matugen:
+        if not have_matugen and mode != "faction":
+            say("matugen not found, using the pack's own scheme")
+        return pal["seed"], pal["scheme"], None
+    source = matugen_source(wallpaper)
+    if not source:
+        say("could not read a colour from the wallpaper, using the pack's own scheme")
+        return pal["seed"], pal["scheme"], None
+    seed = clamp_hue(source, pal) if mode == "guarded" else source
+    return seed, pick_type(wallpaper, cfg["type"]), source
+
+
+def shell_colors(pack, mode, wallpaper, cfg, out):
+    """Only what the shell reads (colors.json), written to `out`. Touches no application. Used by the preview."""
+    have = shutil.which("matugen") is not None
+    seed, scheme, _ = choose(pack, mode, wallpaper, cfg, have)
+    colors = None
+    if have:
+        work = out.parent / "matugen-preview.toml"
+        raw = out.parent / "colors.raw.json"
+        base = (DATA / "matugen/ms.toml").read_text().split("[templates.", 1)[0]
+        work.write_text(base + "\n[templates.quickshell]\ninput_path = " + json.dumps(str(DATA / "matugen/templates/colors.json"))
+                        + "\noutput_path = " + json.dumps(str(raw)) + "\n")
+        r = subprocess.run(["matugen", "color", "hex", seed, "--config", str(work), "--type", scheme, "--mode", "dark",
+                            "--lightness-dark", cfg["darkness"], "-q"], capture_output=True, text=True)
+        if r.returncode == 0 and raw.exists():
+            colors = json.loads(raw.read_text())
+            colors.update(materials(seed, scheme, cfg["darkness"]))
+        for f in (work, raw):
+            if f.exists(): f.unlink()
+        if colors is None: raise RuntimeError("matugen failed: " + r.stderr.strip()[:200])
+    else:
+        colors = json.loads((DATA / "matugen/fixed-colors.json").read_text())
+    atomic(out, json.dumps(dress(colors, pack, mode), indent=2))
+
+
 def apply_inner(args, selected, runtime):
     cfg = read_conf()
-    mode = args.mode or cfg["mode"]
+    mode = MODES.get(args.mode or cfg["mode"], "follow")
+    pack, note = active_pack(args.pack or cfg.get("pack"))
+    if note:
+        say("pack problem, using " + pack["id"] + " instead (" + note + ")")
+        if args.pack: raise ValueError("Theme pack cannot be used: " + note)
     wallpaper = Path(args.wallpaper).expanduser() if args.wallpaper else None
     if wallpaper is None:
-        cur = STATE / "theme.json"
-        wallpaper = Path(json.loads(cur.read_text()).get("source_wallpaper", "")) if cur.exists() else None
-        if not wallpaper or not wallpaper.exists():
-            wallpaper = DATA / "wallpapers/forge.png"
+        wallpaper = current_wallpaper()
     if not wallpaper.is_file():
         raise ValueError("Wallpaper does not exist: " + str(wallpaper))
     STATE.mkdir(parents=True, exist_ok=True)
     (DATA / "wallpapers").mkdir(parents=True, exist_ok=True)
 
-    have_matugen = shutil.which("matugen") is not None
-    source = None
-    if mode == "fixed" or not have_matugen:
-        if not have_matugen and mode != "fixed":
-            say("matugen not found, using the built-in scheme")
-        seed = FIXED_SEED
-    else:
-        source = matugen_source(wallpaper)
-        if not source:
-            say("could not read a colour from the wallpaper, using the built-in scheme")
-            seed = FIXED_SEED
-        else:
-            seed = clamp_hue(source) if mode == "strict" else source
+    # remember what worked before this change, so `revert` and a failed start have somewhere to go
+    prev = STATE / "theme.json"
+    try:
+        old = json.loads(prev.read_text())
+        if old.get("pack") != pack["id"] or MODES.get(old.get("mode"), "follow") != mode:
+            atomic(STATE / "theme-lastgood.json", json.dumps({"pack": old.get("pack", ms_packs.DEFAULT_ID),
+                                                               "mode": MODES.get(old.get("mode"), "follow")}))
+    except (OSError, ValueError): pass
 
-    scheme = pick_type(wallpaper, cfg["type"]) if mode != "fixed" else "scheme-tonal-spot"
+    have_matugen = shutil.which("matugen") is not None
+    seed, scheme, source = choose(pack, mode, wallpaper, cfg, have_matugen)
+    cj = STATE / "colors.json"
     if have_matugen:
         r = subprocess.run(["matugen", "color", "hex", seed, "--config", str(runtime),
                             "--type", scheme, "--mode", "dark",
@@ -249,18 +385,17 @@ def apply_inner(args, selected, runtime):
             say("matugen failed:", r.stderr.strip()[:300])
             return 1
         # forge materials go into the same colors.json the shell reads
-        cj = STATE / "colors.json"
         try:
             colors = json.loads(cj.read_text())
             colors.update(materials(seed, scheme, cfg["darkness"]))
-            cj.write_text(json.dumps(colors, indent=2))
+            atomic(cj, json.dumps(dress(colors, pack, mode), indent=2))
         except Exception as e:
             say("could not add materials:", e)
         if "terminal" in selected: repaint_emblem(cj)
     else:
         fixed = DATA / "matugen/fixed-colors.json"
         if fixed.exists():
-            shutil.copy(fixed, STATE / "colors.json")
+            cj.write_text(json.dumps(dress(json.loads(fixed.read_text()), pack, mode), indent=2))
 
     # wallpaper copy under a fresh name so the shell notices the change
     stamp = time.time_ns()
@@ -269,16 +404,37 @@ def apply_inner(args, selected, runtime):
         if wallpaper.resolve() != dst.resolve(): shutil.copy(wallpaper, dst)
     else:
         dst = None
+    atomic(STATE / "pack.json", json.dumps(pack, indent=2))
     (STATE / "theme.json").write_text(json.dumps({
-        "stamp": stamp, "mode": mode, "seed": seed, "scheme": scheme if have_matugen else "fixed", "source_color": source,
+        "stamp": stamp, "mode": LEGACY[mode], "colors": mode, "pack": pack["id"], "seed": seed,
+        "scheme": scheme if have_matugen else "fixed", "source_color": source,
         "source_wallpaper": str(wallpaper), "wallpaper": str(dst) if dst else ""}, indent=2))
 
     if "apps" in selected:
         merge_kde()
         ensure_qt()
     reload_apps(hypr_env(), selected)
-    say(f"applied: mode={mode} scheme={scheme if have_matugen else 'fixed'} seed={seed}" + (f" (wallpaper colour {source})" if source else ""))
+    say(f"applied: pack={pack['id']} mode={mode} scheme={scheme if have_matugen else 'fixed'} seed={seed}" + (f" (wallpaper colour {source})" if source else ""))
     return 0
+
+
+def save_conf(pack_id, mode):
+    """Record the choice in theme.conf, leaving every other line as the user wrote it."""
+    lines = CONF.read_text().splitlines() if CONF.exists() else []
+    want = {"pack": pack_id, "mode": mode}
+    out = []
+    for line in lines:
+        key = line.split("=", 1)[0].strip() if "=" in line and not line.strip().startswith("#") else None
+        if key in want:
+            old = line.split("=", 1)[1].strip()
+            # an old mode name that means the same thing stays as it was written
+            if key == "mode" and MODES.get(old) == want[key]: out.append(line)
+            else: out.append(f"{key} = {want[key]}")
+            del want[key]
+        else:
+            out.append(line)
+    out += [f"{k} = {v}" for k, v in want.items()]
+    atomic(CONF, "\n".join(out) + "\n")
 
 
 def apply(args):
@@ -288,7 +444,8 @@ def apply(args):
     source = (DATA / "matugen/ms.toml").read_text()
     parsed = tomllib.loads(source)
     text = source.split("[templates.", 1)[0]
-    paths = [STATE / "colors.json", STATE / "theme.json"]
+    paths = [STATE / "colors.json", STATE / "theme.json", STATE / "pack.json", STATE / "theme-lastgood.json"]
+    if args.save: paths.append(CONF)
     owners = {"hyprland":"hyprland", "kitty":"terminal", "fastfetch":"terminal", "fish":"terminal", "gtk3":"apps", "gtk4":"apps", "qt6ct":"apps", "qt5ct":"apps", "kde":"apps", "quickshell":"shell"}
     for name, template in parsed["templates"].items():
         if owners[name] not in selected: continue
@@ -310,7 +467,86 @@ def apply(args):
         with transaction(paths, STATE):
             result = apply_inner(args, selected, runtime)
             if result: raise RuntimeError("Theme generation failed; original files restored")
+            if args.save:
+                done = json.loads((STATE / "theme.json").read_text())
+                save_conf(done["pack"], done["colors"])
+    end_preview()
     return 0
+
+
+def packs(_):
+    cfg = read_conf()
+    rows = []
+    for e in ms_packs.catalogue():
+        p = e["pack"] or {}
+        rows.append({"id": e["id"], "builtin": e["builtin"], "ok": e["ok"], "error": e["error"],
+                     "name": p.get("name", e["id"]), "tagline": p.get("tagline", ""), "author": p.get("author", ""),
+                     "version": p.get("version", ""), "kit": p.get("kit", ""), "preview": p.get("preview", ""),
+                     "wallpapers": p.get("wallpapers", []), "seed": p.get("palette", {}).get("seed", ""),
+                     "anchors": p.get("palette", {}).get("anchors", {}), "materials": p.get("materials", {})})
+    active = ms_packs.DEFAULT_ID; mode = MODES.get(cfg["mode"], "follow")
+    try:
+        t = json.loads((STATE / "theme.json").read_text())
+        active = t.get("pack", active)      # the pack is what is on screen; the mode is the user's choice in theme.conf, which the next apply uses
+    except (OSError, ValueError): pass
+    print(json.dumps({"packs": rows, "active": active, "mode": mode, "previewSeconds": PREVIEW_SECONDS}))
+    return 0
+
+
+def end_preview(token=None):
+    """Drop the preview. With a token: only if that very preview is still the one showing."""
+    meta = PREVIEW / "meta.json"
+    if token:
+        try:
+            if json.loads(meta.read_text()).get("token") != token: return
+        except (OSError, ValueError): return
+    for name in ("meta.json", "colors.json", "pack.json"):       # meta first: the shell lets go before the data disappears
+        try: (PREVIEW / name).unlink()
+        except OSError: pass
+
+
+def preview(args):
+    """Show a pack in the running shell only. Nothing under ~/.config or the state folder is written."""
+    try:
+        pack = ms_packs.find(args.pack_id)
+    except ms_packs.PackError as e:
+        print(json.dumps({"error": str(e)})); return 1
+    cfg = read_conf()
+    mode = MODES.get(args.mode or cfg["mode"], "follow")
+    PREVIEW.mkdir(parents=True, exist_ok=True); os.chmod(RUNTIME, 0o700)
+    token = os.urandom(8).hex()
+    try:
+        end_preview()
+        shell_colors(pack, mode, current_wallpaper(), cfg, PREVIEW / "colors.json")
+        atomic(PREVIEW / "pack.json", json.dumps(pack))
+        atomic(PREVIEW / "meta.json", json.dumps({"token": token, "pack": pack["id"], "mode": mode,
+                                                  "expires": int(time.time()) + args.seconds}))
+    except Exception as e:
+        end_preview()
+        print(json.dumps({"error": "Preview failed: " + str(e)[:200]})); return 1
+    # the watchdog outlives a crashed shell: the preview ends on time whether or not anyone is there to end it
+    subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "preview-watchdog", token, str(args.seconds + 2)],
+                     start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
+    print(json.dumps({"preview": pack["id"], "mode": mode, "token": token, "seconds": args.seconds}))
+    return 0
+
+
+def preview_end(_):
+    end_preview(); print(json.dumps({"ended": True})); return 0
+
+
+def preview_watchdog(args):
+    time.sleep(args.seconds); end_preview(args.token); return 0
+
+
+def revert(args):
+    """Back to the last theme that worked (pack and colour mode). The wallpaper stays."""
+    try: last = json.loads((STATE / "theme-lastgood.json").read_text())
+    except (OSError, ValueError): last = {"pack": ms_packs.DEFAULT_ID, "mode": "follow"}
+    args.pack, args.mode, args.wallpaper, args.save = last.get("pack", ms_packs.DEFAULT_ID), last.get("mode", "follow"), None, True
+    try: ms_packs.find(args.pack)
+    except ms_packs.PackError: args.pack = ms_packs.DEFAULT_ID
+    return apply(args)
 
 
 def status(_):
@@ -322,14 +558,27 @@ def status(_):
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
-    a = sub.add_parser("apply", help="apply a wallpaper")
+    a = sub.add_parser("apply", help="apply a wallpaper and/or a theme pack")
     a.add_argument("wallpaper", nargs="?")
-    a.add_argument("--mode", choices=["follow", "strict", "fixed"])
+    a.add_argument("--mode", choices=sorted(MODES))
+    a.add_argument("--pack")
+    a.add_argument("--save", action="store_true", help="record the pack and mode in theme.conf")
     a.set_defaults(fn=apply)
+    sub.add_parser("packs").set_defaults(fn=packs)
+    v = sub.add_parser("preview")
+    v.add_argument("pack_id"); v.add_argument("--mode", choices=sorted(MODES))
+    v.add_argument("--seconds", type=int, default=PREVIEW_SECONDS, choices=range(5, 121), metavar="5..120")
+    v.set_defaults(fn=preview)
+    sub.add_parser("preview-end").set_defaults(fn=preview_end)
+    w = sub.add_parser("preview-watchdog"); w.add_argument("token"); w.add_argument("seconds", type=int); w.set_defaults(fn=preview_watchdog)
+    sub.add_parser("revert").set_defaults(fn=revert)
     s = sub.add_parser("status")
     s.set_defaults(fn=status)
     args = p.parse_args()
-    sys.exit(args.fn(args))
+    try:
+        sys.exit(args.fn(args))
+    except ValueError as e:
+        say(str(e)); sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -25,12 +25,11 @@ Item {
         Popups.toggle(name, p.x + Theme.barMargin, QsWindow.window?.screen?.name ?? "")
     }
 
-    Rectangle {   // hover light on the metal
+    Face {   // hover light on the metal
         anchors { fill: parent; margins: -2 }
         radius: 6
-        color: Theme.glow
-        opacity: root.active ? 0.14 : (ma.containsMouse && root.interactive ? 0.08 : 0)
-        Behavior on opacity { NumberAnimation { duration: Theme.dShort } }
+        level: root.active ? 0.14 : (ma.containsMouse && root.interactive ? 0.08 : 0)
+        hovered: ma.containsMouse && root.interactive; pressed: ma.pressed && root.interactive; on: root.active
     }
     Item { id: holder; anchors.fill: parent }
     MouseArea {

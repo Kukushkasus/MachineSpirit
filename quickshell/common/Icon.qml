@@ -9,7 +9,7 @@ Text {
     property bool fill: false
     text: name
     color: Theme.surfaceVariantOn
-    font { family: Theme.fontIcon; pixelSize: size; variableAxes: { "FILL": fill ? 1 : 0, "wght": 400, "opsz": Math.min(48, Math.max(20, size)) } }
+    font { family: Skin.fontIcon; pixelSize: size; variableAxes: { "FILL": fill ? 1 : 0, "wght": Skin.iconWeight, "opsz": Math.min(48, Math.max(20, size)) } }
     renderType: Text.NativeRendering
     verticalAlignment: Text.AlignVCenter
 }

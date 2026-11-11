@@ -89,7 +89,7 @@ Item {
     Timer {
         // the interval is set after each tick, not bound: a binding would restart the timer on every CPU sample
         interval: 1200; repeat: true
-        running: root.spin && !Theme.lowPower && root.visible
+        running: root.spin && Theme.motionEnabled && root.visible
         onTriggered: {
             interval = root.tickEvery
             const a = root.at, s = root.step, r = Math.random()

@@ -6,7 +6,7 @@ import qs.services
 
 Instrument {
     id: root
-    title: "Chronometer"; serial: "01 / LOCAL"; corner: 22
+    title: Theme.lex("clock", "Chronometer"); serial: "01 / LOCAL"; corner: 22
     SystemClock { id: clock; precision: DesktopWidgets.state.seconds ? SystemClock.Seconds : SystemClock.Minutes }
     Row {
         anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: -3 }

@@ -1,9 +1,17 @@
 // [ PURITY SEAL ] Keep the signal clear. Preserve the entrusted work.
 import QtQuick
-import QtQuick.Shapes
 import qs.common
+import qs.skins.mechanicus as Me
+import qs.skins.ultramarines as Um
+import qs.skins.necrons as Ne
+import qs.skins.khorne as Kh
 
-// Cogitator screen: dark glass, faint scanlines, vignette. Put glowing content inside.
+// The screen inside a housing. Put glowing content inside. The livery (Skin.screen) draws the glass:
+//   mechanicus    a cogitator CRT: scanlines, opens from a bright line and a sweep runs down it
+//   ultramarines  a tactical display: blue glass, a fine grid, a ruler and gold brackets, wipes on from the left
+//   necrons       phase glass: near black, circuit traces, glyphs in the margin, a cold light rising; phases in
+//   khorne        iron lit by a forge: an ember glow at the foot, a deep shadow under the lip; lands heavily
+// The glass is drawn in two layers, under and over the content; the content itself is never rebuilt.
 Item {
     id: root
     default property alias content: inner.data
@@ -15,73 +23,47 @@ Item {
     // a live screen: now and then it flickers like a lamp or a scan wave rolls down it. Turn off where the
     // screen is only a background and a Flicker sits on top of the content instead.
     property bool ambient: true
+    // the Cogitator's own screens set this: their noise follows the real processor load
+    property bool loadNoise: false
 
     // power-on: the picture opens from a bright horizontal line, then a scanline sweeps down
     property real boot: 1
+    property real sweep: 1
+    readonly property bool booting: bootAnim.running
+    readonly property string kit: Skin.screen
     function powerOn() { if (!Theme.motionEnabled) return; bootAnim.restart() }
     Component.onCompleted: if (bootOnLoad) powerOn()
     SequentialAnimation {
         id: bootAnim
-        NumberAnimation { target: root; property: "boot"; from: 0; to: 1; duration: 300; easing.type: Easing.OutCubic }
-        NumberAnimation { target: sweep; property: "y"; from: 0; to: root.height; duration: 380; easing.type: Easing.InOutSine }
+        NumberAnimation { target: root; property: "boot"; from: 0; to: 1
+            duration: root.kit === "necrons" ? 420 : root.kit === "khorne" ? 380 : root.kit === "ultramarines" ? 200 : 300
+            easing.type: root.kit === "necrons" ? Easing.InOutSine : root.kit === "khorne" ? Easing.OutQuint : Easing.OutCubic }
+        NumberAnimation { target: root; property: "sweep"; from: 0; to: 1; duration: root.kit === "mechanicus" ? 380 : root.kit === "ultramarines" ? 260 : 1; easing.type: Easing.InOutSine }
     }
 
-    Rectangle {   // recessed glass
-        anchors.fill: parent
-        radius: root.radius
-        color: Theme.glass
-        border { width: 1; color: Qt.alpha(Theme.metalLo, 0.9) }
-    }
-    Shape {       // vignette: lighter centre, dark rim
-        anchors { fill: parent; margins: 1 }
-        ShapePath {
-            strokeColor: "transparent"
-            fillGradient: RadialGradient {
-                centerX: root.width / 2; centerY: root.height * 0.45
-                centerRadius: Math.max(root.width, root.height) * 0.7
-                focalX: centerX; focalY: centerY
-                GradientStop { position: 0; color: Qt.alpha(Theme.glowFaint, 0.18) }
-                GradientStop { position: 1; color: Qt.alpha("black", 0.35) }
-            }
-            startX: root.radius; startY: 0
-            PathLine { x: root.width - 2 - root.radius; y: 0 }
-            PathArc { x: root.width - 2; y: root.radius; radiusX: root.radius; radiusY: root.radius }
-            PathLine { x: root.width - 2; y: root.height - 2 - root.radius }
-            PathArc { x: root.width - 2 - root.radius; y: root.height - 2; radiusX: root.radius; radiusY: root.radius }
-            PathLine { x: root.radius; y: root.height - 2 }
-            PathArc { x: 0; y: root.height - 2 - root.radius; radiusX: root.radius; radiusY: root.radius }
-            PathLine { x: 0; y: root.radius }
-            PathArc { x: root.radius; y: 0; radiusX: root.radius; radiusY: root.radius }
-        }
+    Loader {
+        anchors.fill: parent; enabled: false
+        sourceComponent: root.kit === "ultramarines" ? umU : root.kit === "necrons" ? neU : root.kit === "khorne" ? khU : meU
     }
     Item {
         id: inner
         anchors { fill: parent; margins: root.padding }
-        opacity: Math.min(1, root.boot * 1.6)
-        transform: Scale { origin.y: inner.height / 2; yScale: Math.max(0.02, root.boot) }
+        opacity: root.kit === "mechanicus" ? Math.min(1, root.boot * 1.6) : root.boot
+        transform: Scale { origin.x: inner.width / 2; origin.y: inner.height / 2
+            xScale: root.kit === "khorne" ? 1.03 - 0.03 * root.boot : 1
+            yScale: root.kit === "mechanicus" ? Math.max(0.02, root.boot) : root.kit === "khorne" ? 1.03 - 0.03 * root.boot : 1 }
     }
-    Rectangle {   // the power-on line
-        anchors.verticalCenter: parent.verticalCenter
-        x: root.width * 0.5 * (1 - Math.min(1, root.boot * 3)); width: root.width * Math.min(1, root.boot * 3)
-        height: 2; color: Theme.glow
-        opacity: root.boot < 1 ? 1 - root.boot : 0
-    }
-    Rectangle { id: sweep; width: root.width; height: 3; y: root.height + 4; color: Qt.alpha(Theme.glow, 0.18); visible: bootAnim.running }
-    Image {       // scanlines over the content
-        visible: root.scanlines
-        anchors { fill: parent; margins: 1 }
-        source: Qt.resolvedUrl("../assets/scanlines.svg")
-        fillMode: Image.Tile
-        opacity: 0.22
-        smooth: false
+    Loader {
+        anchors.fill: parent; enabled: false
+        sourceComponent: root.kit === "ultramarines" ? umO : root.kit === "necrons" ? neO : root.kit === "khorne" ? khO : meO
     }
     Flicker { anchors.fill: parent; radius: root.radius; active: root.ambient }
-    Rectangle {   // glass sheen
-        anchors { left: parent.left; right: parent.right; top: parent.top; margins: 2 }
-        height: parent.height * 0.4; radius: root.radius
-        gradient: Gradient {
-            GradientStop { position: 0; color: Qt.rgba(1, 1, 1, 0.05) }
-            GradientStop { position: 1; color: "transparent" }
-        }
-    }
+    Component { id: meU; Me.Glass { host: root; over: false } }
+    Component { id: meO; Me.Glass { host: root; over: true } }
+    Component { id: umU; Um.Glass { host: root; over: false } }
+    Component { id: umO; Um.Glass { host: root; over: true } }
+    Component { id: neU; Ne.Glass { host: root; over: false } }
+    Component { id: neO; Ne.Glass { host: root; over: true } }
+    Component { id: khU; Kh.Glass { host: root; over: false } }
+    Component { id: khO; Kh.Glass { host: root; over: true } }
 }

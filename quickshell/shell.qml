@@ -18,6 +18,7 @@ import qs.modules.lock
 import qs.modules.wallpapers
 import qs.modules.sanctum
 import qs.services
+import qs.common
 import QtQuick
 
 ShellRoot {
@@ -28,8 +29,19 @@ ShellRoot {
     SettingsWindow {}
     Startup {}
     LockScreen { id: lockScreen }
-    IpcHandler { target: "settings"; function toggle(): void { Settings.toggle(false) } function setup(): void { Privacy.restartSetup() } }
+    IpcHandler { target: "settings"; function toggle(): void { Settings.toggle(false) } function setup(): void { Privacy.restartSetup() } function page(index: int): void { Settings.openPage(index) } }
     IpcHandler { target: "manual"; function toggle(): void { Settings.toggle(true) } }
+    // theme packs: preview is temporary, apply is permanent and waits for the unlock when the screen is locked
+    Binding { target: ThemePacks; property: "locked"; value: lockScreen.held }
+    IpcHandler {
+        target: "theme"
+        function preview(id: string): void { ThemePacks.preview(id, "") }
+        function apply(id: string): void { ThemePacks.apply(id, "") }
+        function keep(): void { ThemePacks.apply("", "") }
+        function cancel(): void { ThemePacks.cancel() }
+        function revert(): void { ThemePacks.revert() }
+        function state(): string { return JSON.stringify({active: ThemePacks.active, mode: ThemePacks.mode, preview: ThemePacks.previewId, countdown: ThemePacks.countdown, kit: Theme.kit, pending: ThemePacks.pending, error: ThemePacks.error, status: ThemePacks.status}) }
+    }
     Wallpaper {}
     Desktop {}
     Bar {}
@@ -58,7 +70,7 @@ ShellRoot {
     GlobalShortcut {
         appid: "machinespirit"; name: "superTap"
         onReleased: {
-            if (root.superTapArmed && Date.now() - root.superDownAt < 600) Launcher.toggle()
+            if (root.superTapArmed && Settings.data.superTap !== false && Date.now() - root.superDownAt < 600) Launcher.toggle()
             root.superTapArmed = false
         }
     }

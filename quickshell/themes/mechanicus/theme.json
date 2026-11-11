@@ -1,0 +1,102 @@
+{
+  "schema": 2,
+  "id": "mechanicus",
+  "name": "Adeptus Mechanicus",
+  "tagline": "Forged metal, brass, cogitator glass. The machine is old and it is awake.",
+  "author": "MachineSpirit",
+  "version": "1.0",
+  "kit": "mechanicus",
+  "skin": {
+    "frame": "mechanicus",
+    "card": "mechanicus",
+    "control": "mechanicus",
+    "screen": "mechanicus",
+    "bar": "mechanicus",
+    "instrument": "mechanicus",
+    "glyph": "mechanicus",
+    "type": "mechanicus"
+  },
+  "palette": {
+    "seed": "#b0702a",
+    "band": [
+      6,
+      46
+    ],
+    "accept": [
+      350,
+      52
+    ],
+    "lightness": [
+      0.38,
+      0.62
+    ],
+    "minSaturation": 0.45,
+    "scheme": "scheme-tonal-spot",
+    "anchors": {
+      "energy": "#5ab8ff",
+      "danger": "#9a2a1a",
+      "dangerText": "#ef6a50",
+      "warn": "#e0a800",
+      "seal": "#8e1b14",
+      "trimLight": "#f0cf7a",
+      "trimDark": "#8d6a27"
+    }
+  },
+  "materials": {},
+  "lexicon": {
+    "panelTitle": "SANCTUM",
+    "busTitle": "VOX",
+    "logTitle": "VOX LOG",
+    "logEmpty": "++ VOX LOG CLEAR ++",
+    "logCleared": "++ RITE OF PURGE COMPLETE ++",
+    "counter": "MSG",
+    "uptime": "VIGIL",
+    "launcherTitle": "COMMAND CONSOLE",
+    "powerTitle": "RITE OF DEPARTURE",
+    "archiveTitle": "PICT ARCHIVE",
+    "clock": "Chronometer",
+    "weather": "Augury",
+    "resources": "Cogitator",
+    "media": "Vox",
+    "notes": "Memorandum",
+    "greeting": "++ THE MACHINE SPIRIT WAKES ++",
+    "updated": "++ RITE OF RENEWAL COMPLETE ++",
+    "restarted": "++ COGITATORS REKINDLED ++",
+    "motto": "From the weakness of the mind, Omnissiah save us"
+  },
+  "litanies": [
+    "Bless this cogitator",
+    "The spirit is willing",
+    "Praise the sacred circuit",
+    "Knowledge is power, guard it well",
+    "Let the current flow true"
+  ],
+  "motion": {
+    "character": "mechanical",
+    "scale": 1,
+    "overshoot": 2.4
+  },
+  "effects": {
+    "discharge": [
+      3.5,
+      8.5
+    ],
+    "screenLife": [
+      40,
+      120
+    ],
+    "particles": true,
+    "messages": true,
+    "glyphs": [
+      90,
+      240
+    ]
+  },
+  "wallpapers": [
+    {
+      "file": "wallpapers/temple.jpg",
+      "name": "Machine temple"
+    }
+  ],
+  "preview": "preview.jpg"
+}

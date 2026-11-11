@@ -65,13 +65,18 @@ Item {
             }
             Connections { target: surface.owner; function onErrorChanged() { if (surface.owner.error !== "" && Theme.motionEnabled) shake.restart() } }
 
+            // the housing: Mechanicus keeps its riveted instrument case; the other liveries build it as one of their windows
+            readonly property bool plain: Skin.frame === "mechanicus"
+            Bezel { visible: !panel.plain; anchors.fill: parent; radius: 16 * surface.u; inset: 0; role: "window"; bolts: false }
+            CrtScreen { visible: !panel.plain; anchors { fill: parent; margins: 8 * surface.u } radius: 11 * surface.u; padding: 0; bootOnLoad: false; ambient: false; scanlines: false }
             Rectangle {   // housing
+                visible: panel.plain
                 anchors.fill: parent; radius: 12 * surface.u; color: Qt.alpha(Theme.surfaceContainer, 0.94)
                 border { width: Math.max(2, 3 * surface.u); color: Theme.metalEdge }
             }
-            Rectangle { anchors { fill: parent; margins: 6 * surface.u } radius: 8 * surface.u; color: "transparent"; border { width: 1; color: Theme.metal } }
+            Rectangle { visible: panel.plain; anchors { fill: parent; margins: 6 * surface.u } radius: 8 * surface.u; color: "transparent"; border { width: 1; color: Theme.metal } }
             Repeater {   // rivets
-                model: [[0, 0], [1, 0], [0, 1], [1, 1]]
+                model: panel.plain ? [[0, 0], [1, 0], [0, 1], [1, 1]] : []
                 Rectangle {
                     width: 6 * surface.u; height: width; radius: width / 2; color: Theme.metal; border { width: 1; color: Theme.metalEdge }
                     x: modelData[0] ? panel.width - 16 * surface.u : 10 * surface.u; y: modelData[1] ? panel.height - 16 * surface.u : 10 * surface.u
@@ -103,12 +108,13 @@ Item {
 
                 Item { width: 1; height: 2 * surface.u }
                 Txt { text: "OPERATOR"; color: Theme.outline; font.letterSpacing: 3; font.pixelSize: 11 * surface.u }
-                Txt { text: Quickshell.env("USER"); color: Theme.surfaceOn; font { family: Theme.fontNum; pixelSize: 26 * surface.u; weight: Font.DemiBold } }
+                Txt { text: Quickshell.env("USER"); color: panel.plain ? Theme.surfaceOn : Skin.type === "necrons" ? Theme.glow : Theme.brassHi
+                      font { family: panel.plain ? Theme.fontNum : Skin.display(Quickshell.env("USER")); pixelSize: 26 * surface.u * (panel.plain ? 1 : Skin.titleScale); weight: panel.plain ? Font.DemiBold : Skin.titleWeight } }
 
-                Rectangle {
-                    width: parent.width; height: 50 * surface.u; radius: 6 * surface.u; color: Qt.darker(Theme.surface, 1.25)
-                    border { width: 1; color: surface.owner.error !== "" ? Theme.error : (field.activeFocus ? Theme.glow : Theme.metal) }
-                    Behavior on border.color { ColorAnimation { duration: Theme.dShort } }
+                Item {
+                    width: parent.width; height: 50 * surface.u
+                    Face { anchors.fill: parent; radius: 6 * surface.u; solid: true; usePlain: true; on: field.activeFocus; danger: surface.owner.error !== ""
+                        plainColor: Qt.darker(Theme.surface, 1.25); plainBorder: surface.owner.error !== "" ? Theme.error : (field.activeFocus ? Theme.glow : Theme.metal) }
                     Txt { visible: field.text.length === 0 && !surface.owner.checking; anchors { verticalCenter: parent.verticalCenter; left: parent.left; leftMargin: 16 * surface.u }
                           text: "Enter passphrase"; color: Theme.outline; font.pixelSize: 17 * surface.u }
                     TextInput {

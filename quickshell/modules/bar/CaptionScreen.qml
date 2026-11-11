@@ -14,6 +14,12 @@ Item {
     property int maxWidth: 300
     implicitWidth: Math.min(maxWidth, Math.max(top.implicitWidth, bottom.implicitWidth))
     implicitHeight: 28
+    // one line in the faction's voice when the shell starts, for a few seconds; then the caption is the caption again
+    property bool greet: false
+    readonly property string greeting: greet ? Theme.lex("greeting", "") : ""
+    // a moment after start, when the pack has been read
+    Timer { interval: 1500; running: true; onTriggered: if (Theme.fxOn("messages")) { root.greet = true; greetOff.start() } }
+    Timer { id: greetOff; interval: 6000; onTriggered: root.greet = false }
     Glow {
         id: top
         y: -1; width: root.width; elide: Text.ElideRight
@@ -26,6 +32,7 @@ Item {
         y: 12; width: root.width; elide: Text.ElideRight
         halo: 0
         font { family: Theme.fontNum; pixelSize: 13; weight: Font.Medium }
-        text: root.hasWin ? root.win.title : "No machine in focus"
+        textFormat: Text.PlainText
+        text: root.greeting !== "" ? root.greeting : root.hasWin ? root.win.title : Theme.kit === "mechanicus" ? "No machine in focus" : "Nothing in focus"
     }
 }

@@ -15,7 +15,7 @@ Item {
     readonly property color boneDark: Theme.metalEdge
 
     function arrive() {
-        if (Theme.lowPower) return
+        if (!Theme.motionEnabled) return
         flyIn.restart()
     }
     ParallelAnimation {
@@ -31,8 +31,8 @@ Item {
         // hover
         SequentialAnimation {
             running: root.active && Theme.motionEnabled; loops: Animation.Infinite
-            YAnimator { target: body; from: 0; to: -1; duration: Theme.dLong0 + (root.mirror ? 500 : 0); easing.type: Easing.InOutSine }
-            YAnimator { target: body; from: -1; to: 0; duration: Theme.dLong0 + (root.mirror ? 500 : 0); easing.type: Easing.InOutSine }
+            YAnimator { target: body; from: 0; to: -1; duration: 1600 + (root.mirror ? 500 : 0); easing.type: Easing.InOutSine }
+            YAnimator { target: body; from: -1; to: 0; duration: 1600 + (root.mirror ? 500 : 0); easing.type: Easing.InOutSine }
         }
 
         Rectangle {   // clamp arm to the panel

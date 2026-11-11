@@ -16,7 +16,7 @@ DIRS = {
     'bin': {'', '.py'}, 'config': {'.json'}, 'fastfetch': {'.jsonc', '.png'}, 'fish': {'.fish'}, 'hypr': {'.lua'},
     'hypridle': {'.conf'}, 'hyprlock': {'.conf'}, 'installer': {'.py', '.json'}, 'kitty': {'.conf'},
     'matugen': {'', '.json', '.jsonc', '.toml', '.fish', '.css', '.lua', '.conf'},
-    'privacy': {'', '.py', '.policy'}, 'quickshell': {'.qml', '.svg', '.png', '.conf', '.py'},
+    'privacy': {'', '.py', '.policy'}, 'quickshell': {'.qml', '.svg', '.png', '.jpg', '.conf', '.py', '.json'}, 'quickshell/assets/fonts': {'.ttf', '.txt'},
     'assets/fonts': {'.ttf', '.txt'}, 'assets/plymouth': {'.plymouth', '.script'}, 'assets/sddm': {'.qml', '.conf', '.desktop', '.png', '.ttf', '.txt'}, 'assets/wallpapers': {'.png'}, 'docs': {'.md'},
 }
 # Safety net inside the allowed directories: never ship runtime state, credentials or private images.
@@ -52,4 +52,6 @@ def build(root=None, out=None):
     return archive, sha
 
 if __name__ == '__main__':
-    archive, sha = build(); print(archive); print(sha)
+    import sys
+    # an output folder may be given; the default .dist also holds reference archives used by the tests
+    archive, sha = build(out=sys.argv[1] if len(sys.argv) > 1 else None); print(archive); print(sha)

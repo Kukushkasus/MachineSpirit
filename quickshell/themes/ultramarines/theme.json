@@ -1,0 +1,111 @@
+{
+  "schema": 2,
+  "id": "ultramarines",
+  "name": "Ultramarines",
+  "tagline": "Enamelled armour, gilt trim, exact lines. Everything in its place and ready.",
+  "author": "MachineSpirit",
+  "version": "1.0",
+  "kit": "ultramarines",
+  "skin": {
+    "frame": "ultramarines",
+    "card": "ultramarines",
+    "control": "ultramarines",
+    "screen": "ultramarines",
+    "bar": "ultramarines",
+    "instrument": "ultramarines",
+    "glyph": "ultramarines",
+    "type": "ultramarines"
+  },
+  "palette": {
+    "seed": "#2f5fb3",
+    "band": [
+      208,
+      232
+    ],
+    "accept": [
+      200,
+      240
+    ],
+    "lightness": [
+      0.36,
+      0.58
+    ],
+    "minSaturation": 0.5,
+    "scheme": "scheme-tonal-spot",
+    "anchors": {
+      "energy": "#bfe3ff",
+      "danger": "#a4161a",
+      "dangerText": "#ff7a66",
+      "warn": "#e8b923",
+      "seal": "#a4161a",
+      "trimLight": "#f2d27a",
+      "trimDark": "#9a7422"
+    }
+  },
+  "materials": {
+    "metal_lo": "#0f1a31",
+    "metal": "#1b2d52",
+    "metal_hi": "#2d4a80",
+    "metal_edge": "#7d97c8",
+    "brass_lo": "#6b4e12",
+    "brass": "#c9a03f",
+    "brass_hi": "#f3d98a",
+    "glass": "#060b17",
+    "glass_hi": "#0c1526",
+    "glow": "#f4dfa4",
+    "glow_dim": "#cfa94e",
+    "glow_faint": "#5a4819"
+  },
+  "lexicon": {
+    "panelTitle": "COMMAND",
+    "busTitle": "VOX",
+    "logTitle": "DISPATCHES",
+    "logEmpty": "NO DISPATCHES",
+    "logCleared": "DISPATCHES FILED",
+    "counter": "MSG",
+    "uptime": "WATCH",
+    "launcherTitle": "COMMAND CONSOLE",
+    "powerTitle": "STAND DOWN",
+    "archiveTitle": "PICT ARCHIVE",
+    "clock": "Chronometer",
+    "weather": "Auspex",
+    "resources": "Strategium",
+    "media": "Vox",
+    "notes": "Orders",
+    "greeting": "ALL STATIONS READY",
+    "updated": "REFIT COMPLETE",
+    "restarted": "SYSTEMS RESTORED",
+    "motto": "Courage and honour"
+  },
+  "litanies": [
+    "All stations report ready",
+    "Hold the line",
+    "By the book",
+    "Discipline is strength"
+  ],
+  "motion": {
+    "character": "precise",
+    "scale": 0.85,
+    "overshoot": 0
+  },
+  "effects": {
+    "discharge": [
+      18,
+      40
+    ],
+    "screenLife": [
+      50,
+      130
+    ],
+    "particles": true,
+    "messages": true,
+    "glyphs": false
+  },
+  "wallpapers": [
+    {
+      "file": "wallpapers/bridge.jpg",
+      "name": "Command bridge"
+    }
+  ],
+  "preview": "preview.jpg"
+}

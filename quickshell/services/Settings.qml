@@ -24,6 +24,11 @@ Singleton {
     property string operation: "read"
     property string payload: ""
     property int countdown: 0
+    // search: the title of the control that was looked for. It lights up and asks to be scrolled into view.
+    property string sought: ""
+    signal reveal(var item)
+    signal showPage(int index)
+    function openPage(index) { if (!open) toggle(false); showPage(index) }
     function clone(value) { return JSON.parse(JSON.stringify(value)) }
     function set(key, value) { const d = clone(draft); d[key] = value; draft = d; status = ""; error = "" }
     function patch(values) { draft = Object.assign({}, draft, values); status = ""; error = "" }

@@ -51,7 +51,11 @@ def keys():
 def folders():
     f = CONF / "wallpapers.conf"
     dirs = [Path(l.strip()).expanduser() for l in f.read_text().splitlines() if l.strip() and not l.startswith("#")] if f.exists() else []
-    return dirs or [SAVE_DIR, Path(os.environ.get("XDG_DATA_HOME", HOME / ".local/share")) / "machinespirit/wallpapers"]
+    if dirs: return dirs
+    # the default sources: your saved pictures, the shell's own wallpapers, and those that come with the
+    # built-in theme packs (each pack keeps its wallpapers in its own folder, so they are never copied twice)
+    packs = sorted((CONF.parent / "quickshell/machinespirit/themes").glob("*/wallpapers"))
+    return [SAVE_DIR, Path(os.environ.get("XDG_DATA_HOME", HOME / ".local/share")) / "machinespirit/wallpapers", *packs]
 
 
 def get_json(url, headers=None, timeout=25):

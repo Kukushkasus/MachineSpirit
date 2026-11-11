@@ -32,6 +32,7 @@ Row {
     }
 
     Repeater {
+        id: keys
         model: root.count
         Item {
             id: key
@@ -39,33 +40,25 @@ Row {
             readonly property int wsId: root.first + index
             readonly property bool focused: root.cur === wsId
             readonly property bool occupied: Hyprland.toplevels.values.some(t => (t.workspace?.id ?? -1) === wsId)
-            width: 23; height: 24
+            width: Math.max(23, numeral.implicitWidth + 9); height: 24
             onFocusedChanged: if (focused && Theme.motionEnabled) thunk.restart()
             SequentialAnimation { id: thunk
                 NumberAnimation { target: key; property: "scale"; to: 0.88; duration: 70 }
                 NumberAnimation { target: key; property: "scale"; to: 1; duration: Theme.dMedium; easing.type: Easing.OutCubic } }
             anchors.verticalCenter: parent.verticalCenter
 
-            Rectangle {   // only the engaged key has a cap: glass under a brass rim
-                anchors.fill: parent
-                radius: 5
-                color: Theme.glass
-                border { width: 1; color: Theme.glow }
-                opacity: key.focused ? 1 : (ma.containsMouse ? 0.35 : 0)
-                Behavior on opacity { NumberAnimation { duration: Theme.dShort } }
-            }
+            Mark { anchors.fill: parent; focused: key.focused; hovered: ma.containsMouse; occupied: key.occupied }
             Glow {
+                id: numeral
                 anchors.centerIn: parent
-                text: root.numerals[key.wsId - 1]
-                halo: key.focused ? 0.9 : 0
-                color: key.focused ? Theme.glow : (key.occupied ? Theme.glowDim : Theme.glowFaint)
-                font { family: Theme.fontNum; pixelSize: key.wsId > 6 ? 11 : 13; weight: Font.DemiBold }
-            }
-            Rectangle {   // something lives here
-                visible: key.occupied && !key.focused
-                anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 1 }
-                width: 3; height: 3; radius: 1.5
-                color: Theme.glowDim
+                // Roman numerals, except on necron glass, which counts in its own wide figures
+                text: Skin.glyph === "necrons" ? String(key.wsId % 10) : root.numerals[key.wsId - 1]
+                halo: key.focused && Skin.glyph !== "ultramarines" ? 0.9 : 0
+                // the gold shield takes dark engraving
+                color: key.focused ? (Skin.glyph === "ultramarines" ? Qt.darker(Theme.brassLo, 1.9) : Skin.glyph === "khorne" ? Theme.brassHi : Theme.glow)
+                     : (key.occupied ? Theme.glowDim : Theme.glowFaint)
+                font { family: Skin.glyph === "mechanicus" ? Theme.fontNum : Skin.display(numeral.text); pixelSize: Skin.glyph === "necrons" ? 10 : 12
+                       weight: Skin.glyph === "khorne" ? Font.Black : Font.DemiBold }
             }
             MouseArea { id: ma; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.go(key.wsId); onWheel: event => root.roll(event) }
         }
@@ -82,7 +75,7 @@ Row {
             y: parent.height + 2; width: 8; height: 2; radius: 1
             color: Theme.glow
             opacity: 0
-            x: parent.slot * 24 + 7 - root.width
+            x: (keys.itemAt(parent.slot)?.x ?? 0) + ((keys.itemAt(parent.slot)?.width ?? 23) - width) / 2 - root.width
             Behavior on x { enabled: Theme.motionEnabled; SequentialAnimation {
                 ScriptAction { script: sparkFade.restart() }
                 XAnimator { duration: Theme.dLong; easing.type: Easing.OutCubic }

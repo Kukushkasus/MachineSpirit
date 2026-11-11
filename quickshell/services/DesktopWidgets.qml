@@ -8,7 +8,7 @@ import qs.common
 Singleton {
     id: root
     readonly property var catalog: [
-        {key: "clock", name: "Chronometer", w: 300, h: 132},
+        {key: "clock", name: "Chronometer", w: 320, h: 132},
         {key: "weather", name: "Augury", w: 320, h: 230},
         {key: "resources", name: "Cogitator", w: 360, h: 220},
         {key: "media", name: "Vox", w: 360, h: 210},

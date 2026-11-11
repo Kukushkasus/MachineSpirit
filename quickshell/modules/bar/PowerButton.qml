@@ -16,9 +16,8 @@ BarButton {
         anchors.centerIn: parent; width: 22; height: 22
         scale: root.pressed ? 0.88 : 1
         Behavior on scale { NumberAnimation { duration: 90 } }
-        Rectangle { anchors.fill: parent; radius: 11; color: Qt.alpha(Theme.rustText, root.hovered ? 0.2 : 0.06)
-            border { width: 1.4; color: Qt.alpha(Theme.rustText, root.hovered ? 1 : 0.7) }
-            Behavior on color { ColorAnimation { duration: Theme.dShort } } }
+        Face { anchors.fill: parent; round: true; tone: Theme.rustText; danger: true; level: root.hovered ? 0.2 : 0.06; edge: root.hovered ? 1 : 0.7; edgeWidth: 1.4
+            hovered: root.hovered; pressed: root.pressed; on: true }
         Icon { anchors.centerIn: parent; name: "power_settings_new"; size: 14; color: Theme.rustText }
     }
 }

@@ -13,7 +13,7 @@ Canvas {
     anchors.fill: parent
     visible: life > 0
 
-    function fire() { if (Theme.lowPower) return; life = 1; anim.restart() }
+    function fire() { if (!Theme.fxOn("particles")) return; life = 1; anim.restart() }
     NumberAnimation { id: anim; target: root; property: "life"; from: 1; to: 0; duration: 340; easing.type: Easing.OutQuad }
     onLifeChanged: requestPaint()
 

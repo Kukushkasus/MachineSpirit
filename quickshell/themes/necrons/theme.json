@@ -1,0 +1,114 @@
+{
+  "schema": 2,
+  "id": "necrons",
+  "name": "Necrons",
+  "tagline": "Ancient metal, cold geometry, emerald light. It was here before you and it does not hurry.",
+  "author": "MachineSpirit",
+  "version": "1.0",
+  "kit": "necrons",
+  "skin": {
+    "frame": "necrons",
+    "card": "necrons",
+    "control": "necrons",
+    "screen": "necrons",
+    "bar": "necrons",
+    "instrument": "necrons",
+    "glyph": "necrons",
+    "type": "necrons"
+  },
+  "palette": {
+    "seed": "#1fae5b",
+    "band": [
+      135,
+      160
+    ],
+    "accept": [
+      125,
+      170
+    ],
+    "lightness": [
+      0.34,
+      0.56
+    ],
+    "minSaturation": 0.55,
+    "scheme": "scheme-tonal-spot",
+    "anchors": {
+      "energy": "#39ff9c",
+      "danger": "#b13a22",
+      "dangerText": "#ff8a6b",
+      "warn": "#d9c94a",
+      "seal": "#b13a22",
+      "trimLight": "#b9c6c2",
+      "trimDark": "#5a6462"
+    }
+  },
+  "materials": {
+    "metal_lo": "#090c0b",
+    "metal": "#131816",
+    "metal_hi": "#242c29",
+    "metal_edge": "#5f6e69",
+    "brass_lo": "#2a3331",
+    "brass": "#6f7d79",
+    "brass_hi": "#b9c6c2",
+    "glass": "#030605",
+    "glass_hi": "#08100c",
+    "glow": "#7dffb7",
+    "glow_dim": "#2fd47f",
+    "glow_faint": "#0d5a37"
+  },
+  "lexicon": {
+    "panelTitle": "NEXUS",
+    "busTitle": "SIGNAL",
+    "logTitle": "RECORD",
+    "logEmpty": "THE RECORD IS SILENT",
+    "logCleared": "THE RECORD IS EMPTIED",
+    "counter": "MSG",
+    "uptime": "WAKING",
+    "launcherTitle": "COMMAND NODE",
+    "powerTitle": "STASIS",
+    "archiveTitle": "IMAGE VAULT",
+    "clock": "Chronometer",
+    "weather": "Atmosphere",
+    "resources": "Core",
+    "media": "Signal",
+    "notes": "Inscription",
+    "greeting": "THE SLEEPER WAKES",
+    "updated": "PROTOCOLS RENEWED",
+    "restarted": "NODES REALIGNED",
+    "motto": "Time is an inconvenience"
+  },
+  "litanies": [
+    "Protocols nominal",
+    "The long sleep is over",
+    "Aeons are patient",
+    "All nodes aligned"
+  ],
+  "motion": {
+    "character": "phase",
+    "scale": 1.25,
+    "overshoot": 0
+  },
+  "effects": {
+    "discharge": [
+      9,
+      22
+    ],
+    "screenLife": [
+      45,
+      120
+    ],
+    "particles": true,
+    "messages": true,
+    "glyphs": [
+      60,
+      180
+    ]
+  },
+  "wallpapers": [
+    {
+      "file": "wallpapers/tomb.jpg",
+      "name": "Tomb plain"
+    }
+  ],
+  "preview": "preview.jpg"
+}

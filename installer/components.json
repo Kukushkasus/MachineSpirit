@@ -24,7 +24,8 @@
       "libnotify",
       "ttf-jetbrains-mono-nerd",
       "ttf-material-symbols-variable",
-      "gost"
+      "gost",
+      "hyprsunset"
     ]
   },
   "hyprland": {

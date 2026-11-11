@@ -3,7 +3,7 @@ import QtQuick
 import qs.common
 import qs.services
 Instrument {
-    title: "Augury"; serial: "02 / ATMOS"; corner: 10
+    title: Theme.lex("weather", "Augury"); serial: "02 / ATMOS"; corner: 10
     Text { textFormat: Text.PlainText; width: parent.width - 52; text: Weather.ready ? Weather.area : "Weather unavailable"; elide: Text.ElideRight; color: Theme.glowDim; font { family: Theme.fontNum; pixelSize: 12 } }
     Icon { anchors.right: parent.right; y: 16; name: Weather.icon; size: 45; color: Theme.glow }
     Text { textFormat: Text.PlainText; y: 16; text: Weather.ready ? Math.round(Weather.temp) + "°" : "—"; color: Theme.glow; font { family: Theme.fontNum; pixelSize: 53; weight: Font.Light } }
@@ -17,5 +17,5 @@ Instrument {
             }
         }
     }
-    Text { textFormat: Text.PlainText; anchors { right: parent.right; top: parent.top } visible: Weather.stale; text: "SAVED"; color: Theme.rustText; font { family: Theme.fontNum; pixelSize: 10 } }
+    Text { textFormat: Text.PlainText; anchors { right: parent.right; top: parent.top } visible: Weather.stale; text: "CACHED"; color: Theme.glowDim; font { family: Theme.fontNum; pixelSize: 10; letterSpacing: 1.2 } }
 }

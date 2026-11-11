@@ -3,8 +3,8 @@ import QtQuick
 import qs.common
 import qs.services
 Instrument {
-    title: "Cogitator"; serial: "03 / TELEMETRY"; corner: 8
-    Text { text: "CPU"; color: Theme.glowDim; font { family: Theme.fontNum; pixelSize: 12 } }
+    title: Theme.lex("resources", "Cogitator"); serial: "03 / TELEMETRY"; corner: 8; loadNoise: true
+    Text { text: "CPU"; color: Theme.glowDim; font { family: Theme.fontNum; pixelSize: 11 } }
     Text { anchors.right: parent.right; text: Math.round(Sys.cpu * 100) + "%"; color: Theme.glow; font { family: Theme.fontNum; pixelSize: 22 } }
     Oscillo { y: 27; width: parent.width; height: 51; values: Sys.cpuHist; max: 1 }
     Text { y: 87; text: "MEMORY"; color: Theme.glowDim; font { family: Theme.fontNum; pixelSize: 11 } }

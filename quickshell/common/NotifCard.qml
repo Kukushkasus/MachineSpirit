@@ -12,13 +12,13 @@ Item {
     readonly property bool critical: root.notif?.urgency === 2
     implicitHeight: body.implicitHeight + (compact ? 12 : 28)
 
-    Bezel { visible: !root.compact; anchors.fill: parent; radius: 10; inset: 0; boltSize: 4 }
+    Bezel { visible: !root.compact; anchors.fill: parent; radius: 10; inset: 0; boltSize: 4; role: "toast" }
     CrtScreen {
         visible: !root.compact
         anchors { fill: parent; margins: 6 }
         radius: 5; padding: 0
     }
-    Rectangle { visible: root.compact; anchors.fill: parent; radius: 4; color: Theme.glow; opacity: 0.05 }
+    SectionFrame { visible: root.compact; anchors.fill: parent; radius: 4; fill: Qt.alpha(Theme.glow, 0.05); rim: "transparent" }
     Row {
         id: body
         x: root.compact ? 8 : 16; y: root.compact ? 6 : 14
@@ -38,7 +38,7 @@ Item {
         Column {
             width: parent.width - 30 - 10 - 24
             spacing: 2
-            Glow { width: parent.width; elide: Text.ElideRight; halo: 0; color: Theme.glowDim; font { family: Theme.fontMono; pixelSize: 11 } text: "+++ " + (root.notif?.appName ?? "") + " +++" }
+            Glow { width: parent.width; elide: Text.ElideRight; halo: 0; color: Theme.glowDim; font { family: Theme.fontMono; pixelSize: 11 } text: Skin.type === "mechanicus" ? "+++ " + (root.notif?.appName ?? "") + " +++" : (root.notif?.appName ?? "").toUpperCase() }
             Glow { width: parent.width; wrapMode: Text.Wrap; halo: 0.4; color: root.critical ? Theme.rustText : Theme.glow; font { pixelSize: 14; weight: Font.DemiBold } text: root.notif?.summary ?? "" }
             Glow { visible: text !== ""; width: parent.width; wrapMode: Text.Wrap; maximumLineCount: 4; elide: Text.ElideRight; halo: 0; color: Theme.glowDim; font { family: Theme.fontUi; pixelSize: 13 } text: root.notif?.body ?? "" }
         }

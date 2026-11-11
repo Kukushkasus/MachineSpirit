@@ -254,9 +254,9 @@ class ReleaseArchiveTests(unittest.TestCase):
             archive, _ = load('rb', repo / 'tools/build-release.py').build(repo, Path(d) / 'out')
             with tarfile.open(archive) as t: names = t.getnames()
             for rel in strays + ['unlisted-dir/file.py']: self.assertNotIn('MachineSpirit/' + rel, names, rel)
-            for banned in ('docs/media/showcase.gif', 'docs/media/desktop.png', 'docs/media/settings.png', '.github/', 'CONTRIBUTING.md', 'tools/test_release.py', 'assets/emblem.svg', 'wallpapers/forge.svg'):
+            for banned in ('docs/media/showcase.gif', 'docs/media/showcase.mp4', 'docs/media/themes.gif', 'docs/media/factions/', 'docs/media/desktop.png', 'docs/media/settings.png', '.github/', 'CONTRIBUTING.md', 'tools/test_release.py', 'assets/emblem.svg', 'wallpapers/forge.svg'):
                 self.assertFalse([n for n in names if banned in n], banned)
-            self.assertLess(archive.stat().st_size, 5 * 1024**2, 'the release should stay small without the README media')
+            self.assertLess(archive.stat().st_size, 50 * 1024**2, 'the release stays within its budget (50 MiB, hard limit 60) and carries no README media')
     def test_archive_covers_everything_the_installer_installs(self):
         import shutil, tarfile
         with tempfile.TemporaryDirectory() as d:

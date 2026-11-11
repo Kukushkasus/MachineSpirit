@@ -21,10 +21,9 @@ Basic.ComboBox {
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
         }
-        background: Rectangle {
+        background: Face {
             radius: 4
-            color: parent.highlighted ? Qt.alpha(Theme.glow, 0.14) : "transparent"
-            Behavior on color { ColorAnimation { duration: Theme.dShort } }
+            level: parent.highlighted ? 0.14 : 0; on: parent.highlighted
         }
     }
     popup: Basic.Popup {
@@ -39,11 +38,10 @@ Basic.ComboBox {
             currentIndex: c.highlightedIndex
             ScrollIndicator.vertical: Basic.ScrollIndicator {}
         }
-        background: Rectangle { color: Theme.surfaceContainerLow; radius: 7; border.color: Theme.outlineVariant }
+        background: Outline { fill: Skin.control === "mechanicus" ? Theme.surfaceContainerLow : Qt.darker(Theme.glass, 1.1); radius: 7; style: Skin.control; color: Skin.control === "ultramarines" || Skin.control === "khorne" ? Theme.brass : Theme.outlineVariant }
         enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.dShort } }
         exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: Theme.dShort } }
     }
-    background:Rectangle { radius:6; color:c.hovered?Theme.surfaceContainerHigh:Theme.surfaceContainerLow; border.color:c.activeFocus?Theme.glow:Theme.outlineVariant
-        Behavior on color { ColorAnimation { duration:Theme.dShort } }
-        Behavior on border.color { ColorAnimation { duration:Theme.dShort } } }
+    background:Face { radius:6; solid:true; usePlain:true; hovered:c.hovered; on:c.activeFocus || c.popup.visible
+        plainColor:c.hovered?Theme.surfaceContainerHigh:Theme.surfaceContainerLow; plainBorder:c.activeFocus?Theme.glow:Theme.outlineVariant }
 }

@@ -1,9 +1,17 @@
 // [ PURITY SEAL ] Keep the signal clear. Preserve the entrusted work.
 import QtQuick
 import qs.common
+import qs.skins.mechanicus as Me
+import qs.skins.ultramarines as Um
+import qs.skins.necrons as Ne
+import qs.skins.khorne as Kh
 
-// Instrument housing: forged metal with a bevelled edge and optional corner bolts.
-// Content goes inside, inset by `inset`.
+// Instrument housing. Content goes inside, inset by `inset`. The livery (Skin.frame) decides what it is:
+//   mechanicus    forged metal with a bevelled edge and slotted brass bolts
+//   ultramarines  an enamelled armour plate with cut corners inside a gold rim
+//   necrons       an asymmetric monolith of dark living metal with energy let into its edges
+//   khorne        blackened iron under a battered brass lip, riveted, its foot cut into a saw edge
+// Only the housing is drawn by the livery; the content stays put when the livery changes.
 Item {
     id: root
     default property alias content: inner.data
@@ -11,35 +19,22 @@ Item {
     property real inset: 4
     property bool bolts: true
     property real boltSize: 5
+    // what the housing holds, so a livery can dress a large window more than a small gauge:
+    // "window", "toast", "instrument", or "" for a plain part
+    property string role: ""
     readonly property alias inner: inner
+    readonly property string style: Skin.frame
+    // a fixed pseudo-random number per housing size, so wear marks sit differently on each one and never move
+    function wear(i) { return Skin.hash(width, height, i) }
 
-    Rectangle {   // outer edge, lit from above
+    Loader {
         anchors.fill: parent
-        radius: root.radius
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: Theme.metalEdge }
-            GradientStop { position: 0.12; color: Theme.metalHi }
-            GradientStop { position: 1.0; color: Theme.metalLo }
-        }
+        enabled: false
+        sourceComponent: root.style === "ultramarines" ? um : root.style === "necrons" ? ne : root.style === "khorne" ? kh : me
     }
-    Rectangle {   // body
-        anchors { fill: parent; margins: 1.5 }
-        radius: Math.max(0, root.radius - 1.5)
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: Theme.metalHi }
-            GradientStop { position: 0.5; color: Theme.metal }
-            GradientStop { position: 1.0; color: Qt.darker(Theme.metal, 1.25) }
-        }
-    }
-    Repeater {
-        model: root.bolts ? 4 : 0
-        Bolt {
-            required property int index
-            size: root.boltSize
-            angle: 20 + index * 47
-            x: (index % 2 === 0) ? root.radius * 0.45 + 1 : root.width - size - root.radius * 0.45 - 1
-            y: (index < 2) ? root.radius * 0.45 + 1 : root.height - size - root.radius * 0.45 - 1
-        }
-    }
+    Component { id: me; Me.Housing { host: root } }
+    Component { id: um; Um.Housing { host: root } }
+    Component { id: ne; Ne.Housing { host: root } }
+    Component { id: kh; Kh.Housing { host: root } }
     Item { id: inner; anchors { fill: parent; margins: root.inset } }
 }

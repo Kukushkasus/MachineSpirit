@@ -65,10 +65,10 @@ Variants {
             Keys.onPressed: event => event.accepted = win.keys(event)
 
             // a cogitator screen: bezel, glass that powers on, phosphor heading
-            Bezel { anchors.fill: parent; radius: 14; inset: 0; boltSize: 6 }
+            Bezel { anchors.fill: parent; radius: 14; inset: 0; boltSize: 6; role: "window" }
             CrtScreen { id: archiveGlass; anchors { fill: parent; margins: 8 } radius: 8; padding: 0; bootOnLoad: false; ambient: false }
             Connections { target: win; function onMineChanged() { if (win.mine) archiveGlass.powerOn() } }
-            ScreenTitle { anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 20 } text: "Pict Archive" }
+            ScreenTitle { anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 20 } text: Theme.lex("archiveTitle", "Pict Archive") }
             BrassMini { anchors { right: parent.right; top: parent.top; margins: 18 } icon: "close"; onClicked: Walls.close() }
 
             BrassMini { anchors { left: parent.left; top: parent.top; margins: 18 } label: "Desktop widgets"; icon: "widgets"; onClicked: { Walls.close(); DesktopWidgets.editing = true } }

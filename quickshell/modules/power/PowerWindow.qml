@@ -6,6 +6,7 @@ import QtQuick
 import QtQuick.Shapes
 import qs.common
 import qs.services
+import qs.kits
 
 // The Great Valve: eight rites on the spokes of a valve wheel. Wheel / arrows turn the selection,
 // click or Enter performs it. Dangerous rites (hazard ring) must be held until the pressure builds.
@@ -22,15 +23,16 @@ Variants {
         readonly property bool mine: ready && Power.open && (Settings.primary()?.name ?? modelData.name) === modelData.name
 
         readonly property var rites: [
-            { icon: "lock",               label: "Lock",            hint: "Seal the cogitator",        cmd: ["ms-session", "lock"], danger: false },
-            { icon: "bedtime",            label: "Sleep",           hint: "Let the spirit rest",       cmd: ["systemctl", "suspend"], danger: false },
-            { icon: "monitoring",         label: "Settings",        hint: "Configure the instruments", cmd: ["quickshell", "ipc", "-c", "machinespirit", "call", "settings", "toggle"], danger: false },
-            { icon: "imagesmode",         label: "Wallpapers",      hint: "Open the pict archive",     cmd: ["quickshell", "ipc", "-c", "machinespirit", "call", "walls", "toggle"], danger: false },
+            { icon: "lock",               label: "Lock",            hint: mech ? "Seal the cogitator" : "Lock the screen",        cmd: ["ms-session", "lock"], danger: false },
+            { icon: "bedtime",            label: "Sleep",           hint: mech ? "Let the spirit rest" : "Suspend the computer",       cmd: ["systemctl", "suspend"], danger: false },
+            { icon: "monitoring",         label: "Settings",        hint: mech ? "Configure the instruments" : "Open settings", cmd: ["quickshell", "ipc", "-c", "machinespirit", "call", "settings", "toggle"], danger: false },
+            { icon: "imagesmode",         label: "Wallpapers",      hint: mech ? "Open the pict archive" : "Choose a wallpaper",     cmd: ["quickshell", "ipc", "-c", "machinespirit", "call", "walls", "toggle"], danger: false },
             { icon: "restart_alt",        label: "Reboot",          hint: "Hold to restart",           cmd: ["systemctl", "reboot"], danger: true },
             { icon: "power_settings_new", label: "Shut down",       hint: "Hold to power off",         cmd: ["systemctl", "poweroff"], danger: true },
             { icon: "logout",             label: "Log out",         hint: "Hold to end the session",   cmd: ["hyprctl", "eval", "hl.dispatch(hl.dsp.exit())"], danger: true },
             { icon: "refresh",            label: "Reload shell",    hint: "Restart the shell",         cmd: ["ms-session", "restart"], danger: false }
         ]
+        readonly property bool mech: Theme.kit === "mechanicus"
         property int sel: 0
         property real hold: 0          // 0..1 pressure for dangerous rites
         readonly property var cur: rites[sel]
@@ -47,7 +49,7 @@ Variants {
         }
         function release() { if (holdAnim.running) { holdAnim.stop(); hold = 0 } }
         NumberAnimation {
-            id: holdAnim; target: win; property: "hold"; from: 0; to: 1; duration: 800
+            id: holdAnim; target: win; property: "hold"; from: 0; to: 1; duration: Settings.data.holdMs ?? 800
             onFinished: { steam.puff(); win.perform(win.sel) }
         }
 
@@ -116,17 +118,17 @@ Variants {
                     }
                 }
                 // the valve wheel at the centre turns towards the chosen rite
-                Gear {
+                Heart {
                     anchors.centerIn: parent
                     width: 210; height: 210
-                    spin: false; outline: true; filled: false; teeth: 12; hole: Theme.glass
+                    spin: false; large: true; hole: Theme.glass
                     rotation: win.sel * (360 / win.rites.length)
                     Behavior on rotation { RotationAnimation { duration: Theme.dLong; direction: RotationAnimation.Shortest; easing.type: Easing.OutCubic } }
                 }
                 // hub screen: name and hint of the chosen rite, pressure ring while holding
                 CrtScreen {
                     anchors.centerIn: parent
-                    width: 132; height: 132; radius: 66; padding: 0
+                    width: 132; height: 132; radius: Skin.screen === "mechanicus" ? 66 : 38; padding: 0
                     Column {
                         anchors.centerIn: parent; spacing: 2
                         Glow { anchors.horizontalCenter: parent.horizontalCenter; font { pixelSize: 17; weight: Font.DemiBold } halo: 0.8; color: win.cur.danger ? Theme.rustText : Theme.glow; text: win.cur.label }
@@ -159,8 +161,17 @@ Variants {
                         Behavior on scale { NumberAnimation { duration: Theme.dShort } }
 
                         readonly property color tone: rite.modelData.danger ? Theme.rustText : Theme.glow
+                        // the livery's shape for a rite key: a disc, an octagonal plate, a diamond, an iron octagon
+                        readonly property string style: Skin.control
+                        function shape(w) { return style === "ultramarines" ? Skin.chamfer(w, w, w * 0.29) : style === "necrons" ? [[w / 2, 0], [w, w / 2], [w / 2, w], [0, w / 2]] : Skin.chamfer(w, w, w * 0.3) }
+                        Poly {   // dangerous rites, other liveries: a second rim in rust outside the key
+                            visible: rite.modelData.danger && rite.style !== "mechanicus"
+                            anchors.centerIn: parent; width: rite.style === "necrons" ? 100 : 90; height: width
+                            points: rite.shape(width)
+                            stroke: Qt.alpha(Theme.rustText, rite.chosen ? 1 : 0.6); strokeWidth: rite.style === "khorne" ? 3 : 2
+                        }
                         Shape {   // dangerous rites: a dashed rust ring, the warning stripes of a screen
-                            visible: rite.modelData.danger
+                            visible: rite.modelData.danger && rite.style === "mechanicus"
                             anchors.fill: parent
                             preferredRendererType: Shape.CurveRenderer
                             ShapePath {
@@ -170,11 +181,21 @@ Variants {
                             }
                         }
                         Rectangle {   // halo of the chosen rite
-                            visible: rite.chosen
+                            visible: rite.chosen && rite.style === "mechanicus"
                             anchors.centerIn: parent; width: 86; height: 86; radius: 43
                             color: Qt.alpha(rite.tone, 0.1)
                         }
+                        Poly {   // the key, other liveries
+                            visible: rite.style !== "mechanicus"
+                            anchors.centerIn: parent; width: rite.style === "necrons" ? 84 : 76; height: width
+                            points: rite.shape(width)
+                            upper: rite.chosen ? Qt.alpha(rite.tone, 0.2) : rite.style === "khorne" ? Qt.lighter(Theme.metal, 1.05) : Qt.darker(Theme.glass, 1.1)
+                            lower: rite.chosen ? Qt.alpha(rite.tone, 0.08) : rite.style === "khorne" ? Qt.darker(Theme.metal, 1.7) : rite.style === "ultramarines" ? Qt.darker(Theme.metal, 1.3) : Qt.darker(Theme.metal, 1.6)
+                            stroke: rite.style === "ultramarines" ? (rite.chosen ? Theme.brassHi : Qt.alpha(Theme.brass, 0.6)) : rite.style === "khorne" ? (rite.chosen ? rite.tone : Theme.brass) : (rite.chosen ? rite.tone : Qt.alpha(rite.tone, 0.5))
+                            strokeWidth: rite.chosen ? 2.5 : 1.5
+                        }
                         Rectangle {   // the disc: dark glass, phosphor rim
+                            visible: rite.style === "mechanicus"
                             anchors.centerIn: parent; width: 74; height: 74; radius: 37
                             color: rite.chosen ? Qt.alpha(rite.tone, 0.16) : Theme.glass
                             border { width: rite.chosen ? 2.5 : 1.2; color: rite.chosen ? rite.tone : Qt.alpha(rite.tone, 0.45) }
@@ -197,14 +218,14 @@ Variants {
                 anchors { horizontalCenter: parent.horizontalCenter; bottom: dial.top; bottomMargin: -20 }
                 opacity: dial.opacity
                 spacing: 6
-                ScreenTitle { anchors.horizontalCenter: parent.horizontalCenter; text: "Rite of Departure"; size: 17 }
+                ScreenTitle { anchors.horizontalCenter: parent.horizontalCenter; text: Theme.lex("powerTitle", "Rite of Departure"); size: 17 }
             }
             Glow {
                 anchors { horizontalCenter: parent.horizontalCenter; top: dial.bottom; topMargin: -16 }
                 opacity: dial.opacity
                 halo: 0; color: Theme.glowDim
                 font { family: Theme.fontUi; pixelSize: 13 }
-                text: "Wheel or arrows turn the valve, click or Enter performs, hold for rites ringed in red, Esc leaves"
+                text: mech ? "Wheel or arrows turn the valve, click or Enter performs, hold for rites ringed in red, Esc leaves" : "Wheel or arrows choose, click or Enter performs, hold the actions ringed in red, Esc leaves"
             }
         }
     }

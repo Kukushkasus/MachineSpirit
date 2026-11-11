@@ -13,6 +13,14 @@ DEFAULT.update(rounding=14, gapsIn=6, gapsOut=12, borderSize=2, shadows=True,
                dimInactive=True, dimStrength=0.10, sensitivity=0.0,
                accelProfile='adaptive', naturalScroll=True, tapToClick=True,
                leftHanded=False, followMouse=True, repeatRate=25, repeatDelay=600)
+# Shell look, bar, effects, notifications and controls (added after 0.2.0; an older file simply lacks them and gets these values).
+BAR_LEFT=('clock','instruments','caption'); BAR_RIGHT=('media','tray')
+DEFAULT.update(panelOpacity=1.0, glowStrength=1.0, density='comfortable', ornaments='full',
+               barAllScreens=True, barLeft=list(BAR_LEFT), barRight=list(BAR_RIGHT), barWeather=True, barNetRate=True,
+               widgetScan=True,
+               fxLevel=2, fxFrequency=1.0, animSpeed=1.0, fxDischarge=True, fxScreens=True, fxParticles=True, fxMessages=True,
+               toastSeconds=6, toastMax=4, urgentThroughQuiet=True, historyLimit=100,
+               holdMs=800, superTap=True)
 
 DEFAULT['privacy']=copy.deepcopy(ms_privacy.DEFAULT)
 
@@ -49,6 +57,17 @@ def validate(d):
         if type(d[key]) is not int or not low <= d[key] <= high: raise ValueError(f'{key} must be {low}–{high}')
     for key, low, high in [('sensitivity',-1,1),('dimStrength',0,0.5)]:
         if type(d[key]) not in (int,float) or not math.isfinite(d[key]) or not low <= d[key] <= high: raise ValueError(f'{key} must be {low}–{high}')
+    for key in ['barAllScreens','barWeather','barNetRate','widgetScan','fxDischarge','fxScreens','fxParticles','fxMessages','urgentThroughQuiet','superTap']:
+        if type(d[key]) is not bool: raise ValueError(key + ' must be boolean')
+    for key, low, high in [('fxLevel',0,3),('toastSeconds',2,30),('toastMax',1,6),('historyLimit',10,300),('holdMs',400,2500)]:
+        if type(d[key]) is not int or not low <= d[key] <= high: raise ValueError(f'{key} must be {low}–{high}')
+    for key, low, high in [('panelOpacity',0.6,1),('glowStrength',0,1.5),('fxFrequency',0.5,2),('animSpeed',0.5,2)]:
+        if type(d[key]) not in (int,float) or not math.isfinite(d[key]) or not low <= d[key] <= high: raise ValueError(f'{key} must be {low}–{high}')
+    if d['density'] not in ('comfortable','compact'): raise ValueError('density must be comfortable or compact')
+    if d['ornaments'] not in ('full','reduced','off'): raise ValueError('ornaments must be full, reduced or off')
+    for key, allowed in (('barLeft',BAR_LEFT),('barRight',BAR_RIGHT)):
+        # the order is the list; a module left out of the list is hidden
+        if not isinstance(d[key],list) or any(x not in allowed for x in d[key]) or len(set(d[key])) != len(d[key]): raise ValueError(f'{key} may only list: '+', '.join(allowed))
     if d['lockBackend'] not in ('quickshell','hyprlock'): raise ValueError('lockBackend must be quickshell or hyprlock')
     if d['accelProfile'] not in ('adaptive','flat'): raise ValueError('Choose adaptive or flat pointer acceleration')
     if len(set(d['layouts'])) != len(d['layouts']): raise ValueError('Keyboard layouts must be unique')

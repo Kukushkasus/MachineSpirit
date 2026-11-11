@@ -5,7 +5,7 @@ import qs.services
 Instrument {
     id: root
     housing: "receiver"
-    title: "Vox receiver"; serial: "04 / AUDIO"; corner: 18
+    title: Theme.kit === "mechanicus" ? "Vox receiver" : Theme.lex("media", "Player"); serial: "04 / AUDIO"; corner: 18
     readonly property var player: Media.player
     readonly property bool spectrum: Media.playing && !Theme.lowPower && visible
     property bool retained: false

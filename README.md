@@ -22,37 +22,50 @@ Then reboot and sign in on the login screen with the Hyprland session.
 
 </details>
 
-**MachineSpirit** is a desktop shell for Hyprland, built with Quickshell: phosphor screens, Nixie clocks and machined housings, with colours taken from your wallpaper. It is an unofficial fan project in the style of the Warhammer 40,000 Adeptus Mechanicus.
+**MachineSpirit** is a desktop shell for Hyprland, built with Quickshell: phosphor screens, Nixie clocks and machined housings, with colours taken from your wallpaper. Four faction liveries redraw the whole shell (Adeptus Mechanicus, Ultramarines, Necrons and Khorne) while every control stays where it is. It is an unofficial fan project in the style of Warhammer 40,000.
 
-**0.2.0** · Arch Linux / CachyOS · Wayland · [GPL-3.0-only](LICENSE) · Author: [Kukushkasus](https://github.com/Kukushkasus)
+**0.5.0 · Road to 1.0 (pre-release)** · Arch Linux / CachyOS · Wayland · [GPL-3.0-only](LICENSE) · Author: [Kukushkasus](https://github.com/Kukushkasus)
 
-Idle usage in the test VM (4 vCPUs): about 2 to 3% CPU and 600 MiB RAM.
+- Bar, command console with workspace overview, control desk (Sanctum), popups, notification archive, wallpaper archive and five movable desktop instruments.
+- Settings Center with fourteen searchable pages: appearance, themes, bar, widgets, effects, notifications, displays, input, session, shortcuts, privacy, browsers and updates.
+- Four theme packs with their own wallpapers, display faces and motion; a safe preview, apply and revert; your own packs as plain data.
+- Login, lock and boot in the same style; reduced-motion and low-power modes; installs and updates with backups.
 
-<p align="center"><img src="docs/media/showcase.gif?v=0.2.0" alt="36-second MachineSpirit demo recorded in a VM: SDDM login screen, sign-in, desktop, launcher, control panel, calendar and network popups, wallpaper archive, settings, desktop instruments and the power menu" width="100%"></p>
+## Showcase: Adeptus Mechanicus
 
-## Screenshots
+<p align="center"><img src="docs/media/showcase.gif?v=0.5.0" alt="MachineSpirit with the Adeptus Mechanicus theme, recorded in a VM: SDDM login, desktop with bar and instruments, command console, Sanctum, network, media and calendar popups, the wallpaper archive, Settings and the power menu" width="100%"></p>
 
-![Desktop with the five instruments and a notification](docs/media/desktop.png)
+<p align="center"><sub>Recorded in a QEMU/KVM guest. <a href="docs/media/showcase.mp4">Full-quality video (MP4)</a></sub></p>
 
-![Settings](docs/media/settings.png)
+## Faction themes
 
-![Privacy settings](docs/media/privacy.png)
+One shell, four liveries. A theme changes the bar's silhouette, the housings and their glass, cards and titles, keys and gauges, workspace marks, popups, toasts, the power wheel, the lock screen, the display face and how things move. The layout, the click areas and the readings stay the same.
 
-## Features
+| Adeptus Mechanicus | Ultramarines |
+|---|---|
+| ![Adeptus Mechanicus: the machine temple wallpaper, clamped bar plates with cables, CRT glass and Sanctum](docs/media/factions/mechanicus.jpg) | ![Ultramarines: the command bridge wallpaper, a continuous armour band, gold-trimmed plates and Sanctum](docs/media/factions/ultramarines.jpg) |
+| **Necrons** | **Chaos: Khorne** |
+| ![Necrons: the tomb plain wallpaper, floating bar shards, monolith housings and Sanctum](docs/media/factions/necrons.jpg) | ![Khorne: the war forge wallpaper, toothed iron bar slabs and chains, forge glass and Sanctum](docs/media/factions/khorne.jpg) |
 
-- Command console with workspace overview, control panel (Sanctum), notification archive and wallpaper browser.
-- Five movable desktop instruments: clock, weather, resources, media player and persistent notes.
-- Nine searchable settings pages: live window preview, display arrangement with automatic rollback, pointer controls, shortcut recording and updates. Unsaved changes are protected.
-- First-launch setup with privacy presets, per-feature network permissions and an optional authenticated proxy. Browser policy changes have their own preview, administrator authorization and restore.
-- Wallpaper colours flow through the shell and the components you choose to install. Short, consistent transitions; reduced-motion and low-power modes.
-- Login and lock: an SDDM login screen in the same style (set up by `--full`, autologin only if you ask), a lock screen drawn by the shell with hyprlock as the fallback, and an optional Plymouth boot theme.
-- **Super+/** opens the searchable shortcut manual, **Super+,** opens Settings, **Super+Alt+W** edits the desktop instruments. The interface is English; keyboard layouts are configurable.
+<p align="center"><img src="docs/media/themes.gif?v=0.5.0" alt="Switching between the four faction themes live" width="100%"></p>
 
-## Requirements
+Each pack brings its own 3840×2160 wallpaper (a machine temple, a command bridge, a tomb plain and a war forge), rendered in Blender from the scene scripts in [`tools/wallpapers/`](tools/wallpapers). Choosing a theme never changes your wallpaper unless you ask. See [Theme packs](docs/THEMES.md).
+
+## Settings Center and theme packs
+
+![Settings: the Themes page with previews of the four packs](docs/media/settings-themes.jpg)
+
+- **Themes:** preview a pack for 30 seconds without saving anything, then keep it or let it run out; return to the previous theme at any time. Colour modes: keep the faction's palette, guard it against the wallpaper, or follow the wallpaper.
+- **Your own packs:** a folder in `~/.local/share/machinespirit/themes/` with a `theme.json` and pictures. A pack picks built-in liveries by name and tunes colours, words and motion; it cannot run code.
+- **Appearance and effects:** panel opacity, glow, density, decoration level, effect intensity and frequency, animation speed, reduced motion and low power.
+- **Bar, widgets, notifications, session:** which bar modules appear and in what order, widget options, pop-up time and count, quiet mode, hold time for dangerous actions.
+- **Search** finds a single setting and takes you to it. Display changes have a 15-second confirmation with automatic rollback.
+
+## Install and compatibility
+
+The release archive is about 6 MiB (four 4K wallpapers and three display faces included).
 
 Arch Linux or CachyOS, Hyprland 0.55 or newer with the Lua configuration API (tested with 0.57), Quickshell (tested with 0.3.2), Python 3.11+ and `pacman`. Details are in [Installation and recovery](docs/INSTALL.md#requirements).
-
-## Install
 
 The quickest way is the box at the top: `./install.sh --full --yes`, reboot, sign in. The same command works from a text console and from a Hyprland session that is already running. It installs the packages, the shell, the Hyprland configuration, the lock screen and, when no login manager is present, the SDDM login screen.
 
@@ -87,9 +100,17 @@ Settings live in `~/.config/machinespirit/settings.json` (or the XDG equivalent)
 
 - [Installation and recovery](docs/INSTALL.md): requirements, components, updating, backups, rollback and the boot component.
 - [Settings](docs/SETTINGS.md): the settings file, privacy, proxy, browser policies and updates.
+- [Theme packs](docs/THEMES.md): the four factions, previews, colour modes and making your own pack.
 - [Keybindings](docs/KEYBINDINGS.md): every shortcut, generated from the live catalog.
 - [Desktop instruments](docs/desktop-widgets.md): arranging the widgets.
 - [Contributing](CONTRIBUTING.md), [changelog](CHANGELOG.md) and [third-party credits](THIRD-PARTY.md).
+
+## Known limitations
+
+- Tested in a QEMU/KVM guest with a virtual GPU. Physical hardware, NVIDIA and multi-GPU setups are untested.
+- The wallpapers are 3D scenes rendered from code, not hand-painted art.
+- The faction display faces have no Cyrillic; such text is set in IBM Plex. The interface itself is English.
+- This is a pre-release on the way to 1.0: expect changes to the theme pack format before 1.0.
 
 ## Inspiration and credits
 

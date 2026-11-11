@@ -3,6 +3,7 @@ pragma Singleton
 import Quickshell
 import Quickshell.Services.Notifications
 import QtQuick
+import qs.common
 
 // Notification daemon: tracked list for the center, short-lived `toasts` for popups.
 Singleton {
@@ -43,6 +44,11 @@ Singleton {
     }
     function removeToast(n) { toasts = toasts.filter(t => t !== n) }
     function markRead() { unread = 0 }
+    // a short line in the faction's voice (after a purge, say). Decoration only: it replaces a decorative label
+    // for a few seconds, never a status or an error. Off with Settings > Effects > Atmospheric messages.
+    property string line: ""
+    function say(text) { if (!text || !Theme.fxOn("messages")) return; line = text; lineOff.restart() }
+    Timer { id: lineOff; interval: 5000; onTriggered: root.line = "" }
 
     NotificationServer {
         id: server
@@ -55,9 +61,12 @@ Singleton {
             n.tracked = true
             const st = Object.assign({}, root.stamps); st[n.id] = Date.now(); root.stamps = st
             root.unread += 1
-            if (root.dnd && n.urgency !== NotificationUrgency.Critical) return
-            root.toasts = [n].concat(root.toasts).slice(0, 4)
-            const ms = n.expireTimeout > 0 ? n.expireTimeout * 1000 : 6000
+            // history: the oldest messages leave when the log is full
+            const keep = Settings.data.historyLimit ?? 100, list = server.trackedNotifications.values
+            for (let i = 0; i < list.length - keep; i++) list[i].dismiss()
+            if (root.dnd && !(n.urgency === NotificationUrgency.Critical && Settings.data.urgentThroughQuiet !== false)) return
+            root.toasts = [n].concat(root.toasts).slice(0, Settings.data.toastMax ?? 4)
+            const ms = n.expireTimeout > 0 ? n.expireTimeout * 1000 : (Settings.data.toastSeconds ?? 6) * 1000
             const timer = Qt.createQmlObject('import QtQuick; Timer { running: true; repeat: false }', root)
             timer.interval = ms
             timer.triggered.connect(() => { root.removeToast(n); timer.destroy() })

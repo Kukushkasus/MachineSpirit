@@ -7,6 +7,7 @@ import QtQuick
 import QtQuick.Effects
 import qs.common
 import qs.services
+import qs.kits
 
 // Command console: the query terminal at the top centre, the strip of ten sectors under it.
 // Typing searches machines (apps) and filters the sectors; Enter invokes. Ctrl+arrows walk the sectors.
@@ -198,10 +199,10 @@ Variants {
 
                 // carried on two suspensors instead of hanging from a pipe
                 // held by two servo-skulls at its sides
-                ServoSkull { id: skL; x: -44; y: 12; active: win.mine }
-                ServoSkull { id: skR; x: parent.width - 2; y: 12; mirror: true; active: win.mine }
+                Guardian { id: skL; x: -44; y: 12; active: win.mine }
+                Guardian { id: skR; x: parent.width - 2; y: 12; mirror: true; active: win.mine }
 
-                Bezel { anchors.fill: parent; radius: 12; inset: 0; boltSize: 6 }
+                Bezel { anchors.fill: parent; radius: 12; inset: 0; boltSize: 6; role: "window" }
                 CrtScreen {
                     id: screen
                     anchors { fill: parent; margins: 12 }
@@ -228,7 +229,7 @@ Variants {
                                 }
                                 Text { anchors.fill: parent; leftPadding: 14; verticalAlignment: Text.AlignVCenter; visible: field.text === ""
                                     elide: Text.ElideRight; rightPadding: 14   // the long form is cut mid-word on a narrow console, so offer a short one
-                                    text: field.width > 740 ? "name a machine, sum a number, search the web or > run a rite" : "name a machine, sum a number or > run a rite"; color: Theme.glowFaint; font: field.font }
+                                    text: field.width > 740 ? "name a machine, sum a number, search the web or > run a rite" : Theme.kit === "mechanicus" ? "name a machine, sum a number or > run a rite" : "type an app name, a sum, or > a command"; color: Theme.glowFaint; font: field.font }
                             }
                         }
                         ListView {
@@ -249,7 +250,7 @@ Variants {
                                 Rectangle { visible: row.newSection; width: parent.width; height: 1; color: Qt.alpha(Theme.glowDim, 0.3) }
                                 Item {
                                     width: parent.width; height: row.modelData.section ? 44 : 46
-                                    Rectangle { anchors.fill: parent; radius: 3; color: Theme.glow; opacity: row.chosen ? 0.14 : (rm.containsMouse ? 0.06 : 0) }
+                                    Face { anchors.fill: parent; radius: 3; level: row.chosen ? 0.14 : (rm.containsMouse ? 0.06 : 0); on: row.chosen; hovered: rm.containsMouse }
                                     Glow { x: 6; anchors.verticalCenter: parent.verticalCenter; visible: row.chosen; font { family: Theme.fontMono; pixelSize: 14; weight: Font.Bold } text: ">" }
                                     Item {
                                         x: 24; anchors.verticalCenter: parent.verticalCenter; width: 28; height: 28
@@ -317,7 +318,7 @@ Variants {
                     return (c >= 0 && c < cols && r >= 0 && r < 2) ? r * cols + c + 1 : 0
                 }
 
-                Bezel { anchors.fill: parent; radius: 14; inset: 0; boltSize: 7 }
+                Bezel { anchors.fill: parent; radius: 14; inset: 0; boltSize: 7; role: "window" }
                 Grid {
                     x: strip.pad; y: strip.pad
                     columns: strip.cols; spacing: strip.gap
@@ -331,11 +332,10 @@ Variants {
                             readonly property var wins: win.windowsOn(wsId)
                             readonly property bool lit: current || win.pick === wsId || strip.dropWs === wsId
                             width: strip.cellW; height: strip.cellH
-                            Rectangle {
+                            Outline {
                                 anchors { fill: parent; margins: -3 }
-                                radius: 7
-                                color: "transparent"
-                                border { width: cell.lit ? 2 : 1; color: strip.dropWs === cell.wsId ? Theme.glow : (cell.current ? Theme.brassHi : (win.pick === cell.wsId ? Theme.brass : Theme.metalLo)) }
+                                radius: 7; style: Skin.screen
+                                lineWidth: cell.lit ? 2 : 1; color: strip.dropWs === cell.wsId ? Theme.glow : (cell.current ? Theme.brassHi : (win.pick === cell.wsId ? Theme.brass : Theme.metalLo))
                             }
                             CrtScreen {
                                 anchors.fill: parent; radius: 5; padding: 0
@@ -350,7 +350,7 @@ Variants {
                                     visible: cell.wins.length === 0
                                     text: win.numerals[cell.index]
                                     color: Qt.alpha(Theme.glow, cell.lit ? 0.35 : 0.16)
-                                    font { family: Theme.fontNum; pixelSize: cell.height * 0.42; weight: Font.Bold }
+                                    font { family: Skin.type === "khorne" ? Theme.fontNum : Skin.numFont; pixelSize: cell.height * 0.42 * (Skin.type === "khorne" ? 1 : Skin.numScale); weight: Font.Bold }
                                 }
                                 Repeater {
                                     model: cell.wins
@@ -439,11 +439,12 @@ Variants {
                     ScreencopyView { anchors.fill: parent; captureSource: strip.dragSrc; live: true; opacity: 0.9 }
                     Rectangle { anchors.fill: parent; radius: 4; color: "transparent"; border { width: 2; color: Theme.glow } }
                 }
-                ServoSkull { id: skSL; x: -44; y: parent.height / 2 - 22; active: win.mine }
-                ServoSkull { id: skSR; x: parent.width - 2; y: parent.height / 2 - 22; mirror: true; active: win.mine }
+                Guardian { id: skSL; x: -44; y: parent.height / 2 - 22; active: win.mine }
+                Guardian { id: skSR; x: parent.width - 2; y: parent.height / 2 - 22; mirror: true; active: win.mine }
                 // blast doors: two forged halves part from the middle when the console opens
                 property real doors: 1
-                Connections { target: win; function onMineChanged() { if (win.mine && Theme.motionEnabled) { strip.doors = 1; doorAnim.restart() } } }
+                // without motion the doors are simply open: they must never stay shut over the sectors
+                Connections { target: win; function onMineChanged() { if (win.mine && Theme.motionEnabled) { strip.doors = 1; doorAnim.restart() } else if (win.mine) strip.doors = 0 } }
                 NumberAnimation { id: doorAnim; target: strip; property: "doors"; from: 1; to: 0; duration: Theme.dLong; easing.type: Easing.InOutCubic }
                 Item {
                     anchors.fill: parent; clip: true; z: 200

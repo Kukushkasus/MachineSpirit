@@ -1,6 +1,6 @@
 # User settings
 
-Open **Super+,** or the Settings button in the control panel. **Super+/** opens the shortcut manual. The pages are Appearance, Displays, Keyboard, Pointer, Session, Shortcuts, Privacy, Browsers and Updates; use the sidebar or search to find controls. Appearance includes a live geometry preview and Balanced, Compact and Square presets. Changes stay in a draft until **Apply changes**; **Discard** restores saved values, and **Reset page** returns the current page to its defaults. Closing with a modified draft asks whether to keep editing or discard it.
+Open **Super+,** or the Settings button in the control panel. **Super+/** opens the shortcut manual. The sidebar is grouped: **Look** (Appearance, Themes, Animations & effects), **Shell** (Bar & panels, Desktop & widgets, Notifications), **System** (Displays, Keyboard, Pointer, Session & controls, Shortcuts) and **Data** (Privacy, Browsers, Updates). Search finds each control by name, opens its page and lights the control up. Theme packs are described in [THEMES.md](THEMES.md). Appearance includes a live geometry preview and Balanced, Compact and Square presets. Changes stay in a draft until **Apply changes**; **Discard** restores saved values, and **Reset page** returns the current page to its defaults. Closing with a modified draft asks whether to keep editing or discard it.
 
 Settings are stored in `$XDG_CONFIG_HOME/machinespirit/settings.json` (default `~/.config/machinespirit/settings.json`). The file is versioned JSON. Missing supported fields receive defaults; unsupported versions and invalid values are rejected. After manual edits, run `ms-settings generate` and reload Hyprland. The settings UI watches the file.
 
@@ -11,7 +11,7 @@ Settings are stored in `$XDG_CONFIG_HOME/machinespirit/settings.json` (default `
 | layoutSwitch | `grp:alt_shift_toggle` | XKB switching option |
 | primaryOutput | empty | Fixed preferred output, e.g. `DP-1`; empty uses first available |
 | monitors | empty | Use compositor defaults until explicitly configured |
-| reducedMotion | false | Reduce interface and compositor animations |
+| reducedMotion | false | No decorative movement, flicker or flashes; instant transitions in the shell and the compositor |
 | lowPower | false | Reduce shell effects and disable compositor blur, shadows and animations |
 | blur | true | Compositor blur outside low-power mode |
 | rounding / gapsIn / gapsOut / borderSize | 14 / 6 / 12 / 2 | Window corner radius, inner/outer gaps and border width in pixels |
@@ -24,6 +24,18 @@ Settings are stored in `$XDG_CONFIG_HOME/machinespirit/settings.json` (default `
 | screenOffSeconds | 900 | Screen-off timeout, at least lockSeconds |
 | lockBackend | quickshell | Lock screen: `quickshell` (the shell's own) or `hyprlock`. The shell falls back to hyprlock only when it is not running, never on top of a lock that is held |
 | bindings | `{}` | Original combination → replacement; empty string disables |
+| panelOpacity / glowStrength | 1 / 1 | Opacity of the panels' glass (0.6–1) and strength of the phosphor halo (0–1.5) |
+| density | comfortable | `compact` tightens the bar's groups and the control desk; controls keep their size |
+| ornaments | full | `full`, `reduced` (no seals, heraldry or console guardians) or `off` (also no fittings between the bar's mounts) |
+| barLeft / barRight | `["clock","instruments","caption"]` / `["media","tray"]` | Bar modules in order; a module left out is hidden. The cog and the controls are fixed |
+| barWeather / barNetRate / barAllScreens | true / true / true | Weather beside the clock, the network rate in figures, the bar on every screen (or only the panel screen) |
+| widgetScan | true | The faint sweep across desktop instruments |
+| fxLevel / fxFrequency | 2 / 1 | Ambient effects: 0 off, 1 subtle, 2 normal, 3 lively; how often they come (0.5–2) |
+| fxDischarge / fxScreens / fxParticles / fxMessages | true | The kinds of ambient effect: discharges at the bar, life on the screens, particles, atmospheric messages and signs |
+| animSpeed | 1 | Speed of transitions (0.5–2); the theme pack sets their character |
+| toastSeconds / toastMax | 6 / 4 | How long a pop-up stays when the application does not say, and how many show at once |
+| urgentThroughQuiet / historyLimit | true / 100 | Critical messages still pop up in quiet mode; how many messages the log keeps (10–300) |
+| holdMs / superTap | 800 / true | How long Reboot, Shut down and Log out are held (400–2500 ms); tapping Super opens the console |
 | privacy | see below | Network permissions and proxy; edited on the Privacy page |
 
 The `privacy` object:
@@ -68,7 +80,7 @@ Select an action and choose **Record keys**, then press a combination. You can a
 
 Widget positions and notes live in `$XDG_STATE_HOME/machinespirit/desktop-widgets.json`. Do not delete this file to update the shell. Wallpaper API keys live in `$XDG_CONFIG_HOME/machinespirit/keys.conf`, mode 0600; never commit that file.
 
-Theme policy remains in `theme.conf` next to settings. `ms-theme apply IMAGE` applies a wallpaper and generates colours only for installed components. The wallpaper archive can do this from the UI.
+Theme policy remains in `theme.conf` next to settings: the theme pack (`pack`) and the colour mode (`mode`). `ms-theme apply IMAGE` applies a wallpaper and generates colours only for installed components; the pack and mode are kept. The wallpaper archive can do this from the UI. See [THEMES.md](THEMES.md).
 
 ## First launch and privacy
 

@@ -369,7 +369,9 @@ def main():
         with transaction([CONF / 'machinespirit/generated.lua', CONF / 'machinespirit/hypridle.conf'], STATE.parent):
             subprocess.run([str(BIN / 'ms-settings'), 'generate'], check=True)
         if 'wallpapers' in selected and not (STATE.parent / 'theme.json').exists():
-            subprocess.run([str(BIN / 'ms-theme'), 'apply', str(DATA / 'machinespirit/wallpapers/forge.png')], check=True)
+            # the default theme's own wallpaper when the shell brought it, the classic forge otherwise
+            temple = CONF / 'quickshell/machinespirit/themes/mechanicus/wallpapers/temple.jpg'
+            subprocess.run([str(BIN / 'ms-theme'), 'apply', str(temple if temple.is_file() else DATA / 'machinespirit/wallpapers/forge.png')], check=True)
         if shutil.which('fc-cache') and subprocess.run(['fc-cache', '-f', str(DATA / 'fonts/machinespirit')]).returncode:
             print('Warning: fc-cache failed; the new fonts may appear after the next login.', file=sys.stderr)   # cosmetic, never a reason to undo an install
         if 'shell' in selected and not a.no_system:
