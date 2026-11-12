@@ -1,0 +1,221 @@
+#!/usr/bin/env python3
+# [ PURITY SEAL ] Keep the signal clear. Preserve the entrusted work.
+"""ms-cursor: the pointer that goes with the theme.
+
+  ms-cursor apply [--pack KIT] [--runtime]   set the cursor the settings ask for (cursorMode, cursorTheme, cursorSize)
+  ms-cursor build [KIT ...]                  generate the MachineSpirit cursor themes (all four when none is named)
+  ms-cursor status                           what is set, and what was set before MachineSpirit
+  ms-cursor uninstall                        put the original cursor back and remove the generated themes
+
+Modes (Settings > Appearance > Cursor):
+  faction   the cursor of the active theme pack's livery (MachineSpirit-Mechanicus, -Ultramarines, -Necrons, -Khorne)
+  system    the cursor you had before MachineSpirit set one (remembered the first time it did)
+  custom    any installed cursor theme, by name
+
+--runtime changes only the running compositor (a theme preview); nothing is written.
+The original cursor theme and size are recorded once in ~/.local/state/machinespirit/cursor-origin.json.
+~/.icons/default/index.theme is written only when it does not exist or MachineSpirit wrote it.
+"""
+import json, os, shutil, subprocess, sys
+from pathlib import Path
+
+HOME = Path.home()
+CONF = Path(os.environ.get("XDG_CONFIG_HOME", HOME / ".config"))
+SHARE = Path(os.environ.get("XDG_DATA_HOME", HOME / ".local/share"))
+STATE = Path(os.environ.get("XDG_STATE_HOME", HOME / ".local/state")) / "machinespirit"
+ICONS = SHARE / "icons"
+ORIGIN = STATE / "cursor-origin.json"
+LUA = CONF / "machinespirit/cursor.lua"
+DEFAULT_INDEX = HOME / ".icons/default/index.theme"
+MARK = "Written by MachineSpirit (ms-cursor)"
+KITS = {"mechanicus": "Mechanicus", "ultramarines": "Ultramarines", "necrons": "Necrons", "khorne": "Khorne"}
+SIZES = (24, 32, 40, 48)
+
+
+def say(*a): print("ms-cursor:", *a, file=sys.stderr)
+
+
+def generator():
+    for p in (SHARE / "machinespirit/tools/make_cursors.py", Path(__file__).resolve().parent.parent / "tools/make_cursors.py"):
+        if p.is_file(): return p
+    return None
+
+
+def theme_name(kit): return "MachineSpirit-" + KITS[kit]
+
+
+def settings():
+    try: d = json.loads((CONF / "machinespirit/settings.json").read_text())
+    except (OSError, ValueError): d = {}
+    mode = d.get("cursorMode", "faction")
+    size = d.get("cursorSize", 24)
+    return (mode if mode in ("faction", "system", "custom") else "faction",
+            size if size in SIZES else 24,
+            d.get("cursorTheme", "") if isinstance(d.get("cursorTheme", ""), str) else "")
+
+
+def active_kit():
+    try:
+        pack = json.loads((STATE / "pack.json").read_text())
+        kit = pack.get("kit") or (pack.get("skin") or {}).get("glyph")
+        if kit in KITS: return kit
+    except (OSError, ValueError): pass
+    return "mechanicus"
+
+
+def gsettings(*args):
+    if not shutil.which("gsettings"): return None
+    r = subprocess.run(["gsettings", *args], capture_output=True, text=True)
+    return r.stdout.strip().strip("'") if r.returncode == 0 else None
+
+
+def hypr_env():
+    # Only the session this runs in: never go looking for some other running Hyprland (a test, a TTY, SSH).
+    return dict(os.environ)
+
+
+def remember_origin():
+    """The cursor in use before MachineSpirit first set one; `system` mode and uninstall return to it."""
+    if ORIGIN.exists(): return json.loads(ORIGIN.read_text())
+    theme = gsettings("get", "org.gnome.desktop.interface", "cursor-theme")
+    size = gsettings("get", "org.gnome.desktop.interface", "cursor-size")
+    # without gsettings (no GTK stack) the session's own XCURSOR_* are the best record of what was there
+    if not theme: theme = os.environ.get("XCURSOR_THEME")
+    if not size: size = os.environ.get("XCURSOR_SIZE")
+    index = None
+    if DEFAULT_INDEX.is_file() and MARK not in DEFAULT_INDEX.read_text(errors="ignore"):
+        index = "user"      # the user's own file: it is never touched
+    origin = {"theme": theme if theme and not theme.startswith("MachineSpirit-") else None,
+              "size": int(size) if size and size.isdigit() else None, "index": index}
+    STATE.mkdir(parents=True, exist_ok=True)
+    ORIGIN.write_text(json.dumps(origin, indent=2))
+    return origin
+
+
+def installed(name):
+    return any((d / name / "cursors").is_dir() or (d / name / "manifest.hl").is_file()
+               for d in (ICONS, HOME / ".icons", Path("/usr/share/icons")))
+
+
+def has_hyprcursor(name):
+    return any((d / name / "manifest.hl").is_file() for d in (ICONS, HOME / ".icons", Path("/usr/share/icons")))
+
+
+def write_if_changed(path, text):
+    """Rewriting an identical file would only wake the config watchers."""
+    try:
+        if path.read_text() == text: return
+    except OSError: pass
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp"); tmp.write_text(text); os.replace(tmp, path)
+
+
+def build(kits):
+    gen = generator()
+    if not gen: say("make_cursors.py is missing; reinstall the shell component"); return False
+    if not shutil.which("rsvg-convert"): say("rsvg-convert (librsvg) is missing; cannot draw the cursors"); return False
+    ICONS.mkdir(parents=True, exist_ok=True)
+    args = [sys.executable, str(gen), "build", str(ICONS)]
+    for k in kits: args += ["--faction", k]
+    r = subprocess.run(args, capture_output=True, text=True)
+    if r.returncode: say("cursor build failed:", r.stderr.strip()[-300:]); return False
+    return True
+
+
+def write_lua(theme, size):
+    lines = ["-- " + MARK + ". Settings > Appearance > Cursor."]
+    lines += [f'hl.env("XCURSOR_SIZE", "{size}")', f'hl.env("HYPRCURSOR_SIZE", "{size}")']
+    if theme: lines += [f'hl.env("XCURSOR_THEME", {json.dumps(theme)})']
+    # an XCursor-only theme (most third-party ones, or ours built without hyprcursor-util) is found through XCURSOR_THEME
+    if theme and has_hyprcursor(theme): lines += [f'hl.env("HYPRCURSOR_THEME", {json.dumps(theme)})']
+    write_if_changed(LUA, "\n".join(lines) + "\n")
+
+
+def write_index(theme):
+    """X11 and older toolkits read ~/.icons/default. Only a file that is missing or ours is written."""
+    if DEFAULT_INDEX.is_file() and MARK not in DEFAULT_INDEX.read_text(errors="ignore"): return
+    if not theme:
+        if DEFAULT_INDEX.is_file():
+            DEFAULT_INDEX.unlink()
+            try: DEFAULT_INDEX.parent.rmdir()   # only if now empty
+            except OSError: pass
+        return
+    write_if_changed(DEFAULT_INDEX, f"# {MARK}\n[Icon Theme]\nName=Default\nInherits={theme}\n")
+
+
+def apply(argv):
+    pack = None; runtime = False
+    i = 0
+    while i < len(argv):
+        if argv[i] == "--pack" and i + 1 < len(argv): pack = argv[i + 1]; i += 2
+        elif argv[i] == "--runtime": runtime = True; i += 1
+        else: say("unknown option", argv[i]); return 2
+    origin = remember_origin() if not runtime else (json.loads(ORIGIN.read_text()) if ORIGIN.exists() else {})
+    mode, size, custom = settings()
+    if mode == "faction":
+        kit = pack if pack in KITS else active_kit()
+        theme = theme_name(kit)
+        # all four at once (a few seconds, once): switching factions and the Settings preview never wait afterwards
+        if not installed(theme) and not build(list(KITS)): theme = None
+    elif mode == "custom":
+        theme = custom if custom and installed(custom) else None
+        if custom and not theme: say(f"cursor theme '{custom}' is not installed; keeping the system cursor")
+    else:
+        theme = origin.get("theme")
+        size = origin.get("size") or size
+    env = hypr_env()
+    if shutil.which("hyprctl") and env.get("HYPRLAND_INSTANCE_SIGNATURE"):
+        subprocess.run(["hyprctl", "setcursor", theme or "default", str(size)], env=env, capture_output=True)
+    if runtime: return 0
+    write_lua(theme, size)
+    if theme:
+        gsettings("set", "org.gnome.desktop.interface", "cursor-theme", theme)
+    elif origin.get("theme"):
+        gsettings("set", "org.gnome.desktop.interface", "cursor-theme", origin["theme"])
+    else:
+        gsettings("reset", "org.gnome.desktop.interface", "cursor-theme")
+    gsettings("set", "org.gnome.desktop.interface", "cursor-size", str(size))
+    write_index(theme if mode != "system" else None)
+    return 0
+
+
+def status(_):
+    mode, size, custom = settings()
+    print(json.dumps({"mode": mode, "size": size, "custom": custom, "kit": active_kit(),
+                      "gsettings": gsettings("get", "org.gnome.desktop.interface", "cursor-theme"),
+                      "origin": json.loads(ORIGIN.read_text()) if ORIGIN.exists() else None,
+                      "installed": [theme_name(k) for k in KITS if installed(theme_name(k))]}, indent=2))
+    return 0
+
+
+def uninstall(_):
+    origin = json.loads(ORIGIN.read_text()) if ORIGIN.exists() else {}
+    current = gsettings("get", "org.gnome.desktop.interface", "cursor-theme") or ""
+    if current.startswith("MachineSpirit-"):
+        if origin.get("theme"): gsettings("set", "org.gnome.desktop.interface", "cursor-theme", origin["theme"])
+        else: gsettings("reset", "org.gnome.desktop.interface", "cursor-theme")
+        if origin.get("size"): gsettings("set", "org.gnome.desktop.interface", "cursor-size", str(origin["size"]))
+    write_index(None)
+    for k in KITS:
+        d = ICONS / theme_name(k)
+        if d.is_dir() and (d / "index.theme").is_file() and "MachineSpirit" in (d / "index.theme").read_text(errors="ignore"):
+            shutil.rmtree(d)
+    for p in (LUA, ORIGIN):
+        if p.exists(): p.unlink()
+    env = hypr_env()
+    if shutil.which("hyprctl") and env.get("HYPRLAND_INSTANCE_SIGNATURE"):
+        subprocess.run(["hyprctl", "setcursor", origin.get("theme") or "default", str(origin.get("size") or 24)], env=env, capture_output=True)
+    return 0
+
+
+def main():
+    cmd, rest = (sys.argv[1], sys.argv[2:]) if len(sys.argv) > 1 else ("status", [])
+    if cmd == "apply": return apply(rest)
+    if cmd == "build": return 0 if build([k for k in rest if k in KITS] or list(KITS)) else 1
+    if cmd == "status": return status(rest)
+    if cmd == "uninstall": return uninstall(rest)
+    print(__doc__, file=sys.stderr); return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())

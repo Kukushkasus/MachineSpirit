@@ -7,6 +7,7 @@ trap 'rm -rf "$work"' EXIT
 export HOME="$work/home" XDG_CONFIG_HOME="$work/config" XDG_DATA_HOME="$work/data" XDG_STATE_HOME="$work/state"
 mkdir -p "$HOME"
 unset HYPRLAND_INSTANCE_SIGNATURE
+export GSETTINGS_BACKEND=memory   # the installer runs ms-cursor: keep gsettings off the real desktop
 "$root/install.sh" --components shell --dry-run > "$work/dry-run.log"
 test ! -e "$XDG_CONFIG_HOME"
 "$root/install.sh" --components shell --no-packages --no-system --yes > "$work/install.log"

@@ -28,7 +28,7 @@ Instrument {
                 onTextChanged: tick.restart()
                 NumberAnimation { id: tick; target: seconds; property: "opacity"; from: 0.65; to: 1; duration: Theme.dShort }
             }
-            Text { text: "SEC"; color: Theme.glowFaint; font { family: Theme.fontMono; pixelSize: 9; letterSpacing: 1.5 } }
+            Text { text: "SEC"; color: Theme.glowFaint; font { family: Theme.fontMono; pixelSize: 10; letterSpacing: 1.5 } }
         }
     }
     Text {

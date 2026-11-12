@@ -50,11 +50,13 @@ Variants {
             function onValuesChanged() { if (win.mine) win.refresh() }
         }
         onMineChanged: {
+            if (!mine) { cardArrival.stop(); stripArrival.stop(); sectors.finish() }
             if (mine) {
                 field.text = Launcher.preset; Launcher.preset = ""; query = field.text; selected = 0
                 pick = Hyprland.focusedWorkspace?.id ?? 1
                 field.forceActiveFocus()
                 screen.powerOn(); skL.arrive(); skR.arrive(); skSL.arrive(); skSR.arrive()
+                cardArrival.play(); stripArrival.play(); sectors.play()
                 Qt.callLater(() => { refresh(); Hyprland.refreshToplevels() })   // after the first frame is out
             }
         }
@@ -193,7 +195,7 @@ Variants {
                 height: 76 + (win.typing ? list.height + 12 : 0)
                 x: (win.width - width) / 2
                 y: 70 + (win.mine ? 0 : 14)
-                Behavior on y { NumberAnimation { duration: Theme.dMedium; easing.type: Easing.OutCubic } }
+                Behavior on y { NumberAnimation { duration: win.mine ? Theme.dEnter : Theme.dExit; easing.type: win.mine ? Easing.BezierSpline : Easing.InCubic; easing.bezierCurve: Theme.easeSpring } }
                 Behavior on height { NumberAnimation { duration: Theme.dShort; easing.type: Easing.OutCubic } }
                 MouseArea { anchors.fill: parent }
 
@@ -203,6 +205,7 @@ Variants {
                 Guardian { id: skR; x: parent.width - 2; y: 12; mirror: true; active: win.mine }
 
                 Bezel { anchors.fill: parent; radius: 12; inset: 0; boltSize: 6; role: "window" }
+                Arrival { id: cardArrival; anchors.fill: parent; radius: 12; z: 30; delay: 40 }
                 CrtScreen {
                     id: screen
                     anchors { fill: parent; margins: 12 }
@@ -261,7 +264,7 @@ Variants {
                                     }
                                     Column {
                                         anchors { left: parent.left; leftMargin: 62; right: tagBox.left; rightMargin: 10; verticalCenter: parent.verticalCenter }
-                                        Glow { visible: row.modelData.section !== undefined; halo: 0; color: Theme.glowDim; font { family: Theme.fontMono; pixelSize: 10 } text: (row.modelData.section ?? "").toLowerCase() }
+                                        Glow { visible: row.modelData.section !== undefined; halo: 0; color: Theme.glowDim; font { family: Theme.fontMono; pixelSize: 11 } text: (row.modelData.section ?? "").toLowerCase() }
                                         Glow { width: parent.width; elide: Text.ElideRight; halo: row.chosen ? 0.7 : 0; textFormat: Text.StyledText
                                             font { family: row.modelData.kind === "app" ? Theme.fontNum : Theme.fontMono; pixelSize: 15; weight: Font.Medium }
                                             text: row.modelData.kind === "app" ? win.marked(row.modelData.title, win.query.trim()) : row.modelData.title }
@@ -301,13 +304,13 @@ Variants {
                 readonly property real sc: cellW / win.modelData.width
                 height: pad * 2 + cellH * 2 + gap + 30
                 x: (win.width - width) / 2
-                y: 70 + 76 + 22 + (win.mine ? 0 : 20)
+                y: 70 + 76 + 22 + (win.mine ? 0 : (Theme.kit === "khorne" ? -26 : 20))
                 // while typing the catalogue steps aside and the results have the room
                 opacity: win.typing ? 0 : 1
                 visible: opacity > 0.01
                 enabled: !win.typing
                 Behavior on opacity { NumberAnimation { duration: Theme.dShort } }
-                Behavior on y { NumberAnimation { duration: Theme.dMedium; easing.type: Easing.OutCubic } }
+                Behavior on y { NumberAnimation { duration: win.mine ? Math.round(Theme.dEnter * 1.1) : Theme.dExit; easing.type: win.mine ? Easing.BezierSpline : Easing.InCubic; easing.bezierCurve: Theme.easeSpring } }
                 MouseArea { anchors.fill: parent }
 
                 property string dragAddr: ""
@@ -319,7 +322,11 @@ Variants {
                 }
 
                 Bezel { anchors.fill: parent; radius: 14; inset: 0; boltSize: 7; role: "window" }
+                Arrival { id: stripArrival; anchors.fill: parent; radius: 14; z: 30; delay: 120 }
+                // the sectors light one after another behind the doors
+                Stagger { id: sectors; items: sectorGrid.children.filter(c => c.wsId !== undefined) }
                 Grid {
+                    id: sectorGrid
                     x: strip.pad; y: strip.pad
                     columns: strip.cols; spacing: strip.gap
                     Repeater {

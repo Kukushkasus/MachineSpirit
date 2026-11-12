@@ -75,5 +75,8 @@
       "username": "",
       "shell": false
     }
-  }
+  },
+  "cursorMode": "faction",
+  "cursorTheme": "",
+  "cursorSize": 24
 }

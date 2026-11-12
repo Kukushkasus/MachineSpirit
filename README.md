@@ -1,6 +1,10 @@
 <p align="center"><img src="docs/media/banner.svg" alt="MachineSpirit: phosphor instruments and forged metal" width="100%"></p>
 <p align="center"><b>English</b> · <a href="README.ru.md">Русский</a> · <a href="docs/INSTALL.md">Installation & recovery</a> · <a href="docs/SETTINGS.md">Settings</a> · <a href="docs/KEYBINDINGS.md">Keybindings</a></p>
 
+**MachineSpirit** is a desktop shell for Hyprland, built with Quickshell: phosphor screens, Nixie clocks and machined housings, with colours taken from your wallpaper. Four faction liveries (Adeptus Mechanicus, Ultramarines, Necrons and Khorne) redraw the whole shell and change how it moves, while every control stays where it is. It is an unofficial fan project in the style of Warhammer 40,000.
+
+**0.6.0 · Visual & Motion Overhaul** · Arch Linux / CachyOS · Wayland · [GPL-3.0-only](LICENSE) · Author: [Kukushkasus](https://github.com/Kukushkasus)
+
 <details>
 <summary><b>I'm not reading all that. Just give me the install command.</b></summary>
 
@@ -22,99 +26,61 @@ Then reboot and sign in on the login screen with the Hyprland session.
 
 </details>
 
-**MachineSpirit** is a desktop shell for Hyprland, built with Quickshell: phosphor screens, Nixie clocks and machined housings, with colours taken from your wallpaper. Four faction liveries redraw the whole shell (Adeptus Mechanicus, Ultramarines, Necrons and Khorne) while every control stays where it is. It is an unofficial fan project in the style of Warhammer 40,000.
+<p align="center"><img src="docs/media/showcase.gif?v=0.6.0" alt="MachineSpirit with the Adeptus Mechanicus theme: login screen, desktop with bar and instruments, command console, Sanctum, calendar, network and media popups, the wallpaper archive, theme packs and cursor settings, and the power menu" width="100%"></p>
+<p align="center"><sub><a href="docs/media/showcase.mp4">Full-quality video (MP4)</a></sub></p>
 
-**0.5.0 · Road to 1.0 (pre-release)** · Arch Linux / CachyOS · Wayland · [GPL-3.0-only](LICENSE) · Author: [Kukushkasus](https://github.com/Kukushkasus)
+## Four factions
 
-- Bar, command console with workspace overview, control desk (Sanctum), popups, notification archive, wallpaper archive and five movable desktop instruments.
-- Settings Center with fourteen searchable pages: appearance, themes, bar, widgets, effects, notifications, displays, input, session, shortcuts, privacy, browsers and updates.
-- Four theme packs with their own wallpapers, display faces and motion; a safe preview, apply and revert; your own packs as plain data.
-- Login, lock and boot in the same style; reduced-motion and low-power modes; installs and updates with backups.
-
-## Showcase: Adeptus Mechanicus
-
-<p align="center"><img src="docs/media/showcase.gif?v=0.5.0" alt="MachineSpirit with the Adeptus Mechanicus theme, recorded in a VM: SDDM login, desktop with bar and instruments, command console, Sanctum, network, media and calendar popups, the wallpaper archive, Settings and the power menu" width="100%"></p>
-
-<p align="center"><sub>Recorded in a QEMU/KVM guest. <a href="docs/media/showcase.mp4">Full-quality video (MP4)</a></sub></p>
-
-## Faction themes
-
-One shell, four liveries. A theme changes the bar's silhouette, the housings and their glass, cards and titles, keys and gauges, workspace marks, popups, toasts, the power wheel, the lock screen, the display face and how things move. The layout, the click areas and the readings stay the same.
+One shell, four liveries. A theme changes the bar's silhouette, housings and glass, cards and titles, keys and gauges, popups, toasts, the power wheel, the lock screen, the display face, the cursor and the way windows arrive. The layout, the click areas and the readings stay the same. Each faction has its own 4K wallpaper; choosing a theme never changes yours unless you ask.
 
 | Adeptus Mechanicus | Ultramarines |
 |---|---|
-| ![Adeptus Mechanicus: the machine temple wallpaper, clamped bar plates with cables, CRT glass and Sanctum](docs/media/factions/mechanicus.jpg) | ![Ultramarines: the command bridge wallpaper, a continuous armour band, gold-trimmed plates and Sanctum](docs/media/factions/ultramarines.jpg) |
+| ![Adeptus Mechanicus: clamped bar plates with cables, CRT glass and Sanctum](docs/media/factions/mechanicus.jpg) | ![Ultramarines: a slim armour band, gold-trimmed plates and Sanctum](docs/media/factions/ultramarines.jpg) |
 | **Necrons** | **Chaos: Khorne** |
-| ![Necrons: the tomb plain wallpaper, floating bar shards, monolith housings and Sanctum](docs/media/factions/necrons.jpg) | ![Khorne: the war forge wallpaper, toothed iron bar slabs and chains, forge glass and Sanctum](docs/media/factions/khorne.jpg) |
+| ![Necrons: floating bar shards, monolith housings and Sanctum](docs/media/factions/necrons.jpg) | ![Khorne: toothed iron bar slabs and chains, forge glass and Sanctum](docs/media/factions/khorne.jpg) |
 
-<p align="center"><img src="docs/media/themes.gif?v=0.5.0" alt="Switching between the four faction themes live" width="100%"></p>
+<p align="center"><img src="docs/media/themes.gif?v=0.6.0" alt="The four faction themes switched live with Sanctum open, each with its own wallpaper: Adeptus Mechanicus, Ultramarines, Necrons and Khorne" width="100%"></p>
 
-Each pack brings its own 3840×2160 wallpaper (a machine temple, a command bridge, a tomb plain and a war forge), rendered in Blender from the scene scripts in [`tools/wallpapers/`](tools/wallpapers). Choosing a theme never changes your wallpaper unless you ask. See [Theme packs](docs/THEMES.md).
+Each faction moves in its own way. Mechanicus relays snap into place while lamps warm up and current runs along the frame; Ultramarines instruments come up in strict order behind a gold pulse; Necron panels phase in under a scanning line; Khorne plates drop with weight and throw sparks. See [Theme packs](docs/THEMES.md).
 
-## Settings Center and theme packs
+## What is in it
+
+- **Bar, command console and workspace overview**, the **Sanctum** control desk, popups for time, weather, resources, network and media, a notification log, a wallpaper archive with online sources, and five movable desktop instruments.
+- **Settings Center** with fourteen searchable pages: appearance and cursor, themes, bar, widgets, effects, notifications, displays, input, session, shortcuts, privacy, browsers and updates.
+- **Theme packs** with a 30-second preview that saves nothing, apply and revert; your own packs as plain data (they cannot run code).
+- **Cursors** for every faction, outlined light and dark so they stay visible on any wallpaper; or keep your own.
+- **Login, lock and boot** in the same style; reduced-motion and low-power modes; installs and updates with backups.
 
 ![Settings: the Themes page with previews of the four packs](docs/media/settings-themes.jpg)
 
-- **Themes:** preview a pack for 30 seconds without saving anything, then keep it or let it run out; return to the previous theme at any time. Colour modes: keep the faction's palette, guard it against the wallpaper, or follow the wallpaper.
-- **Your own packs:** a folder in `~/.local/share/machinespirit/themes/` with a `theme.json` and pictures. A pack picks built-in liveries by name and tunes colours, words and motion; it cannot run code.
-- **Appearance and effects:** panel opacity, glow, density, decoration level, effect intensity and frequency, animation speed, reduced motion and low power.
-- **Bar, widgets, notifications, session:** which bar modules appear and in what order, widget options, pop-up time and count, quiet mode, hold time for dangerous actions.
-- **Search** finds a single setting and takes you to it. Display changes have a 15-second confirmation with automatic rollback.
+## Install and update
 
-## Install and compatibility
-
-The release archive is about 6 MiB (four 4K wallpapers and three display faces included).
-
-Arch Linux or CachyOS, Hyprland 0.55 or newer with the Lua configuration API (tested with 0.57), Quickshell (tested with 0.3.2), Python 3.11+ and `pacman`. Details are in [Installation and recovery](docs/INSTALL.md#requirements).
-
-The quickest way is the box at the top: `./install.sh --full --yes`, reboot, sign in. The same command works from a text console and from a Hyprland session that is already running. It installs the packages, the shell, the Hyprland configuration, the lock screen and, when no login manager is present, the SDDM login screen.
-
-## Advanced installation
-
-Choose individual components or a full installation. To inspect the changes first:
+Requirements: Arch Linux or CachyOS, Hyprland 0.55 or newer with the Lua configuration API, Quickshell (tested with 0.3.2), Python 3.11+ and `pacman`. The quickest way is the box at the top. To choose components or see the plan first:
 
 ```sh
 ./install.sh --full --dry-run
 ./install.sh --components shell,hyprland,terminal,apps,lock,wallpapers
 ```
 
-Existing files are backed up, and your own edits are preserved on update. The optional boot component supports GRUB with mkinitcpio and no display manager, and asks before it changes anything. Package installation needs `sudo`, but the installer itself runs as your normal user. AUR is optional. Options such as `--with-autologin`, `--with-boot` and `--no-packages`, the rules for an existing login manager and recovery are in [Installation and recovery](docs/INSTALL.md).
+Existing files are backed up and your own edits are kept on update. To update, open **Settings → Updates** or run `ms-update` (it contacts GitHub only when you ask); from a Git checkout, `git pull` and `./install.sh update`. Options, the boot component, existing login managers and recovery: [Installation and recovery](docs/INSTALL.md).
 
-## Update
+## Compatibility and known limitations
 
-Open **Settings, Updates** or run `ms-update`: it checks for a new release only when you ask, shows what changed and installs with backups. From a Git checkout, run `git pull` and `./install.sh update`. See [updating](docs/INSTALL.md#updating).
-
-## Configuration
-
-Settings live in `~/.config/machinespirit/settings.json` (or the XDG equivalent); the interface and the file describe the same options. Updates keep your layouts, display preferences and notes. Display changes have a 15-second confirmation window with a separate rollback process.
-
-```json
-{
-  "version": 1,
-  "layouts": ["us", "ru"],
-  "primaryOutput": "DP-1"
-}
-```
+- Developed and tested on Hyprland 0.57 and Quickshell 0.3.2 with a virtual GPU (virtio/virgl). Physical GPUs, NVIDIA and multi-GPU setups have not been tested yet; reports are welcome.
+- The faction display faces have no Cyrillic; such text is set in IBM Plex. The interface itself is English.
+- Before 1.0 the theme pack format may still change.
 
 ## Documentation
 
 - [Installation and recovery](docs/INSTALL.md): requirements, components, updating, backups, rollback and the boot component.
-- [Settings](docs/SETTINGS.md): the settings file, privacy, proxy, browser policies and updates.
+- [Settings](docs/SETTINGS.md): the settings file, cursor, privacy, proxy, browser policies and updates.
 - [Theme packs](docs/THEMES.md): the four factions, previews, colour modes and making your own pack.
-- [Keybindings](docs/KEYBINDINGS.md): every shortcut, generated from the live catalog.
-- [Desktop instruments](docs/desktop-widgets.md): arranging the widgets.
+- [Keybindings](docs/KEYBINDINGS.md) and [desktop instruments](docs/desktop-widgets.md).
 - [Contributing](CONTRIBUTING.md), [changelog](CHANGELOG.md) and [third-party credits](THIRD-PARTY.md).
-
-## Known limitations
-
-- Tested in a QEMU/KVM guest with a virtual GPU. Physical hardware, NVIDIA and multi-GPU setups are untested.
-- The wallpapers are 3D scenes rendered from code, not hand-painted art.
-- The faction display faces have no Cyrillic; such text is set in IBM Plex. The interface itself is English.
-- This is a pre-release on the way to 1.0: expect changes to the theme pack format before 1.0.
 
 ## Inspiration and credits
 
-- [end-4](https://github.com/end-4/dots-hyprland) and [end4-pC](https://github.com/pctrade/end4-pC): desktop workflow, shortcuts and Super-tap handling.
+- [end-4](https://github.com/end-4/dots-hyprland) and [end4-pC](https://github.com/pctrade/end4-pC): desktop workflow, shortcuts, Super-tap handling and motion references.
 - [DMS / DUX](https://github.com/duxlabs-dev/dux-shell): early panel and animation references.
 - [Noctalia](https://github.com/noctalia-dev/noctalia-shell): settings organization and navigation.
 - [Caelestia](https://github.com/caelestia-dots/caelestia): installation, configuration and clock typography references.

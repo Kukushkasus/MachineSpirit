@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # [ PURITY SEAL ] Touch only the spirit entrusted to this session.
-import fcntl, json, os, signal, subprocess, sys, time
+import fcntl, json, os, shutil, signal, subprocess, sys, time
 from pathlib import Path
 run=Path(os.environ.get('XDG_RUNTIME_DIR','/tmp')) / ('machinespirit-'+str(os.getuid()))
 run.mkdir(mode=0o700,exist_ok=True)
@@ -79,10 +79,16 @@ def stop(*_):
             except ProcessLookupError: pass
     (run/'supervisor.pid').unlink(missing_ok=True)
     sys.exit(0)
-signal.signal(signal.SIGTERM,stop);signal.signal(signal.SIGINT,stop)
+signal.signal(signal.SIGTERM,stop);signal.signal(signal.SIGINT,stop);signal.signal(signal.SIGHUP,stop)
 conf=Path(os.environ.get('XDG_CONFIG_HOME',Path.home()/'.config'))
 subprocess.run(['ms-settings','generate'],stdout=subprocess.DEVNULL)
 env=dict(os.environ,MS_STARTUP='1',MS_RUN=str(run))
+def compositor_alive():
+    # The Hyprland this session belongs to. Once it has gone (logout), its control socket is removed: the
+    # supervisor must end with it, or it would keep the session lock, restart the shell into the next login
+    # and leave that login without its own idle lock.
+    sig=os.environ.get('HYPRLAND_INSTANCE_SIGNATURE'); rt=os.environ.get('XDG_RUNTIME_DIR')
+    return not sig or not rt or (Path(rt)/'hypr'/sig/'.socket.sock').exists()
 state=Path(os.environ.get('XDG_STATE_HOME',Path.home()/'.local/state'))/'machinespirit'
 state.mkdir(parents=True,exist_ok=True)
 logfile=state/'session.log'
@@ -92,14 +98,16 @@ with logfile.open('a' if logfile.exists() and logfile.stat().st_size<1_000_000 e
     children.append(start_shell(env))
     shell_starts=[time.monotonic()]
     if (conf/'hypr/hyprlock.conf').exists():
-        import shutil
         if shutil.which('hypridle'): children.append(subprocess.Popen(['hypridle','-c',str(conf/'machinespirit/hypridle.conf')],stdout=log,stderr=log,start_new_session=True))
-    children.append(subprocess.Popen(['ms-privacy','daemon'],stdout=log,stderr=log,start_new_session=True))
+    # the privacy daemon needs no display, so it would outlive a supervisor killed at logout: it dies with it instead
+    PRIVACY=(['setpriv','--pdeathsig','TERM'] if shutil.which('setpriv') else [])+['ms-privacy','daemon']
+    children.append(subprocess.Popen(PRIVACY,stdout=log,stderr=log,start_new_session=True))
     idleconf=conf/'machinespirit/hypridle.conf'
     stamp=idleconf.stat().st_mtime_ns if idleconf.exists() else 0
     daemon_started=time.monotonic()
     try:
         while True:
+            if not compositor_alive(): break
             if children[0].poll() is not None:
                 # A shell that died on its own is started again (a lock it held is taken over at once); a clean exit ends the session helpers.
                 now_=time.monotonic(); shell_starts=[t for t in shell_starts if now_-t<60]
@@ -116,6 +124,6 @@ with logfile.open('a' if logfile.exists() and logfile.stat().st_size<1_000_000 e
                 stamp=now
             # The privacy daemon owns the loopback proxy; without it the shell stays offline until the next login.
             if children[-1].poll() is not None and time.monotonic()-daemon_started>5:
-                children[-1]=subprocess.Popen(['ms-privacy','daemon'],stdout=log,stderr=log,start_new_session=True)
+                children[-1]=subprocess.Popen(PRIVACY,stdout=log,stderr=log,start_new_session=True)
                 daemon_started=time.monotonic()
     finally: stop()

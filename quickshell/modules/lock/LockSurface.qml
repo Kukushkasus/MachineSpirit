@@ -3,6 +3,7 @@
 import Quickshell
 import QtQuick
 import QtQuick.Effects
+import QtQuick.Shapes
 import qs.common
 import qs.services
 
@@ -16,15 +17,53 @@ Item {
     readonly property string wallpaperSource: Theme.wallpaper !== "" ? "file://" + Theme.wallpaper
         : "file://" + (Quickshell.env("XDG_DATA_HOME") || (Quickshell.env("HOME") + "/.local/share")) + "/machinespirit/wallpaper.png"
 
+    clip: true
     Rectangle { anchors.fill: parent; color: Theme.surface }
+    // The blur reads its neighbours, so at the edge of the picture it fades into transparency and the plain surface
+    // showed through as a dark frame with rounded corners. The picture is therefore drawn larger than the screen by
+    // more than the blur reaches, and the surface clips it: the screen only ever sees the solid middle.
+    readonly property real blurReach: 48
     Image {
         id: wall
-        anchors.fill: parent; source: surface.wallpaperSource; fillMode: Image.PreserveAspectCrop; asynchronous: true
+        anchors { fill: parent; margins: Theme.lowPower ? 0 : -surface.blurReach * 1.5 }
+        source: surface.wallpaperSource; fillMode: Image.PreserveAspectCrop; asynchronous: true
+        sourceSize: Qt.size(Math.ceil(surface.width / 2), Math.ceil(surface.height / 2))   // blurred anyway: half size is enough
         opacity: Theme.lowPower ? 0.35 : 1
         layer.enabled: !Theme.lowPower   // blurred and darkened; with low power the plain wallpaper is only dimmed
-        layer.effect: MultiEffect { blurEnabled: true; blur: 1.0; blurMax: 48; brightness: -0.28; saturation: -0.15 }
+        layer.effect: MultiEffect { autoPaddingEnabled: false; blurEnabled: true; blur: 1.0; blurMax: surface.blurReach
+            brightness: Skin.frame === "khorne" ? -0.22 : -0.28; saturation: Skin.frame === "khorne" ? 0.05 : -0.15 }
     }
     Rectangle { anchors.fill: parent; color: Qt.alpha(Theme.surface, 0.4) }
+    Shape {   // a vignette: the edges sink, the light gathers behind the housing; Khorne glows from below like a forge
+        anchors.fill: parent
+        preferredRendererType: Shape.CurveRenderer
+        ShapePath {
+            strokeWidth: -1
+            fillGradient: RadialGradient {
+                centerX: surface.width / 2; centerY: surface.height * (Skin.frame === "khorne" ? 0.62 : 0.5)
+                centerRadius: Math.hypot(surface.width, surface.height) * 0.62
+                focalX: centerX; focalY: centerY
+                GradientStop { position: 0; color: "transparent" }
+                GradientStop { position: 0.55; color: Qt.rgba(0, 0, 0, 0.12) }
+                GradientStop { position: 1; color: Qt.rgba(0, 0, 0, 0.62) }
+            }
+            PathRectangle { width: surface.width; height: surface.height }
+        }
+    }
+    Rectangle {   // Khorne: heat rising from the bottom edge, breathing slowly
+        visible: Skin.frame === "khorne"
+        anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+        height: parent.height * 0.42
+        gradient: Gradient {
+            GradientStop { position: 0; color: "transparent" }
+            GradientStop { position: 1; color: Qt.alpha(Theme.rust, 0.26) }
+        }
+        SequentialAnimation on opacity {
+            running: Theme.motionEnabled && Skin.frame === "khorne"; loops: Animation.Infinite
+            NumberAnimation { from: 0.7; to: 1; duration: 2600; easing.type: Easing.InOutSine }
+            NumberAnimation { from: 1; to: 0.7; duration: 3100; easing.type: Easing.InOutSine }
+        }
+    }
     Repeater {   // brass hairlines, as on the desktop
         model: [0.07, 0.93]
         Rectangle { x: surface.width * modelData; width: 1; height: surface.height; color: Theme.brass; opacity: 0.18 }

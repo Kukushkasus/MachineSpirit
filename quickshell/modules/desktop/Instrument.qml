@@ -31,7 +31,7 @@ Item {
     // the mechanicus plate shows a burst of binary, the necron one lets a small sign drift up past it.
     property string sign: ""
     Text { id: serialText; anchors { right: parent.right; rightMargin: 17; top: parent.top; topMargin: 11 } textFormat: Text.PlainText
-        text: root.sign !== "" ? root.sign : root.serial; color: root.sign !== "" ? Theme.glowDim : Theme.glowFaint; font { family: Theme.fontNum; pixelSize: 10 } }
+        text: root.sign !== "" ? root.sign : root.serial; color: root.sign !== "" ? Theme.glowDim : Theme.glowFaint; font { family: Theme.fontNum; pixelSize: 11 } }
     Rectangle { id: mote; visible: moteAnim.running; x: serialText.x - 12; y: 14; width: 5; height: 5; rotation: 45; opacity: 0; color: "transparent"; border { width: 1; color: Theme.glow } }
     ParallelAnimation {
         id: moteAnim

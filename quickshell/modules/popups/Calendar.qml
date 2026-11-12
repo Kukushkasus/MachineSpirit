@@ -57,10 +57,10 @@ Column {
             }
             Repeater {
                 model: [0, 6, 12, 18, 24]
-                Glow { required property int modelData; x: modelData * ruler.px - width / 2; y: 24; halo: 0; color: Theme.glowDim; font.pixelSize: 10; text: String(modelData).padStart(2, "0") }
+                Glow { required property int modelData; x: modelData * ruler.px - width / 2; y: 24; halo: 0; color: Theme.glowDim; font.pixelSize: 11; text: String(modelData).padStart(2, "0") }
             }
-            Glow { x: Weather.sunrise * ruler.px - width / 2; y: -4; halo: 0; color: Theme.glowDim; font.pixelSize: 10; text: "☀ " + root.fmtH(Weather.sunrise) }
-            Glow { x: Weather.sunset * ruler.px - width / 2; y: -4; halo: 0; color: Theme.glowDim; font.pixelSize: 10; text: "☾ " + root.fmtH(Weather.sunset) }
+            Glow { x: Weather.sunrise * ruler.px - width / 2; y: -4; halo: 0; color: Theme.glowDim; font.pixelSize: 11; text: "☀ " + root.fmtH(Weather.sunrise) }
+            Glow { x: Weather.sunset * ruler.px - width / 2; y: -4; halo: 0; color: Theme.glowDim; font.pixelSize: 11; text: "☾ " + root.fmtH(Weather.sunset) }
             Rectangle {   // needle: now
                 x: root.nowH * ruler.px - 1; y: 4; width: 2; height: 22; radius: 1
                 color: Theme.rustText

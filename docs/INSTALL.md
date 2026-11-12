@@ -98,7 +98,7 @@ Every installation is a transaction recorded under `$XDG_STATE_HOME/machinespiri
 - **Files a new version no longer ships** are removed only when MachineSpirit installed them, you did not change them and nothing in the new version refers to them. Otherwise they stay and a warning says why.
 - **Failures roll back.** A failed installation restores every file it can and says what is left and how to retry. Package installations are not rolled back.
 - **Interrupted installations** (crash, power loss) are recovered on the next installation, and only when the process that wrote the record is provably gone. `doctor` reports unfinished records and who owns them.
-- **Nothing is discarded silently.** Restore and uninstall keep files whose hashes no longer match the installed version and report them. Generated state, notes, API keys and wallpaper downloads remain after uninstall. Stop the shell before uninstalling it.
+- **Nothing is discarded silently.** Restore and uninstall keep files whose hashes no longer match the installed version and report them. Generated state, notes, API keys and wallpaper downloads remain after uninstall; the generated MachineSpirit cursor themes are removed and the cursor you had before is set again. Stop the shell before uninstalling it.
 
 ```sh
 ./install.sh doctor                 # check commands, versions, settings and unfinished records

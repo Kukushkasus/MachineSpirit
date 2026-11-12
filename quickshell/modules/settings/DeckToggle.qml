@@ -24,7 +24,7 @@ RowLayout {
           Item { anchors.fill:parent; visible:Skin.control!=="mechanicus"
             Face { anchors.fill:parent; solid:true; hovered:sw.hovered; on:sw.checked || sw.activeFocus }
             Poly { width:16;height:16;y:5;x:sw.checked?25:5
-                Behavior on x { NumberAnimation {duration:Theme.dShort;easing.type:Easing.OutCubic} }
+                Behavior on x { NumberAnimation {duration:Theme.dMedium;easing.type:Easing.BezierSpline;easing.bezierCurve:Theme.easeSpring} }
                 points:Skin.control==="necrons"?[[8,0],[16,8],[8,16],[0,8]]:Skin.control==="ultramarines"?Skin.chamfer(16,16,4):Skin.iron(16,16,3,0)
                 upper:sw.checked?(Skin.control==="ultramarines"?Theme.brassHi:Skin.control==="khorne"?Qt.lighter(Theme.glow,1.1):Theme.glow):Theme.outline
                 lower:sw.checked?(Skin.control==="ultramarines"?Theme.brass:Skin.control==="khorne"?Theme.rust:Theme.glowDim):Qt.darker(Theme.outline,1.3)
@@ -33,7 +33,7 @@ RowLayout {
           Rectangle { anchors.fill:parent;visible:Skin.control==="mechanicus";radius:13;color:sw.checked?Qt.alpha(Theme.glow,sw.hovered?0.32:0.25):sw.hovered?Theme.surfaceContainerHigh:Theme.surfaceContainerHighest;border.color:sw.checked?Theme.glowDim:Theme.outlineVariant
             Behavior on color { ColorAnimation { duration:Theme.dShort } }
             Behavior on border.color { ColorAnimation { duration:Theme.dShort } }
-            Rectangle { width:18;height:18;radius:9;y:4;x:sw.checked?24:4;color:sw.checked?Theme.glow:Theme.outline;Behavior on x { NumberAnimation {duration:Theme.dShort;easing.type:Easing.OutCubic} } Behavior on color { ColorAnimation { duration:Theme.dShort } } }
+            Rectangle { width:18;height:18;radius:9;y:4;x:sw.checked?24:4;color:sw.checked?Theme.glow:Theme.outline;Behavior on x { NumberAnimation {duration:Theme.dMedium;easing.type:Easing.BezierSpline;easing.bezierCurve:Theme.easeSpring} } Behavior on color { ColorAnimation { duration:Theme.dShort } } }
           }
         }
         background:Rectangle { color:"transparent";radius:15;border.color:sw.activeFocus?Theme.glow:"transparent" }

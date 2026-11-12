@@ -57,6 +57,7 @@ Variants {
             {title:"Colour mode",hint:"wallpaper colours matugen palette follow guarded faction",page:9},
             {title:"Recommended wallpapers",hint:"theme background picture",page:9},
             {title:"Corner radius",hint:"rounding window shape",page:0,to:"Corner radius"},
+            {title:"Pointer",hint:"cursor mouse pointer theme size faction",page:0,to:"Pointer"},
             {title:"Space between windows",hint:"gaps inner",page:0,to:"Space between windows"},
             {title:"Space at screen edges",hint:"gaps outer margin",page:0,to:"Space at screen edges"},
             {title:"Border weight",hint:"window border width",page:0,to:"Border weight"},
@@ -117,7 +118,20 @@ Variants {
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: mine ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         ShortcutInhibitor { window: win; enabled: win.mine && win.captureOriginal !== "" }
-        onMineChanged: if (mine) { page = Settings.manual ? 5 : page; query = ""; focus.forceActiveFocus() }
+        onMineChanged: if (mine) { page = Settings.manual ? 5 : page; query = ""; focus.forceActiveFocus(); deckArrival.play(); Qt.callLater(revealPage) } else { deckArrival.stop(); pageParts.finish() }
+        // a new page comes up card by card, in the faction's manner
+        onPageChanged: if (mine) Qt.callLater(revealPage)
+        Stagger { id:pageParts }
+        function revealPage() {
+            const col = pagesCol
+            let pg = col.children.find(x => x.visible && x.height > 0 && x.children.length > 0)
+            if (pg && pg.item) pg = pg.item
+            if (!pg) { pageParts.items = []; return }
+            let c = pg.children.filter(x => x.visible && x.height > 0)
+            if (c.length === 1 && c[0].children.length > 1) c = c[0].children.filter(x => x.visible && x.height > 0)
+            pageParts.items = c.slice(0, 12)
+            pageParts.play()
+        }
         Connections {target:Privacy;function onSetupFinished(){win.setupDone=true;successIn.restart()} function onOnboardingChanged(){if(Privacy.onboarding){win.setupDone=false;win.setupStep=0;win.go(6);Settings.open=true}}}
         Connections{target:BrowserPrivacy;function onPreviewChanged(){if(BrowserPrivacy.preview!==""&&win.page===7)reviewScroll.restart()}}
         Timer { id: reviewScroll; interval: 100; onTriggered: scroll.contentItem.contentY = Math.max(0, scroll.contentItem.contentHeight - scroll.contentItem.height) }
@@ -174,9 +188,9 @@ Variants {
             Keys.onEscapePressed: { if(win.captureOriginal){win.captureOriginal="";win.recording=false} else if(Settings.closeRequested) Settings.closeRequested=false;else Settings.requestClose() }
             Rectangle {
                 id:frame
-                opacity:win.mine?1:0;scale:win.mine?1:0.98
-                Behavior on opacity { NumberAnimation { duration:win.mine?Theme.dLong:Theme.dClose;easing.type:Easing.OutCubic } }
-                Behavior on scale { NumberAnimation { duration:win.mine?Theme.dLong:Theme.dClose;easing.type:Easing.OutCubic } }
+                opacity:win.mine?1:0;scale:win.mine?1:(Theme.kit==="khorne"?1.03:0.96)
+                Behavior on opacity { NumberAnimation { duration:win.mine?Theme.dLong:Theme.dExit;easing.type:Easing.OutCubic } }
+                Behavior on scale { NumberAnimation { duration:win.mine?Theme.dEnter:Theme.dExit;easing.type:win.mine?Easing.BezierSpline:Easing.InCubic;easing.bezierCurve:Theme.easeSpring } }
                 // Small screens (for example 1280x720 at scale 2 is 640x360): keep the panel usable instead of clipping it.
                 readonly property bool compact:height<520
                 readonly property bool narrow:width<700
@@ -193,6 +207,7 @@ Variants {
                 MouseArea {anchors.fill:parent}
                 Bezel { visible:!frame.plain;anchors.fill:parent;radius:16;inset:0;role:"window";bolts:false }
                 CrtScreen { visible:!frame.plain;anchors.fill:parent;anchors.margins:8;radius:11;padding:0;bootOnLoad:false;ambient:false }
+                Arrival { id:deckArrival;anchors.fill:parent;radius:16;z:40;delay:Math.round(Theme.dEnter*0.25) }
                 // the faction's fastenings at the corners of the deck; put away with reduced decoration
                 Repeater { model:Theme.ornaments>0&&frame.plain?4:0
                     Bolt { required property int index;z:5;size:7;angle:20+index*47;visible:Theme.kit!=="necrons"||index===1||index===2
@@ -212,7 +227,7 @@ Variants {
                                     DeckText {text:"SPIRIT";font.family:Theme.fontMono;font.pixelSize:12;font.letterSpacing:4;color:Theme.glow}
                                 }
                             }
-                            DeckText {visible:!frame.compact&&!frame.narrow;text:"CONFIGURATION DECK";color:Theme.outline;font.family:Theme.fontMono;font.pixelSize:9;font.letterSpacing:1;Layout.topMargin:6;Layout.bottomMargin:4}
+                            DeckText {visible:!frame.compact&&!frame.narrow;text:"CONFIGURATION DECK";color:Theme.outline;font.family:Theme.fontMono;font.pixelSize:10;font.letterSpacing:1;Layout.topMargin:6;Layout.bottomMargin:4}
                             Flickable {   // the page list scrolls when the panel is short
                                 Layout.fillWidth:true;Layout.fillHeight:true;clip:true;contentHeight:navColumn.implicitHeight;interactive:contentHeight>height;boundsBehavior:Flickable.StopAtBounds
                                 ColumnLayout {
@@ -226,7 +241,7 @@ Variants {
                                     }
                                 }
                                 Component { id:navHead
-                                    DeckText { text:frame.narrow?"·":parent.entry.head;color:Theme.outline;font.family:Theme.fontMono;font.pixelSize:9;font.letterSpacing:1.5;topPadding:frame.compact?2:8;leftPadding:frame.narrow?22:14;wrapMode:Text.NoWrap }
+                                    DeckText { text:frame.narrow?"·":parent.entry.head;color:Theme.outline;font.family:Theme.fontMono;font.pixelSize: 11;font.letterSpacing:1.5;topPadding:frame.compact?2:8;leftPadding:frame.narrow?22:14;wrapMode:Text.NoWrap }
                                 }
                                 Component { id:navItem
                                     Basic.Button {
@@ -269,7 +284,7 @@ Variants {
                         }
                         RowLayout {Layout.fillWidth:true
                             ColumnLayout {Layout.fillWidth:true;spacing:5
-                                DeckText{text:win.query?"SEARCH / CONFIGURATION":win.pages[win.page].tag;color:Theme.glowDim;font.family:Theme.fontMono;font.pixelSize:10;font.letterSpacing:1.5;Layout.fillWidth:true}
+                                DeckText{text:win.query?"SEARCH / CONFIGURATION":win.pages[win.page].tag;color:Theme.glowDim;font.family:Theme.fontMono;font.pixelSize:11;font.letterSpacing:1.5;Layout.fillWidth:true}
                                 DeckText{readonly property string t:win.query?"Find your controls":win.pages[win.page].name;text:t;Layout.fillWidth:true
                                     // the page name in the faction's display face
                                     font.family:frame.plain?Theme.fontUi:Skin.display(t);font.weight:frame.plain?Font.DemiBold:Skin.titleWeight
@@ -282,6 +297,7 @@ Variants {
                         ScrollView {
                             id:scroll;Layout.fillWidth:true;Layout.fillHeight:true;Layout.minimumHeight:120;clip:true;contentWidth:availableWidth
                             ColumnLayout {
+                                id:pagesCol
                                 width:scroll.availableWidth;spacing:14
                                 PrivacyPage{stage:Privacy.onboarding?win.setupStep:-1;visible:!win.query&&win.page===6;Layout.fillWidth:true}
                                 BrowserPage{visible:!win.query&&win.page===7;Layout.fillWidth:true}
@@ -315,7 +331,7 @@ Variants {
                                                 }
                                             }
                                             Column {anchors{left:mini.right;right:parent.right;verticalCenter:parent.verticalCenter;leftMargin:22}spacing:8
-                                                DeckText{text:"YOUR WORKSPACE";font.family:Theme.fontMono;font.pixelSize:9;color:Theme.glowDim}
+                                                DeckText{text:"YOUR WORKSPACE";font.family:Theme.fontMono;font.pixelSize:10;color:Theme.glowDim}
                                                 DeckText{text:"Forged to fit.";font.pixelSize:22;font.weight:Font.DemiBold}
                                                 DeckText{text:"Preview changes before applying.";width:parent.width;color:Theme.surfaceVariantOn;font.pixelSize:12}
                                                 Row{spacing:6;Repeater{model:[Theme.glow,Theme.brass,Theme.surfaceContainerHigh,Theme.metalEdge];Rectangle{required property color modelData;width:15;height:15;radius:4;color:modelData;border.color:Qt.alpha(Theme.surfaceOn,0.2)}}}
@@ -348,6 +364,33 @@ Variants {
                                         DeckDivider{}
                                         DeckSegments{title:"Decoration";value:win.d.ornaments||"full";onChanged:v=>Settings.set("ornaments",v)
                                             options:[{id:"full",name:"Full",hint:"Seals, heraldry, guardians and the faction's bar fittings."},{id:"reduced",name:"Reduced",hint:"Frames and fittings stay; seals, heraldry and guardians are put away."},{id:"off",name:"Plain",hint:"Bare instruments: no fittings between the bar's mounts, no ornament."}]}
+                                    }
+                                    DeckCard {title:"Cursor";subtitle:"A pointer drawn for each faction, outlined light and dark so it stands out on any picture."
+                                        DeckSegments{title:"Pointer";value:win.d.cursorMode||"faction";onChanged:v=>Settings.set("cursorMode",v)
+                                            options:[{id:"faction",name:"Follow faction",hint:"Changes with the theme pack: brass, gold, emerald or forged iron."},{id:"system",name:"System",hint:"The cursor you had before MachineSpirit."},{id:"custom",name:"Custom",hint:"Any installed cursor theme, by its folder name."}]}
+                                        DeckField{visible:(win.d.cursorMode||"faction")==="custom";Layout.fillWidth:true;text:win.d.cursorTheme||"";placeholderText:"Cursor theme name, e.g. Bibata-Modern-Classic";onTextEdited:Settings.set("cursorTheme",text)}
+                                        DeckSegments{title:"Size";value:String(win.d.cursorSize||24);onChanged:v=>Settings.set("cursorSize",Number(v))
+                                            options:[{id:"24",name:"24"},{id:"32",name:"32"},{id:"40",name:"40"},{id:"48",name:"48"}]}
+                                        Item {   // the faction's pointer on light, dark and the wallpaper
+                                            id:cursorPreview
+                                            visible:(win.d.cursorMode||"faction")==="faction"
+                                            Layout.fillWidth:true;implicitHeight:3*44+2*6
+                                            readonly property string dir:(Quickshell.env("XDG_DATA_HOME")||(Quickshell.env("HOME")+"/.local/share"))+"/icons/MachineSpirit-"+({mechanicus:"Mechanicus",ultramarines:"Ultramarines",necrons:"Necrons",khorne:"Khorne"}[Theme.kit]||"Mechanicus")+"/preview/"
+                                            readonly property var shapes:["default","pointer","text","grab","move","ew-resize","nwse-resize","crosshair","wait","not-allowed"]
+                                            readonly property real px:Math.min(40,(win.d.cursorSize||24)*1.15)
+                                            Column { anchors.fill:parent;spacing:6
+                                                Repeater { model:3
+                                                    Rectangle { required property int index;width:parent.width;height:44;radius:6;clip:true
+                                                        color:index===0?"#f2f0ea":index===1?"#121212":"transparent";border.color:Theme.outlineVariant
+                                                        Image{visible:parent.index===2;anchors.fill:parent;source:Theme.wallpaper?"file://"+Theme.wallpaper:"";fillMode:Image.PreserveAspectCrop;sourceSize.width:600}
+                                                        Row{anchors.verticalCenter:parent.verticalCenter;x:12;spacing:Math.max(4,(parent.width-24-cursorPreview.shapes.length*cursorPreview.px)/(cursorPreview.shapes.length-1))
+                                                            Repeater{model:cursorPreview.shapes
+                                                                Image{required property string modelData;width:cursorPreview.px;height:width;smooth:true;mipmap:true;asynchronous:true;source:win.mine&&win.page===0&&cursorPreview.visible?"file://"+cursorPreview.dir+modelData+".png":""}}}
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        DeckText{text:(win.d.cursorMode||"faction")==="faction"?"Drawn the first time it is needed and changed together with the theme. Apps started before the change may keep the old pointer until they restart.":(win.d.cursorMode==="system"?"MachineSpirit leaves the pointer to your system theme.":"If the theme is not installed, the system cursor is kept.");color:Theme.surfaceVariantOn;font.pixelSize:12;Layout.fillWidth:true;wrapMode:Text.WordWrap}
                                     }
                                     RowLayout{Layout.fillWidth:true;spacing:8
                                         DeckButton{text:"Themes ›";Layout.fillWidth:true;implicitHeight:42;onClicked:win.go(9)}
@@ -470,7 +513,7 @@ Variants {
                                             Layout.fillWidth:true;implicitHeight:Math.max(68,bindingRow.implicitHeight+24);radius:7;color:Qt.alpha(Theme.surfaceContainerLow,0.45);border.color:overridden?Qt.alpha(Theme.glowDim,0.6):Qt.alpha(Theme.outlineVariant,0.5)
                                             RowLayout{id:bindingRow;anchors{left:parent.left;right:parent.right;verticalCenter:parent.verticalCenter;margins:14}spacing:10
                                                 ColumnLayout{Layout.fillWidth:true;spacing:3
-                                                    DeckText{text:binding.modelData.description.split(":")[0].toUpperCase();font.family:Theme.fontMono;font.pixelSize:9;color:Theme.outline;Layout.fillWidth:true}
+                                                    DeckText{text:binding.modelData.description.split(":")[0].toUpperCase();font.family:Theme.fontMono;font.pixelSize:10;color:Theme.outline;Layout.fillWidth:true}
                                                     DeckText{text:binding.modelData.description.split(":").slice(1).join(":").trim()||binding.modelData.description;Layout.fillWidth:true;font.pixelSize:13}
                                                 }
                                                 DeckButton{text:binding.actual||"Disabled";Layout.maximumWidth:250;enabled:binding.original!=="";onClicked:{win.captureOriginal=binding.original;win.captureLabel=binding.modelData.description;win.captured=binding.actual;win.recording=false}}

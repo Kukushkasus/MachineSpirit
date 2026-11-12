@@ -42,6 +42,9 @@ Variants {
         readonly property real centreStart: heart.x
         readonly property real centreEnd: heart.x + heart.width
 
+        // a new livery comes online with its own signal running the spans (cables arc, gold pulses, conduits flow, chains jolt)
+        Connections { target: Theme; function onKitChanged() { if (Theme.motionEnabled) switchSignal.restart() } }
+        Timer { id: switchSignal; interval: 260; onTriggered: { for (const c of [spanL, spanR]) if (c.hasBare()) c.strike(false) } }
         // `quickshell ipc -c machinespirit call spirit discharge` sets it off by hand
         IpcHandler { target: "spirit"; function discharge(): void { const s = [spanL, spanR].filter(c => c.hasBare()); for (const c of s) c.strike(false) } }
         // the spirit discharges now and then; between strikes the bare copper crackles faintly

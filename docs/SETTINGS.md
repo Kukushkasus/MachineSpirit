@@ -36,6 +36,7 @@ Settings are stored in `$XDG_CONFIG_HOME/machinespirit/settings.json` (default `
 | toastSeconds / toastMax | 6 / 4 | How long a pop-up stays when the application does not say, and how many show at once |
 | urgentThroughQuiet / historyLimit | true / 100 | Critical messages still pop up in quiet mode; how many messages the log keeps (10–300) |
 | holdMs / superTap | 800 / true | How long Reboot, Shut down and Log out are held (400–2500 ms); tapping Super opens the console |
+| cursorMode / cursorSize / cursorTheme | faction / 24 / empty | The pointer: `faction` (the active theme's MachineSpirit cursor), `system` (the cursor you had before MachineSpirit set one) or `custom` (the installed theme named in `cursorTheme`); size 24, 32, 40 or 48. Applied by `ms-cursor`; see [Theme packs](THEMES.md#cursors) |
 | privacy | see below | Network permissions and proxy; edited on the Privacy page |
 
 The `privacy` object:
@@ -75,6 +76,12 @@ Use your own advertised modes, not these example values.
 ## Shortcuts
 
 Select an action and choose **Record keys**, then press a combination. You can also type the Hyprland combination directly, disable an action, or restore its original binding. Escape cancels recording. Compositor shortcuts are inhibited while the recorder dialog is open. Conflicts are checked before saving; an invalid configuration leaves the saved settings intact. Recording recognizes Latin letters, numbers, function keys and common navigation keys; use manual entry for other key names.
+
+## Cursor
+
+`ms-cursor apply` sets the pointer the settings ask for: through `hyprctl setcursor` for the running session, `cursor.lua` (next to `settings.json`) for the next login, the GNOME `cursor-theme` and `cursor-size` keys for GTK, and `~/.icons/default/index.theme` for X11 applications, but only when that file is missing or was written by MachineSpirit. The cursor in use before the first change is recorded in `~/.local/state/machinespirit/cursor-origin.json`; `system` mode and uninstalling return to it. `ms-cursor status` shows what is set. Applications started before a change may keep the previous pointer until they are restarted.
+
+The themes are drawn on first use with `rsvg-convert` (librsvg, installed with the shell) and, for Hyprland's own scalable format, `hyprcursor-util` (part of Hyprland's `hyprcursor` package). Without `hyprcursor-util` only the XCursor form is made, which Hyprland also reads; without `rsvg-convert` nothing is drawn and the current pointer stays. A cursor set by hand in `hypr/local.lua` takes precedence at login; choose **System** or **Custom** so switching themes does not change it for the running session.
 
 ## Other persisted data
 

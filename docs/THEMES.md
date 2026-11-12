@@ -4,7 +4,7 @@ MachineSpirit has one layout and four liveries. The functions, the place of ever
 
 ## Wallpapers
 
-Each pack ships one 3840×2160 wallpaper in `quickshell/themes/<id>/wallpapers/`: a machine temple (Mechanicus), a command bridge (Ultramarines), a tomb plain (Necrons) and a war forge (Khorne). They are rendered in Blender from the scene scripts in `tools/wallpapers/` (`blender -b -P tools/wallpapers/<id>.py -- --out out.png`), and each leaves calm space at the upper left and on the right, where the instruments and the control desk sit. The Pict Archive lists them with your own pictures; nothing is copied. A fresh install starts on the machine temple. Choosing a theme never changes your wallpaper: Settings → Themes offers the pack's wallpaper as a separate button.
+Each pack ships one 3840×2160 wallpaper in `quickshell/themes/<id>/wallpapers/`: a machine temple (Mechanicus), a command bridge (Ultramarines), a tomb plain (Necrons) and a war forge (Khorne). Each leaves calm space at the upper left and on the right, where the instruments and the control desk sit. The Pict Archive lists them with your own pictures; nothing is copied. A fresh install starts on the machine temple. Choosing a theme never changes your wallpaper: Settings → Themes offers the pack's wallpaper as a separate button.
 
 The pictures on the theme cards (`preview.jpg`) are screenshots of the real shell with each pack and its wallpaper.
 
@@ -32,7 +32,24 @@ Four packs ship with the shell:
 | Necrons | dark alloy, living glass with circuit traces | two energy conduits; a charge travels them, a thin arc may jump at a node | counter-turning rings, a cartouche crest, hovering shards, panels phase in rather than slide |
 | Chaos: Khorne | blackened iron, battered brass, forge light | two heavy chains between toothed iron slabs; rarely one dark drop gathers and falls | a saw-toothed wheel that heaves, a horned mask, braziers, scored iron, slow heavy landings |
 
-All graphics are made for MachineSpirit: the interface is drawn with QML shapes, and the wallpapers are 3D scenes rendered in Blender from the scripts in `tools/wallpapers/` (built from primitives in code; no outside models, textures or artwork). None of it is, or may become, an official emblem or artwork.
+All graphics are made for MachineSpirit: the interface is drawn with QML shapes, the wallpapers come from the scene scripts in `tools/wallpapers/` (see its README) and the cursors from `tools/make_cursors.py`. None of it is, or may become, an official emblem or artwork.
+
+## Motion
+
+Every livery moves in its own way, from one shared set of timings (`common/Theme.qml`: `dEnter`, `dExit`, `dStagger`, `easeSpring`). Large windows arrive with a faction moment drawn over their housing (`common/Arrival.qml`), and their parts come up one after another (`common/Stagger.qml`):
+
+| | Window arrives | Parts come up | At rest |
+|---|---|---|---|
+| Mechanicus | current runs from the crown round the frame and earths at the feet | each drops in with a relay's kick while its lamp warms | lightning on the cables, a ticking cog, flickering CRTs |
+| Ultramarines | a gold pulse runs the top trim and back along the foot, then the rim answers | each slides in from the left and stops dead, in order | a readiness pulse along the armour band |
+| Necrons | a phase line scans down the glass; glyphs flare where it passes | each shimmers sideways and its light wavers before it holds | motes of energy drift along the conduits |
+| Khorne | a sheen of heat crosses the iron; the plate lands, jolts and throws sparks | each falls a short way and bounces once | chains that tug and settle, a dark drop that gathers and falls |
+
+The power wheel deploys its rites from the hub in turn, the console's sectors light one after another and Settings pages come up card by card. Nothing waits for an animation: controls take input from the first frame. **Reduced motion** turns all of it off, including flashes and ambient effects; **low power** keeps only short fades.
+
+## Cursors
+
+Each livery has its own cursor theme: `MachineSpirit-Mechanicus`, `-Ultramarines`, `-Necrons` and `-Khorne`, with every standard shape (arrow, hand, text, resize, move, grab, crosshair, not-allowed, busy and the rest). Each shape has a dark outer and a light inner outline around the faction colours, so it stays visible on white, black and busy wallpapers. With **Settings → Appearance → Cursor → Follow faction** the pointer changes together with the theme (a preview changes it only for the running session). The themes are built on first use by `ms-cursor` into `~/.local/share/icons/` in both XCursor and hyprcursor form; **System** returns to the cursor you had before, and uninstalling MachineSpirit removes them and restores it.
 
 ## Choosing and trying
 

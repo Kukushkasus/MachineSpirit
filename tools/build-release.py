@@ -10,7 +10,7 @@ import hashlib, sys, tarfile
 from pathlib import Path
 
 TOP = ('CHANGELOG.md', 'LICENSE', 'README.md', 'README.ru.md', 'THIRD-PARTY.md', 'VERSION', 'install.sh', 'packages.txt')
-FILES = ('scripts/ms-theme', 'scripts/ms-walls', 'tools/managed.py', 'tools/make_emblem.py', 'docs/media/banner.svg', 'docs/media/seal.svg')
+FILES = ('scripts/ms-theme', 'scripts/ms-walls', 'tools/managed.py', 'tools/make_emblem.py', 'tools/make_cursors.py', 'docs/media/banner.svg', 'docs/media/seal.svg')
 # directory -> suffixes that may be shipped from it ('' means a file without a suffix, such as the bin/ms-* scripts)
 DIRS = {
     'bin': {'', '.py'}, 'config': {'.json'}, 'fastfetch': {'.jsonc', '.png'}, 'fish': {'.fish'}, 'hypr': {'.lua'},

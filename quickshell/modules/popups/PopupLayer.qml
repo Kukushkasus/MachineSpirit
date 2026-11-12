@@ -165,7 +165,9 @@ Variants {
             x: Math.max(12, Math.min(win.width - 12 - width, Popups.anchorX - width / 2))
             y: 66 + (win.shown === "traymenu" ? Popups.drop : 0)
             property real open: win.mine ? 1 : 0
-            Behavior on open { NumberAnimation { duration: win.mine ? Theme.dLong : Theme.dClose; easing.type: win.mine ? Easing.OutCubic : Easing.InCubic } }
+            // opening follows the faction's spring (a relay's kick, a dead stop, a glide, a heavy landing); closing is quick
+            Behavior on open { NumberAnimation { duration: win.mine ? Theme.dEnter : Theme.dExit
+                easing.type: win.mine ? Easing.BezierSpline : Easing.InCubic; easing.bezierCurve: Theme.easeSpring } }
             // unload the panel once it has folded away, so nothing inside keeps animating
             property bool vented: false
             onOpenChanged: {
@@ -173,8 +175,15 @@ Variants {
                 if (open > 0.5 && win.mine && !vented) { vented = true; if (Theme.fxOn("discharge") && Math.random() < 0.35) { steam.jet(); arcAnim.restart() } }   // the leads reached the panel; now and then they spark
             }
             readonly property real unfold: Math.max(0, (open - 0.25) / 0.75)
-            opacity: Math.min(1, unfold * 1.4)
-            transform: Scale { origin.x: win.pipeX - card.x; origin.y: 0; yScale: 0.55 + 0.45 * card.unfold; xScale: 0.9 + 0.1 * card.unfold }
+            readonly property string kit: Theme.kit
+            // necrons do not unfold, they phase in: the light wavers before it holds
+            opacity: kit === "necrons" ? Math.min(1, unfold * 1.3) * (unfold >= 1 ? 1 : 0.78 + 0.22 * Math.cos(unfold * 24)) : Math.min(1, unfold * 1.4)
+            transform: [
+                Scale { origin.x: win.pipeX - card.x; origin.y: 0
+                    yScale: card.kit === "necrons" ? 1 : card.kit === "khorne" ? 0.8 + 0.2 * card.unfold : 0.55 + 0.45 * card.unfold
+                    xScale: card.kit === "necrons" ? 1.05 - 0.05 * Math.min(1, card.unfold) : 0.9 + 0.1 * Math.min(1, card.unfold) },
+                Translate { y: card.kit === "khorne" ? -22 * (1 - card.unfold) : 0 }
+            ]
 
             // a cogitator screen: forged bezel, recessed glass that powers on like a CRT, phosphor heading
             Bezel { anchors.fill: parent; radius: 12; inset: 0; boltSize: 5; role: "window" }
@@ -193,7 +202,8 @@ Variants {
             }
             Loader {
                 id: loader
-                x: card.pad; y: card.pad + card.plateH
+                // centred: a faction title wider than the panel (the Necron rails) must not push it to the left edge
+                x: Math.max(card.pad, Math.round((card.width - width) / 2)); y: card.pad + card.plateH
                 sourceComponent: win.shown === "calendar" ? cCalendar
                     : win.shown === "weather" ? cWeather
                     : win.shown === "notifs" ? cNotifs
@@ -203,6 +213,22 @@ Variants {
                     : win.shown === "traymenu" ? cTrayMenu : null
             }
             Flicker { anchors { fill: parent; margins: 7 } radius: 7; active: win.mine; z: 20 }
+            Arrival { id: arrival; anchors.fill: parent; radius: 12; z: 25; delay: Math.round(Theme.dEnter * 0.3) }
+            // the panel's own parts come up in order: the top level of what it shows, or of its single column
+            Stagger { id: parts }
+            function partsOf(it) {
+                if (!it) return []
+                let c = it.children.filter(x => x.visible && x.height > 0)
+                if (c.length === 1 && c[0].children.length > 1) c = c[0].children.filter(x => x.visible && x.height > 0)
+                return c.length > 1 && c.length < 14 ? c : []
+            }
+            function arrive() {
+                if (win.shown === "traymenu") return
+                parts.items = partsOf(loader.item); parts.play(); arrival.play()
+            }
+            Connections { target: Theme; function onKitChanged() { if (win.mine) card.arrive() } }
+            Connections { target: loader; function onLoaded() { if (win.mine) Qt.callLater(card.arrive) } }
+            Connections { target: win; function onMineChanged() { if (win.mine && loader.item) card.arrive(); else if (!win.mine) { arrival.stop(); parts.finish() } } }
         }
 
         Component { id: cCalendar; Calendar {} }

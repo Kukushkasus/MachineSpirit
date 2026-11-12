@@ -29,7 +29,10 @@ Column {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 3
                 Glow { halo: 0; font { family: Theme.fontNum; pixelSize: 16; weight: Font.DemiBold }
-                    text: Weather.ready ? Weather.desc + (Weather.stale?" · saved "+new Date(Weather.updatedAt).toLocaleString():"") : "Weather paused or unavailable" }
+                    text: Weather.ready ? Weather.desc : "Weather paused or unavailable" }
+                // cached data says when it was saved, briefly, on a line of its own instead of pushing into the icon
+                Glow { visible: Weather.ready && Weather.stale; halo: 0; color: Theme.hazard; font { family: Theme.fontNum; pixelSize: 12 }
+                    text: "Saved " + Qt.formatDateTime(new Date(Weather.updatedAt), "ddd HH:mm") }
                 Glow { halo: 0; color: Theme.glowDim; font { family: Theme.fontNum; pixelSize: 13 }
                     text: "Feels like " + Math.round(Weather.feels) + "°" }
                 Glow { halo: 0; color: Theme.glowDim; font { family: Theme.fontNum; pixelSize: 13 }
@@ -68,7 +71,7 @@ Column {
                         font { family: Theme.fontNum; pixelSize: 14; weight: Font.DemiBold } text: Math.round(index === 0 ? Weather.temp : modelData.temp) + "°" }
                     Glow { anchors.horizontalCenter: parent.horizontalCenter; halo: 0; color: Theme.glowDim
                         opacity: modelData.rain >= 20 ? 1 : 0
-                        font { family: Theme.fontNum; pixelSize: 10 } text: modelData.rain + "%" }
+                        font { family: Theme.fontNum; pixelSize: 11 } text: modelData.rain + "%" }
                 }
             }
         }

@@ -57,9 +57,9 @@ Variants {
             height: Math.min(win.height - 110, 820)
             anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 70 }
             opacity: win.mine ? 1 : 0
-            scale: win.mine ? 1 : 0.97
-            Behavior on opacity { NumberAnimation { duration: Theme.dMedium } }
-            Behavior on scale { NumberAnimation { duration: Theme.dMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecel } }
+            scale: win.mine ? 1 : (Theme.kit === "khorne" ? 1.03 : 0.96)
+            Behavior on opacity { NumberAnimation { duration: win.mine ? Theme.dMedium : Theme.dExit } }
+            Behavior on scale { NumberAnimation { duration: win.mine ? Theme.dEnter : Theme.dExit; easing.type: win.mine ? Easing.BezierSpline : Easing.InCubic; easing.bezierCurve: Theme.easeSpring } }
             MouseArea { anchors.fill: parent }
             focus: true
             Keys.onPressed: event => event.accepted = win.keys(event)
@@ -67,7 +67,8 @@ Variants {
             // a cogitator screen: bezel, glass that powers on, phosphor heading
             Bezel { anchors.fill: parent; radius: 14; inset: 0; boltSize: 6; role: "window" }
             CrtScreen { id: archiveGlass; anchors { fill: parent; margins: 8 } radius: 8; padding: 0; bootOnLoad: false; ambient: false }
-            Connections { target: win; function onMineChanged() { if (win.mine) archiveGlass.powerOn() } }
+            Connections { target: win; function onMineChanged() { if (win.mine) { archiveGlass.powerOn(); archiveArrival.play() } else archiveArrival.stop() } }
+            Arrival { id: archiveArrival; anchors.fill: parent; radius: 14; z: 40; delay: Math.round(Theme.dEnter * 0.25) }
             ScreenTitle { anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 20 } text: Theme.lex("archiveTitle", "Pict Archive") }
             BrassMini { anchors { right: parent.right; top: parent.top; margins: 18 } icon: "close"; onClicked: Walls.close() }
 

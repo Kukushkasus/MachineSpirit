@@ -12,7 +12,7 @@ Instrument {
     Row { y: 123; spacing: 8
         Repeater { model: Weather.ready ? Weather.upcoming.slice(0, 4) : []
             Column { required property var modelData; width: 60; spacing: 4
-                Text { textFormat: Text.PlainText; text: modelData.label; color: Theme.glowDim; font { family: Theme.fontNum; pixelSize: 10 } }
+                Text { textFormat: Text.PlainText; text: modelData.label; color: Theme.glowDim; font { family: Theme.fontNum; pixelSize: 11 } }
                 Row { spacing: 5; Icon { name: modelData.icon; size: 16; color: Theme.glowDim } Text { textFormat: Text.PlainText; text: Math.round(modelData.temp) + "°"; color: Theme.glow; font { family: Theme.fontNum; pixelSize: 13 } } }
             }
         }

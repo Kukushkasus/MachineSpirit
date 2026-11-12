@@ -4,6 +4,12 @@
 
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" })
 
+hl.env("XCURSOR_SIZE", "24")
+hl.env("HYPRCURSOR_SIZE", "24")
+-- the pointer theme and size, written by ms-cursor (Settings > Appearance > Cursor); absent until it first runs.
+-- Loaded before local.lua, so a cursor set there by hand still wins.
+pcall(dofile, (os.getenv("XDG_CONFIG_HOME") or (os.getenv("HOME") .. "/.config")) .. "/machinespirit/cursor.lua")
+
 -- machine-local overrides (e.g. the dev VM); not part of the repo
 pcall(require, "local")
 if FX and FX.low_power then hl.env("MS_LOW_POWER", "1") end
@@ -13,8 +19,6 @@ hl.env("PATH", os.getenv("HOME") .. "/.local/bin:" .. (os.getenv("PATH") or "/us
 pcall(hl.config, { ecosystem = { no_update_news = true } })
 -- If the lock screen dies while the screen is locked, the shell is started again and takes the lock over; without this the screen stays locked for good.
 pcall(hl.config, { misc = { allow_session_lock_restore = true } })
-hl.env("XCURSOR_SIZE", "24")
-hl.env("HYPRCURSOR_SIZE", "24")
 
 hl.on("hyprland.start", function()
     hl.exec_cmd("ms-session start")

@@ -56,7 +56,7 @@ def mappings(selected):
         tree('shell', 'quickshell', CONF / 'quickshell/machinespirit')
         tree('shell', 'assets/fonts', DATA / 'fonts/machinespirit')
         tree('shell', 'matugen', DATA / 'machinespirit/matugen')
-        for n in ('managed.py', 'make_emblem.py'): add('shell', ROOT / 'tools' / n, DATA / 'machinespirit/tools' / n)   # the only tools ms-theme uses; the rest are for developers
+        for n in ('managed.py', 'make_emblem.py', 'make_cursors.py'): add('shell', ROOT / 'tools' / n, DATA / 'machinespirit/tools' / n)   # the only tools ms-theme and ms-cursor use; the rest are for developers
         tree('shell', 'privacy', DATA / 'machinespirit/privacy')
         tree('shell', 'bin', BIN)
         for n in ('ms-theme', 'ms-walls'): add('shell', ROOT / 'scripts' / n, BIN / n)
@@ -263,6 +263,8 @@ def main():
                 mark(STATE / a.backup, 'restored')
             else:
                 incomplete = False
+                # the generated cursor themes are not install records: put the original pointer back and remove them
+                if (BIN / 'ms-cursor').is_file(): subprocess.run([sys.executable, str(BIN / 'ms-cursor'), 'uninstall'])
                 if HELPER.exists() and not a.no_system: subprocess.run(['sudo',str(HELPER),'uninstall'],check=True)
                 if not a.no_system and Path('/var/lib/machinespirit/login').is_dir(): subprocess.run(['sudo',sys.executable,str(ROOT/'installer/login.py'),'uninstall'],check=True)
                 for tx in sorted(STATE.glob('*/manifest.json'), reverse=True):
@@ -372,6 +374,8 @@ def main():
             # the default theme's own wallpaper when the shell brought it, the classic forge otherwise
             temple = CONF / 'quickshell/machinespirit/themes/mechanicus/wallpapers/temple.jpg'
             subprocess.run([str(BIN / 'ms-theme'), 'apply', str(temple if temple.is_file() else DATA / 'machinespirit/wallpapers/forge.png')], check=True)
+        if 'shell' in selected and (BIN / 'ms-cursor').is_file() and subprocess.run([sys.executable, str(BIN / 'ms-cursor'), 'apply']).returncode:
+            print('Warning: the cursor themes could not be set up; see `ms-cursor status`.', file=sys.stderr)   # cosmetic, never a reason to undo an install
         if shutil.which('fc-cache') and subprocess.run(['fc-cache', '-f', str(DATA / 'fonts/machinespirit')]).returncode:
             print('Warning: fc-cache failed; the new fonts may appear after the next login.', file=sys.stderr)   # cosmetic, never a reason to undo an install
         if 'shell' in selected and not a.no_system:

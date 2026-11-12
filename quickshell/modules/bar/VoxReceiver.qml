@@ -48,7 +48,7 @@ Row {
                 width: parent.width; elide: Text.ElideRight
             }
             Glow { id: artist; y: 13; width: parent.width; elide: Text.ElideRight; halo: 0; color: Theme.glowDim
-                font { family: Theme.fontNum; pixelSize: 10 } text: Media.artist }
+                font { family: Theme.fontNum; pixelSize: 11 } text: Media.artist }
         }
     }
     GlyphButton { visible: !root.compact; icon: Media.playing ? "pause" : "play_arrow"; tip: Media.playing ? "Pause" : "Play"; onClicked: Media.player?.togglePlaying() }

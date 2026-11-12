@@ -198,6 +198,18 @@ Singleton {
     readonly property int easeEnter: motionChar === "precise" ? Easing.OutQuart : motionChar === "phase" ? Easing.InOutSine : motionChar === "heavy" ? Easing.OutQuint : Easing.OutCubic
     readonly property var easeStandard: [0.2, 0, 0, 1, 1, 1]
     readonly property var easeDecel: [0.05, 0.7, 0.1, 1, 1, 1]
+    readonly property var easeAccel: [0.3, 0, 0.8, 0.15, 1, 1]
+    // spatial curves with a little spring, by character: a relay snaps past its stop, a heavy plate lands and settles
+    readonly property var easeSpring: motionChar === "precise" ? [0.16, 1, 0.3, 1, 1, 1]          // straight in, dead stop
+        : motionChar === "phase" ? [0.45, 0, 0.2, 1, 1, 1]                                          // slow start, glide
+        : motionChar === "heavy" ? [0.3, 1.45, 0.4, 0.96, 1, 1]                                     // overshoots, falls back
+        : [0.38, 1.3, 0.3, 1, 1, 1]                                                                 // mechanical kick
+    // the arrival of a large window and the reveal of its parts (0 with reduced motion, short with low power)
+    readonly property int dEnter: Settings.data.reducedMotion ? 0 : lowPower ? 140 : Math.round((motionChar === "heavy" ? 460 : motionChar === "phase" ? 440 : motionChar === "precise" ? 340 : 380) * tempo)
+    readonly property int dExit: Settings.data.reducedMotion ? 0 : lowPower ? 100 : Math.round(170 * tempo)
+    readonly property int dStagger: !motionEnabled ? 0 : Math.round((motionChar === "precise" ? 34 : motionChar === "phase" ? 46 : motionChar === "heavy" ? 52 : 40) * tempo)
+    // the decorative part of an arrival (a pulse along the trim, a scan, a heat sheen): only with motion and effects on
+    readonly property bool arrivals: motionEnabled && fxLevel > 0 && Settings.data.fxArrivals !== false
 
     // ---- the user's own trim (Settings > Appearance)
     readonly property real panelOpacity: Math.max(0.6, Math.min(1, Settings.data.panelOpacity ?? 1))

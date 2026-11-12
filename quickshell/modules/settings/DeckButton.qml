@@ -9,7 +9,7 @@ Basic.Button {
     id: b
     property bool accent: false
     scale: down ? 0.97 : 1
-    Behavior on scale { NumberAnimation { duration: Theme.dShort; easing.type: Easing.OutCubic } }
+    Behavior on scale { NumberAnimation { duration: b.down ? 70 : 260; easing.type: b.down ? Easing.OutQuad : Easing.OutBack; easing.overshoot: 2.5 } }   // pressed in, springs back
     implicitHeight: 38; implicitWidth: Math.max(90, contentItem.implicitWidth + 28)
     hoverEnabled: true; font.family: Theme.fontUi; font.pixelSize: 13
     contentItem: Text { text:b.text; font:b.font; color: !b.enabled ? Theme.outline : b.accent ? (Skin.control === "mechanicus" ? Theme.glass : Theme.glow) : Theme.surfaceOn; horizontalAlignment:Text.AlignHCenter; verticalAlignment:Text.AlignVCenter }

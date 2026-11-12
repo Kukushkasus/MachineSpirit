@@ -3,6 +3,8 @@
 """installer/login.py against a disposable fake root: no root rights, no real systemd, no real SDDM."""
 import json, os, shutil, subprocess, sys, tempfile, unittest
 from pathlib import Path
+# the tests run installers and ms-cursor: gsettings must not reach the real desktop (dconf over the session bus), nor hyprctl the running Hyprland
+os.environ['GSETTINGS_BACKEND'] = 'memory'; os.environ.pop('HYPRLAND_INSTANCE_SIGNATURE', None)
 REPO = Path(__file__).resolve().parents[1]
 
 FAKE_SYSTEMCTL = '''#!/usr/bin/env python3

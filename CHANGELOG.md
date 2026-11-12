@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.6.0 - 2026-11-13
+
+### Added
+
+- Faction motion: large windows (Sanctum, the console, popups, Settings, the wallpaper archive, toasts) arrive with a moment of their own drawn over the housing, and their parts come up one after another in the faction's manner. Mechanicus: current runs round the frame while relays snap in and lamps warm. Ultramarines: a gold pulse runs the trim and instruments come up in strict order. Necrons: a phase line scans down the glass, glyphs flare, parts shimmer in. Khorne: a sheen of heat, a heavy landing with a jolt and sparks.
+- The power wheel deploys its rites from the hub in turn (the Mechanicus wheel meshes like a gear); the console's sectors light one after another; Settings pages come up card by card; a new theme arrives with its own signal along the bar and in open panels.
+- Necron conduits carry a slow drift of energy at rest.
+- Cursor themes for all four factions (`MachineSpirit-Mechanicus`, `-Ultramarines`, `-Necrons`, `-Khorne`) in XCursor and hyprcursor form, with every standard shape and a light and dark double outline. Settings → Appearance → Cursor: follow the faction, keep the system cursor or name another theme; sizes 24 to 48; a preview on light, dark and wallpaper. New `ms-cursor` command; settings `cursorMode`, `cursorSize`, `cursorTheme`. A cursor set by hand in `hypr/local.lua` still wins at login. Drawing the themes needs `rsvg-convert` (librsvg); without `hyprcursor-util` only the XCursor form is made, without `rsvg-convert` the current pointer stays.
+
+### Changed
+
+- Shared motion timings in `Theme`: spring curves by faction character, longer entrances and shorter exits, a stagger step. Popups, the console, Settings, the wallpaper archive and toasts open on the faction's spring; toggles, segmented choices and buttons press in and spring back; the chosen option in a segmented choice slides to its place.
+- Ultramarines bar: thinner plates and gold rim, a slim armour rail between the sections instead of a full-height band, smaller clamps and bolts. Click areas are unchanged.
+- Small labels in Settings, Sanctum, popups and desktop instruments are at least 10 px (most 11 px).
+
+### Fixed
+
+- Signing out and in again: the previous session's supervisor outlived its Hyprland, kept restarting the shell into the next login and held the session lock, so the new login ran without its own idle lock. It now ends with its compositor, and the privacy daemon ends with it even when the supervisor is killed.
+- Popups whose faction title is wider than their contents (the Necron calendar) had the contents pushed to the left with an empty strip on the right; they are now centred.
+- Lock screen: the blurred wallpaper faded out towards the screen edges and the plain background showed through as a frame with rounded corners (most visible with Khorne). The picture is now blurred beyond the screen edge and clipped. The lock screen also gets a vignette, and Khorne a slow forge glow from below.
+
 ## 0.5.0 - 2026-11-12
 
 Road to 1.0. Four complete faction liveries on one shell, a Settings Center that reaches every part of it, and new wallpapers.
@@ -7,7 +28,7 @@ Road to 1.0. Four complete faction liveries on one shell, a Settings Center that
 ### Added
 
 - Four theme packs: Adeptus Mechanicus (still the default), Ultramarines, Necrons and Chaos: Khorne. Each redraws the whole shell, not only its accents: the bar's silhouette (plates clamped to the edge, one armour band, floating shards, toothed iron slabs), window housings and their glass, section cards and titles, keys, icon wells, level strips, switches and sliders, workspace marks, the console, the power wheel, popups and the way they hang from the bar, toasts, desktop instruments and the lock screen's housing. Each has its own motion, rare effects and display face (Cinzel, Michroma, Grenze Gotisch; OFL, shipped with the shell). One layout for all: no control moves and no click area shrinks.
-- New wallpapers for all four factions, 3840×2160, rendered in Blender from the scene scripts in `tools/wallpapers/`: a machine temple, a command bridge, a tomb plain and a war forge. Each pack offers its own; picking a theme never changes your wallpaper unless you ask.
+- New 3840×2160 wallpapers for all four factions: a machine temple, a command bridge, a tomb plain and a war forge. Each pack offers its own; picking a theme never changes your wallpaper unless you ask.
 - Settings → Themes: preview for 30 s (nothing permanent is written; it ends by itself, on cancel and if the shell crashes), Apply, return to the previous theme, reset to Mechanicus, recommended wallpapers applied on request, previews of each pack, and the reason a pack cannot be used.
 - Your own packs in `~/.local/share/machinespirit/themes/`: JSON and pictures only, validated against a versioned schema (now 2, with a `skin` section that picks a built-in livery per part; schema 1 packs still load). A pack cannot run code.
 - `ms-theme packs | preview | preview-end | revert` and `apply --pack ID --save`; the `theme` IPC target. A theme applied while the screen is locked waits for unlock.
@@ -28,8 +49,7 @@ Road to 1.0. Four complete faction liveries on one shell, a Settings Center that
 
 ### Known limitations
 
-- Tested in a QEMU/KVM guest (virgl). Physical hardware and NVIDIA are untested.
-- The wallpapers are rendered 3D scenes built from code, not hand-painted art.
+- Tested with a virtual GPU (QEMU/KVM, virgl). Physical hardware and NVIDIA are untested.
 - None of the three faction faces has Cyrillic; such text is set in IBM Plex.
 
 ## 0.2.0 - 2026-11-08
@@ -55,7 +75,7 @@ One command now gives a working desktop: `./install.sh --full --yes`, reboot, si
 
 ### Known limitations
 
-- Tested in a QEMU/KVM guest: text console and running Hyprland installs with a reboot and sign-in, an existing SDDM, lightdm as another login manager, autologin, uninstall and restore, the boot theme together with SDDM, lock and unlock with PAM, a wrong passphrase, missing PAM configuration, two outputs, a killed shell while locked, and suspend with the lock held. After resuming, the QEMU window stayed black (the guest logged `virtio_gpu` errors); this also happens on a bare Hyprland without MachineSpirit, so it comes from QEMU's virtual GPU, not from the shell, and the lock screen after suspend was not seen. Physical hardware, NVIDIA and other login managers are untested. The Plymouth splash itself was not looked at.
+- Tested in a QEMU/KVM guest: installs from a text console and from a running Hyprland with reboot and sign-in, an existing SDDM, lightdm, autologin, uninstall and restore, the boot theme with SDDM, lock and unlock with PAM, a wrong passphrase, missing PAM configuration, two outputs, a killed shell while locked, and suspend with the lock held. After resuming, the guest's virtual GPU left the window black (also without MachineSpirit), so the lock screen after suspend was not seen. Physical hardware, NVIDIA, other login managers and the Plymouth splash itself are untested.
 - If the shell cannot restart while the screen is locked, Hyprland shows its own recovery screen; follow what it says (`hyprctl --instance 0 eval 'hl.clear_crashed_lockscreen()'` from another console).
 
 ## 0.1.0 - 2026-11-08

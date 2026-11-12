@@ -75,7 +75,7 @@ ColumnLayout {
                         // one mark of state, only on the pack it belongs to
                         Rectangle { visible: card.active || card.previewed; implicitWidth: chip.implicitWidth + 16; implicitHeight: 22; radius: 11
                             color: Qt.alpha(card.previewed ? Theme.hazard : Theme.glow, 0.14)
-                            DeckText { id: chip; anchors.centerIn: parent; font.family: Theme.fontMono; font.pixelSize: 10; font.letterSpacing: 1
+                            DeckText { id: chip; anchors.centerIn: parent; font.family: Theme.fontMono; font.pixelSize: 11; font.letterSpacing: 1
                                 text: card.previewed ? "PREVIEW" : "ACTIVE"; color: card.previewed ? Theme.hazard : Theme.glow } }
                     }
                     DeckText { text: card.modelData.tagline; Layout.fillWidth: true; font.pixelSize: 12; color: Theme.surfaceVariantOn; maximumLineCount: 3; elide: Text.ElideRight }

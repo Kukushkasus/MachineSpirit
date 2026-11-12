@@ -471,6 +471,7 @@ def apply(args):
                 done = json.loads((STATE / "theme.json").read_text())
                 save_conf(done["pack"], done["colors"])
     end_preview()
+    cursor()
     return 0
 
 
@@ -493,6 +494,15 @@ def packs(_):
     return 0
 
 
+def cursor(*args):
+    """Hand the pointer to ms-cursor (it follows the pack's livery when the user lets it). Never fails a theme change."""
+    here = Path(__file__).resolve().parent
+    tool = next((p for p in (here / "ms-cursor", here.parent / "bin/ms-cursor") if p.is_file()), None) or shutil.which("ms-cursor")
+    if not tool: return
+    try: subprocess.run([sys.executable, str(tool), "apply", *args], capture_output=True, timeout=90)
+    except (OSError, subprocess.TimeoutExpired) as e: say("cursor not changed:", e)
+
+
 def end_preview(token=None):
     """Drop the preview. With a token: only if that very preview is still the one showing."""
     meta = PREVIEW / "meta.json"
@@ -500,9 +510,11 @@ def end_preview(token=None):
         try:
             if json.loads(meta.read_text()).get("token") != token: return
         except (OSError, ValueError): return
+    had = (PREVIEW / "meta.json").exists()
     for name in ("meta.json", "colors.json", "pack.json"):       # meta first: the shell lets go before the data disappears
         try: (PREVIEW / name).unlink()
         except OSError: pass
+    if had: cursor("--runtime")                                   # back to the saved pack's pointer
 
 
 def preview(args):
@@ -527,6 +539,7 @@ def preview(args):
     # the watchdog outlives a crashed shell: the preview ends on time whether or not anyone is there to end it
     subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "preview-watchdog", token, str(args.seconds + 2)],
                      start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
+    cursor("--runtime", "--pack", pack.get("kit", ""))
     print(json.dumps({"preview": pack["id"], "mode": mode, "token": token, "seconds": args.seconds}))
     return 0
 

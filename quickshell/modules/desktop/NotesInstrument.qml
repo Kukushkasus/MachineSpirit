@@ -29,5 +29,5 @@ Instrument {
         ScrollBar.vertical: ScrollBar { }
     }
     Text { anchors { bottom: parent.bottom; right: parent.right } width: parent.width; horizontalAlignment: Text.AlignRight; elide: Text.ElideRight
-        text: DesktopWidgets.status; color: DesktopWidgets.error ? Theme.rustText : Theme.glowDim; font { family: Theme.fontNum; pixelSize: 10 } }
+        text: DesktopWidgets.status; color: DesktopWidgets.error ? Theme.rustText : Theme.glowDim; font { family: Theme.fontNum; pixelSize: 11 } }
 }

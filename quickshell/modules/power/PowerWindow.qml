@@ -97,6 +97,25 @@ Variants {
                 Behavior on opacity { NumberAnimation { duration: Theme.dMedium } }
                 Behavior on scale { NumberAnimation { duration: Theme.dMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecel } }
                 readonly property real ringR: 210
+                // the rites deploy from the hub one after another, round the wheel, in the faction's manner
+                readonly property string kit: Theme.kit
+                property real deploy: 1e6        // ms into the deployment; large = all in place
+                readonly property int each: Math.max(1, Math.round(Theme.dEnter * 0.9))
+                function riteP(i) { return Math.max(0, Math.min(1, (deploy - i * Theme.dStagger) / each)) }
+                function reach(p) {
+                    if (p >= 1) return 1
+                    const q = p - 1
+                    if (kit === "khorne") return q * q * (3.6 * q + 2.6) + 1          // flung out, overshoots hard, settles
+                    if (kit === "mechanicus") return q * q * (2.7 * q + 1.7) + 1      // a sprung kick
+                    if (kit === "necrons") return 1                                   // they do not travel: they phase in where they stand
+                    return 1 - Math.pow(1 - p, 4)                                     // precise
+                }
+                NumberAnimation { id: deployAnim; target: dial; property: "deploy"; from: 0
+                    to: (win.rites.length - 1) * Theme.dStagger + dial.each; duration: to
+                    onFinished: dial.deploy = 1e6 }
+                Connections { target: win; function onMineChanged() { if (win.mine && Theme.motionEnabled) deployAnim.restart(); else { deployAnim.stop(); dial.deploy = 1e6 } } }
+                // Mechanicus: the whole wheel turns into place like a gear meshing
+                rotation: kit === "mechanicus" && deploy < 1e6 ? -24 * Math.pow(1 - Math.min(1, deploy / (dial.each + win.rites.length * Theme.dStagger)), 3) : 0
 
                 // spokes from the hub to each rite
                 Repeater {
@@ -155,10 +174,13 @@ Variants {
                         readonly property real a: (index / win.rites.length * 360 - 90) * Math.PI / 180
                         readonly property bool chosen: win.sel === index
                         width: 92; height: 92
-                        x: dial.width / 2 + Math.cos(a) * dial.ringR - width / 2
-                        y: dial.height / 2 + Math.sin(a) * dial.ringR - height / 2
-                        scale: chosen ? 1.08 : 1
-                        Behavior on scale { NumberAnimation { duration: Theme.dShort } }
+                        readonly property real p: dial.riteP(index)
+                        readonly property real r: dial.ringR * Math.max(0.15, dial.reach(p))
+                        x: dial.width / 2 + Math.cos(a) * r - width / 2
+                        y: dial.height / 2 + Math.sin(a) * r - height / 2
+                        opacity: dial.kit === "necrons" ? Math.min(1, p * 1.4) * (p >= 1 ? 1 : 0.7 + 0.3 * Math.cos(p * 30)) : Math.min(1, p * 2.5)
+                        scale: (chosen ? 1.08 : 1) * (dial.kit === "necrons" ? 1.15 - 0.15 * p : 0.6 + 0.4 * Math.min(1, p * 1.3))
+                        Behavior on scale { enabled: dial.deploy >= 1e6; NumberAnimation { duration: Theme.dShort; easing.type: Easing.OutBack } }
 
                         readonly property color tone: rite.modelData.danger ? Theme.rustText : Theme.glow
                         // the livery's shape for a rite key: a disc, an octagonal plate, a diamond, an iron octagon

@@ -48,6 +48,33 @@ Item {
                     Behavior on opacity { NumberAnimation { duration: 180 } } } }
         }
     }
+    Item {   // the channels are alive: faint motes of energy drift along them all the time, in opposite directions.
+        // They step 15 times a second, not every frame: the drift is slow, and the bar is redrawn four times less often.
+        anchors.fill: parent; clip: true
+        visible: flow.running
+        Repeater {
+            id: motes
+            model: 4
+            Rectangle {
+                required property int index
+                readonly property bool low: index % 2 === 1
+                readonly property real speed: 1000 / (9 + index * 2.5)        // px per second
+                property real pos: (index * 0.27 + 0.1) * root.width
+                x: low ? root.width - pos : pos - width
+                y: (low ? root.y1 : root.y0) - 1; width: 26; height: 2; radius: 1
+                opacity: 0.55
+                gradient: Gradient { orientation: Gradient.Horizontal
+                    GradientStop { position: 0; color: "transparent" } GradientStop { position: 0.5; color: Theme.glow } GradientStop { position: 1; color: "transparent" } }
+                function step(dt) { pos = (pos + speed * dt) % (root.width + 26) }
+            }
+        }
+        Timer {
+            interval: 66; repeat: true; running: flow.running
+            onTriggered: { for (let i = 0; i < motes.count; i++) motes.itemAt(i).step(0.066) }
+        }
+    }
+    // runs while effects are on; stops with reduced motion, low power or effects off
+    QtObject { id: flow; readonly property bool running: Theme.fxOn("discharge") && root.width > 110 && root.visible }
     Item {   // the charge travels inside the span only, never over the mounts
         anchors.fill: parent; clip: true
     Rectangle {   // the travelling charge

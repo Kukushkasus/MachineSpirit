@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
 import copy,importlib.machinery,importlib.util,json,os,sys,tempfile,unittest
 from pathlib import Path
+# the tests run installers and ms-cursor: gsettings must not reach the real desktop (dconf over the session bus), nor hyprctl the running Hyprland
+os.environ['GSETTINGS_BACKEND'] = 'memory'; os.environ.pop('HYPRLAND_INSTANCE_SIGNATURE', None)
 from unittest.mock import patch,MagicMock
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'bin'))

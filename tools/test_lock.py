@@ -3,6 +3,8 @@
 """`ms-session lock`: when the shell's lock is used, when hyprlock takes over, and when nothing may be started."""
 import json, os, shutil, subprocess, sys, tempfile, unittest
 from pathlib import Path
+# the tests run installers and ms-cursor: gsettings must not reach the real desktop (dconf over the session bus), nor hyprctl the running Hyprland
+os.environ['GSETTINGS_BACKEND'] = 'memory'; os.environ.pop('HYPRLAND_INSTANCE_SIGNATURE', None)
 ROOT = Path(__file__).resolve().parents[1]
 
 FAKE_QUICKSHELL = '''#!SYS
@@ -116,5 +118,51 @@ class HeldLockProtectionTests(LockCase):
         env = dict(self.env, PATH=str(fake) + ':' + self.env['PATH'], XDG_STATE_HOME=str(self.tmp / 'st'), XDG_CACHE_HOME=str(self.tmp / 'ca'))
         r = subprocess.run([sys.executable, str(ROOT / 'bin/ms-update'), 'install', '--yes'], env=env, capture_output=True, text=True, timeout=60)
         self.assertEqual(r.returncode, 1); self.assertIn('screen is locked', r.stdout); self.assertIn('Nothing was changed', r.stdout)
+
+
+class Supervisor(unittest.TestCase):
+    """`ms-session start` belongs to one Hyprland: when that compositor is gone (logout) it ends with it."""
+    def test_the_supervisor_ends_with_its_compositor(self):
+        tmp = Path(tempfile.mkdtemp()); self.addCleanup(shutil.rmtree, tmp, True)
+        fake = tmp / 'bin'; fake.mkdir()
+        for name, body in (('quickshell', 'echo $$ > "$FAKE_PIDS/shell"; exec sleep 60'), ('ms-privacy', 'echo $$ > "$FAKE_PIDS/privacy"; exec sleep 60'), ('ms-settings', 'exit 0')):
+            f = fake / name; f.write_text('#!/bin/sh\n' + body + '\n'); f.chmod(0o755)
+        sock = tmp / 'xdg/hypr/sig/.socket.sock'; sock.parent.mkdir(parents=True); sock.write_text('')
+        env = dict(os.environ, PATH=str(fake) + ':' + os.environ['PATH'], HOME=str(tmp), XDG_RUNTIME_DIR=str(tmp / 'xdg'),
+                   XDG_CONFIG_HOME=str(tmp / 'c'), XDG_STATE_HOME=str(tmp / 's'), HYPRLAND_INSTANCE_SIGNATURE='sig', FAKE_PIDS=str(tmp))
+        sup = subprocess.Popen([sys.executable, str(ROOT / 'bin/ms-session'), 'start'], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.addCleanup(lambda: sup.poll() is None and sup.kill())
+        for _ in range(50):
+            if (tmp / 'shell').exists(): break
+            subprocess.run(['sleep', '0.1'])
+        subprocess.run(['sleep', '1.5'])
+        self.assertIsNone(sup.poll(), 'the supervisor keeps running while its compositor is there')
+        shell = int((tmp / 'shell').read_text())
+        sock.unlink()                     # Hyprland exits: its control socket goes
+        self.assertEqual(sup.wait(timeout=10), 0)
+        subprocess.run(['sleep', '0.3'])
+        with self.assertRaises(ProcessLookupError): os.kill(shell, 0)   # the shell went with it
+
+
+    @unittest.skipUnless(shutil.which('setpriv'), 'needs setpriv (util-linux)')
+    def test_the_privacy_daemon_dies_with_a_killed_supervisor(self):
+        # at logout the supervisor may be killed outright; the daemon needs no display and must not live on
+        tmp = Path(tempfile.mkdtemp()); self.addCleanup(shutil.rmtree, tmp, True)
+        fake = tmp / 'bin'; fake.mkdir()
+        for name, body in (('quickshell', 'echo $$ > "$FAKE_PIDS/shell"; exec sleep 60'), ('ms-privacy', 'echo $$ > "$FAKE_PIDS/privacy"; exec sleep 60'), ('ms-settings', 'exit 0')):
+            f = fake / name; f.write_text('#!/bin/sh\n' + body + '\n'); f.chmod(0o755)
+        env = dict(os.environ, PATH=str(fake) + ':' + os.environ['PATH'], HOME=str(tmp), XDG_RUNTIME_DIR=str(tmp / 'xdg'),
+                   XDG_CONFIG_HOME=str(tmp / 'c'), XDG_STATE_HOME=str(tmp / 's'), FAKE_PIDS=str(tmp))
+        env.pop('HYPRLAND_INSTANCE_SIGNATURE', None); (tmp / 'xdg').mkdir()
+        sup = subprocess.Popen([sys.executable, str(ROOT / 'bin/ms-session'), 'start'], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        for _ in range(50):
+            if (tmp / 'privacy').exists(): break
+            subprocess.run(['sleep', '0.1'])
+        daemon = int((tmp / 'privacy').read_text())
+        sup.kill(); sup.wait()
+        subprocess.run(['sleep', '0.5'])
+        with self.assertRaises(ProcessLookupError): os.kill(daemon, 0)
+        try: os.kill(int((tmp / 'shell').read_text()), 9)   # the fake shell, left behind as the real one is by a lost display
+        except (OSError, ValueError): pass
 
 if __name__ == '__main__': unittest.main()

@@ -26,7 +26,7 @@ Variants {
         property bool ready: false
         Component.onCompleted: Qt.callLater(() => ready = true)
         readonly property bool mine: ready && Sanctum.open && (Settings.primary()?.name ?? modelData.name) === modelData.name
-        onMineChanged: if (mine) { Brightness.probe(); Notifs.markRead(); glass.powerOn(); keys.forceActiveFocus(); plateSurge.restart() }
+        onMineChanged: if (mine) { Brightness.probe(); Notifs.markRead(); glass.powerOn(); keys.forceActiveFocus(); plateSurge.restart(); parts.play(); arrival.play() } else { parts.finish(); arrival.stop() }
         // the plates take a charge just as the panel seats itself
         Timer { id: plateSurge; interval: Theme.dLong * 0.7; onTriggered: { voxFrame.energise(); logFrame.energise() } }
 
@@ -75,6 +75,18 @@ Variants {
             Bezel { anchors.fill: parent; radius: 14; inset: 0; boltSize: 5; role: "window" }
             CrtScreen { id: glass; anchors { fill: parent; margins: 7 } radius: 9; padding: 0; bootOnLoad: false; ambient: false }
             Flicker { anchors { fill: parent; margins: 7 } radius: 9; active: win.mine; z: 20 }
+            // the arrival over the housing, and the desk's parts coming up in order behind it
+            Connections { target: Theme; function onKitChanged() { if (win.mine) { arrival.play(); parts.play() } } }   // the new livery arrives too
+            Arrival { id: arrival; anchors.fill: parent; radius: 14; z: 25; delay: Math.round(Theme.dLong * 0.35)
+                onLanded: if (panel.kit === "khorne") thud.restart() }
+            transform: Translate { id: thudT }
+            SequentialAnimation {   // Khorne: the iron lands and the frame jolts
+                id: thud
+                NumberAnimation { target: thudT; property: "y"; to: 4; duration: 60; easing.type: Easing.OutQuad }
+                NumberAnimation { target: thudT; property: "y"; to: -1.5; duration: 110; easing.type: Easing.InOutQuad }
+                NumberAnimation { target: thudT; property: "y"; to: 0; duration: 140; easing.type: Easing.OutQuad }
+            }
+            Stagger { id: parts; items: [emblem, crest, stack.children[0], voxFrame].concat(grid.children.filter(c => c.order !== undefined)).concat([logFrame]) }
 
             // ---------------- the crest: the winged cog and skull over the title
             Emblem { id: emblem; anchors.horizontalCenter: parent.horizontalCenter; y: -22; height: win.compact ? 44 : 58 }
@@ -132,7 +144,7 @@ Variants {
                         width: Math.min(implicitWidth, voxFrame.width - 170); elide: Text.ElideRight
                         text: (Pipewire.defaultAudioSink?.description || "no output").toUpperCase()
                         color: Theme.glowDim; renderType: Text.NativeRendering
-                        font { family: Theme.fontNum; pixelSize: 10; weight: Font.DemiBold; letterSpacing: 1.6 }
+                        font { family: Theme.fontNum; pixelSize: 11; weight: Font.DemiBold; letterSpacing: 1.6 }
                     }
                     Column {
                         id: voxCol
@@ -271,7 +283,7 @@ Variants {
                         anchors.verticalCenter: parent.verticalCenter; spacing: 5
                         Nixie { anchors.verticalCenter: parent.verticalCenter; size: 14; text: String(Notifs.all.length).padStart(2, "0") }
                         Text { anchors.verticalCenter: parent.verticalCenter; text: Theme.lex("counter", "MSG"); color: Theme.glowDim; renderType: Text.NativeRendering
-                            font { family: Theme.fontNum; pixelSize: 10; weight: Font.Bold; letterSpacing: 2 } }
+                            font { family: Theme.fontNum; pixelSize: 11; weight: Font.Bold; letterSpacing: 2 } }
                     },
                     Plate {
                         anchors.verticalCenter: parent.verticalCenter
@@ -427,7 +439,8 @@ Variants {
             signal roll(bool up)
             readonly property bool on: lit && win.warm > order
             height: win.compact ? 52 : 66
-            opacity: available ? 1 : 0.5
+            property real reveal: 1
+            opacity: (available ? 1 : 0.5) * reveal
 
             SectionFrame { anchors.fill: parent; radius: 10; glow: cd.on
                 fill: cd.on ? Qt.tint(Qt.alpha(Theme.glass, 0.85), Qt.alpha(Theme.glow, 0.06)) : Qt.alpha(Theme.glass, 0.8) }
@@ -594,7 +607,7 @@ Variants {
                     }
                     Text { anchors { right: parent.right; top: parent.top; topMargin: 2 } visible: !msgHover.containsMouse
                         text: msg.notif ? Notifs.when(msg.notif) : ""; color: Qt.alpha(Theme.glowDim, 0.8); renderType: Text.NativeRendering
-                        font { family: Theme.fontNum; pixelSize: 10; features: { "tnum": 1 } } }
+                        font { family: Theme.fontNum; pixelSize: 11; features: { "tnum": 1 } } }
                     Row {
                         anchors { right: parent.right; top: parent.top; topMargin: -2 }
                         visible: msgHover.containsMouse

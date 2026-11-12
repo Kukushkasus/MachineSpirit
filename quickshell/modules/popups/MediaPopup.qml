@@ -131,7 +131,7 @@ Item {
                         spacing: 4
                         Icon { anchors.verticalCenter: parent.verticalCenter; name: "graphic_eq"; size: 13; color: Theme.glowDim }
                         Glow { anchors.verticalCenter: parent.verticalCenter; halo: 0; color: Theme.glowDim
-                            font { family: Theme.fontNum; pixelSize: 10; weight: Font.Medium; letterSpacing: 1; capitalization: Font.AllUppercase }
+                            font { family: Theme.fontNum; pixelSize: 11; weight: Font.Medium; letterSpacing: 1; capitalization: Font.AllUppercase }
                             text: root.player?.identity ?? "" }
                     }
                     Item {

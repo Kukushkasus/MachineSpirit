@@ -2,34 +2,43 @@
 import QtQuick
 import qs.common
 
-// Ultramarines bar section: part of one armour band that runs the width of the screen. A gold rim, blue
-// enamel, tactical glass set in it with a gold pinstripe at its foot and hex bolts at its corners. The centre
-// section stands deeper as a command post, with three gold pips under the sectors.
+// Ultramarines bar section: part of one armour band that runs the width of the screen. A fine gold rim, blue
+// enamel, tactical glass set in it with a gold pinstripe at its foot and small hex bolts at its corners. The
+// centre section stands a little deeper as a command post, with three gold pips under the sectors.
+// The glass keeps 32 px for the housings (they sit at y 3..31); everything else is trim and is kept thin.
 Item {
     id: root
     required property Item host
     readonly property bool heart: host.part === "heart"
-    readonly property real d: heart ? 44 : 36          // how far the plate reaches down
-    readonly property real k: heart ? 14 : 6           // its lower corner cut
+    readonly property real d: heart ? 41 : 35          // how far the plate reaches down
+    readonly property real k: heart ? 10 : 5           // its lower corner cut
+    readonly property real gb: heart ? 35.5 : 33       // the glass's foot
+    readonly property real gk: heart ? 8 : 3.5         // the glass's corner cut
     readonly property real w: width
     function plate(m) { return [[m, 0], [w - m, 0], [w - m, d - k - m * 0.4], [w - k - m * 0.6, d - m], [k + m * 0.6, d - m], [m, d - k - m * 0.4]] }
+    function glass(m) { return [[m, 0], [w - m, 0], [w - m, gb - gk], [w - m - gk, gb], [m + gk, gb], [m, gb - gk]] }
     Poly { width: root.w; height: root.d; points: root.plate(0); upper: Theme.brassHi; lower: Theme.brassLo }
-    Poly { width: root.w; height: root.d; points: root.plate(2); upper: Qt.lighter(Theme.metal, 1.25); lower: Qt.darker(Theme.metal, 1.35) }
+    Poly { width: root.w; height: root.d; points: root.plate(1.2); upper: Qt.lighter(Theme.metal, 1.2); lower: Qt.darker(Theme.metal, 1.4) }
     Poly {   // the glass
         width: root.w; height: root.d
-        points: [[7, 0], [root.w - 7, 0], [root.w - 7, 31], [root.w - 10, 34], [10, 34], [7, 31]]
-        upper: Qt.tint(Theme.glass, Qt.alpha(Theme.metal, 0.4)); lower: Qt.darker(Theme.glass, 1.2)
-        stroke: Qt.alpha(Theme.brassLo, 0.9); strokeWidth: 1
+        points: root.glass(4)
+        upper: Qt.tint(Theme.glass, Qt.alpha(Theme.metal, 0.35)); lower: Qt.darker(Theme.glass, 1.15)
+        stroke: Qt.alpha(Theme.brassLo, 0.75); strokeWidth: 0.8
     }
-    Image { x: 8; y: 0; width: root.w - 16; height: 33; source: Qt.resolvedUrl("../../assets/grid.svg"); fillMode: Image.Tile; opacity: 0.06; smooth: false }
-    Rectangle { x: 12; y: 36; width: root.w - 24; height: 1; color: Qt.alpha(Theme.brass, 0.8); visible: root.heart }
+    Image { x: 5; y: 0; width: root.w - 10; height: root.gb - 2; source: Qt.resolvedUrl("../../assets/grid.svg"); fillMode: Image.Tile; opacity: 0.05; smooth: false }
+    Rectangle {   // the gold pinstripe at the glass's foot
+        x: 4 + root.gk + 2; y: root.gb - 2.5; width: root.w - 2 * (4 + root.gk + 2); height: 1
+        gradient: Gradient { orientation: Gradient.Horizontal
+            GradientStop { position: 0; color: "transparent" } GradientStop { position: 0.12; color: Qt.alpha(Theme.brass, 0.75) }
+            GradientStop { position: 0.88; color: Qt.alpha(Theme.brass, 0.75) } GradientStop { position: 1; color: "transparent" } }
+    }
     Repeater {   // hex bolts at the foot of the glass
         model: 2
-        Bolt { required property int index; kit: "ultramarines"; size: 5; x: index ? root.w - 7.5 : 2.5; y: root.d - root.k - 7 }
+        Bolt { required property int index; kit: "ultramarines"; size: 4; x: index ? root.w - 4 - 1 : 0.5; y: root.d - root.k - 5 }
     }
     Row {   // the command post's pips
         visible: root.heart && Theme.ornaments > 0
-        anchors.horizontalCenter: parent.horizontalCenter; y: 38.5; spacing: 6
-        Repeater { model: 3; Rectangle { width: 4; height: 4; rotation: 45; color: Theme.brassHi } }
+        anchors.horizontalCenter: parent.horizontalCenter; y: root.gb + 1.2; spacing: 5
+        Repeater { model: 3; Rectangle { width: 3; height: 3; rotation: 45; antialiasing: true; color: Theme.brassHi } }
     }
 }

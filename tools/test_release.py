@@ -1,6 +1,8 @@
 # [ PURITY SEAL ] Prove preservation, not merely success messages.
 import importlib.machinery, importlib.util, json, os, subprocess, sys, tempfile, unittest
 from pathlib import Path
+# the tests run installers and ms-cursor: gsettings must not reach the real desktop (dconf over the session bus), nor hyprctl the running Hyprland
+os.environ['GSETTINGS_BACKEND'] = 'memory'; os.environ.pop('HYPRLAND_INSTANCE_SIGNATURE', None)
 ROOT=Path(__file__).resolve().parents[1]
 def load(name,path):
     loader=importlib.machinery.SourceFileLoader(name,str(path)); spec=importlib.util.spec_from_loader(name,loader); m=importlib.util.module_from_spec(spec);loader.exec_module(m);return m
@@ -89,7 +91,8 @@ class ReleaseConsistencyTests(unittest.TestCase):
     def test_version_matches_changelog_and_banner(self):
         version=(ROOT/'VERSION').read_text().strip()
         self.assertRegex(version,r'^\d+\.\d+\.\d+$',version)
-        self.assertRegex((ROOT/'CHANGELOG.md').read_text().split('## ',2)[1],'^'+version.replace('.',r'\.')+r'\b')
+        sections=[x for x in (ROOT/'CHANGELOG.md').read_text().split('\n## ')[1:] if not x.startswith('Unreleased')]   # notes for the next release may sit on top
+        self.assertRegex(sections[0],'^'+version.replace('.',r'\.')+r'\b')
         self.assertIn(version,(ROOT/'docs/media/banner.svg').read_text())
         for readme in ('README.md','README.ru.md'): self.assertNotIn('beta',(ROOT/readme).read_text().lower().split('\n',12)[7])
     def test_package_list_matches_components(self):
@@ -285,7 +288,7 @@ class ReleaseArchiveTests(unittest.TestCase):
             self.assertEqual(r.returncode, 0, r.stdout[-400:] + r.stderr)
             self.assertTrue((d / 'c/quickshell/machinespirit/shell.qml').is_file()); self.assertTrue((d / 'd/machinespirit/wallpapers/forge.png').is_file())
             self.assertEqual((d / 'd/machinespirit/VERSION').read_text().strip(), (ROOT / 'VERSION').read_text().strip())
-            self.assertEqual(sorted(p.name for p in (d / 'd/machinespirit/tools').iterdir() if p.name != '__pycache__'), ['make_emblem.py', 'managed.py'])
+            self.assertEqual(sorted(p.name for p in (d / 'd/machinespirit/tools').iterdir() if p.name != '__pycache__'), ['make_cursors.py', 'make_emblem.py', 'managed.py'])
             self.assertEqual(sorted(p.name for p in (d / 'd/machinespirit/wallpapers').iterdir() if not p.name.startswith('active-')), ['cogitator.png', 'forge.png', 'quiet.png'])   # no SVG sources, no duplicates in the archive
             doc = subprocess.run([sys.executable, str(out / 'MachineSpirit/installer/install.py'), 'doctor'], env=env, capture_output=True, text=True)
             self.assertNotIn('did not finish', doc.stdout); self.assertNotIn('not valid JSON', doc.stdout)

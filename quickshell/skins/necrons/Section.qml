@@ -51,7 +51,7 @@ Item {
         Glow {
             anchors.verticalCenter: parent.verticalCenter; halo: 0.45
             text: root.host.tab.toUpperCase()
-            font { family: Skin.display(root.host.tab); pixelSize: 10; weight: Font.Normal; letterSpacing: 2.4 }
+            font { family: Skin.display(root.host.tab); pixelSize: 11; weight: Font.Normal; letterSpacing: 2.4 }
         }
     }
     Poly {   // the cartouche behind the readings

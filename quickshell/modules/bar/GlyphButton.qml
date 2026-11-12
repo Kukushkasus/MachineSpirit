@@ -18,7 +18,7 @@ BarButton {
         color: root.on || root.hovered || root.active ? Theme.glow : root.tint
         scale: root.pressed ? 0.86 : 1
         Behavior on color { ColorAnimation { duration: Theme.dShort } }
-        Behavior on scale { NumberAnimation { duration: 90 } }
+        Behavior on scale { NumberAnimation { duration: root.pressed ? 70 : 300; easing.type: root.pressed ? Easing.OutQuad : Easing.OutBack; easing.overshoot: 3 } }   // pressed in, springs back
     }
     Rectangle {
         id: lampDot
