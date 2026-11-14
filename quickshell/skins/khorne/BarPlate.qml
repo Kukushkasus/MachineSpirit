@@ -2,9 +2,8 @@
 import QtQuick
 import qs.common
 
-// Khorne bar section: a slab of blackened iron hung from the screen edge, its foot cut into brass teeth and a
-// row of rivets above them, a brass spike jutting from each inner end. The centre slab has a jaw: one long
-// fang under the sectors. The forge glass is set into the iron.
+// Khorne bar section: blackened iron slab hung from the edge, brass teeth and rivets on the foot, a spike at
+// each inner end. The centre one has a fang under the sectors
 Item {
     id: root
     required property Item host

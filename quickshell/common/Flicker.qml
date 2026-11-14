@@ -3,14 +3,8 @@ import QtQuick
 import Quickshell
 import qs.common
 
-// Life on a screen, laid over its content. Now and then (the pack sets how often, each screen on its own
-// clock) one short thing happens, by faction:
-//   mechanicus    the picture dips twice like a lamp, or a scan wave rolls down it
-//   ultramarines  a readiness pulse: one thin bright line crosses the display, once
-//   necrons       a slow shimmer climbs the glass
-//   khorne        the forge breathes: a dull red swell and fade
-// Render-thread animations only, stopped while hidden, with reduced motion or in low power. Never more than
-// one ambient effect at a time across the shell (Theme.fxClaim). MS_DEV_FAST_AMBIENT=1 makes it frequent for testing.
+// screen life over the content: now and then one short effect by faction (lamp dip, pulse, shimmer, forge breath).
+// render thread only, off when hidden, reduced motion or low power, one at a time (Theme.fxClaim). MS_DEV_FAST_AMBIENT=1 for testing
 Item {
     id: root
     property real radius: 6

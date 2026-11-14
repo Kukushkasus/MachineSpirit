@@ -7,10 +7,8 @@ import qs.common
 import qs.services
 import qs.kits
 
-// The hanging manifold: three mount plates clamped to the top edge of the screen, housings seated on them. The cog, time and
-// instruments hang on the left, the sectors alone in the middle, the receiver and the controls on the right,
-// so music never moves the middle. Braided cables sag across the two long spans; the spirit's lightning
-// runs along their bare copper.
+// the bar: three groups on mounts at the top edge. Cog, time and gauges on the left, sectors alone in the
+// middle so music never moves them, player and controls on the right
 Variants {
     // every screen, or only the one that hosts the panels (Settings > Bar & panels)
     model: Settings.data.barAllScreens === false ? Quickshell.screens.filter(s => s === Settings.primary()) : Quickshell.screens
@@ -57,9 +55,8 @@ Variants {
             onTriggered: { const s = [spanL, spanR].filter(c => c.hasBare()); if (s.length) s[Math.floor(Math.random() * s.length)].crackle(); interval = Theme.fxDelay("discharge", 1.5, 4.5); restart() }
         }
 
-        // ---- which modules sit on the bar and in what order (Settings > Bar & panels). The cog and the controls
-        // are fixed; the rest follow the lists. Re-seating a housing moves it to the end of its row, so seating
-        // them in order gives the order.
+        // ---- which modules sit on the bar and in what order (Settings > Bar & panels). Cog and controls are fixed.
+        // re-seating a housing moves it to the end of its row, so seating them in order gives the order
         readonly property var leftOrder: Settings.data.barLeft ?? ["clock", "instruments", "caption"]
         readonly property var rightOrder: Settings.data.barRight ?? ["media", "tray"]
         function seat() {

@@ -1,6 +1,6 @@
 # Theme packs
 
-MachineSpirit has one layout and four liveries. The functions, the place of every control, the size of every click area and every reading are the same everywhere; what the shell is drawn as is not. A livery redraws every structural part of the shell: the bar's silhouette, window housings, the glass inside them, section cards and their titles, keys, icon wells, level strips, switches and sliders, workspace marks, window titles, the console, the power wheel, popups and their mounts, toasts, desktop instruments and the lock screen, and it brings its own display face.
+MachineSpirit has one layout and four liveries. Functions, control positions, click areas and readings are the same in all of them, only the drawing changes. A livery redraws every structural part, from the bar and window housings to keys, popups, toasts, desktop instruments and the lock screen, and brings its own display font.
 
 ## Wallpapers
 
@@ -32,7 +32,7 @@ Four packs ship with the shell:
 | Necrons | dark alloy, living glass with circuit traces | two energy conduits; a charge travels them, a thin arc may jump at a node | counter-turning rings, a cartouche crest, hovering shards, panels phase in rather than slide |
 | Chaos: Khorne | blackened iron, battered brass, forge light | two heavy chains between toothed iron slabs; rarely one dark drop gathers and falls | a saw-toothed wheel that heaves, a horned mask, braziers, scored iron, slow heavy landings |
 
-All graphics are made for MachineSpirit: the interface is drawn with QML shapes, the wallpapers come from the scene scripts in `tools/wallpapers/` (see its README) and the cursors from `tools/make_cursors.py`. None of it is, or may become, an official emblem or artwork.
+All graphics are made for MachineSpirit: the interface is QML shapes, the wallpapers are rendered from scenes built in code, the cursors from `tools/make_cursors.py`. None of it is official Games Workshop artwork.
 
 ## Motion
 

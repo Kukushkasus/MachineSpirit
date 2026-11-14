@@ -2,9 +2,8 @@
 import QtQuick
 import qs.common
 
-// Necron bar section: a shard floating just clear of the screen edge, pointed at both ends, dark metal with a
-// lit edge and phase glass inside. The centre shard carries a pendant: a lit diamond hanging on a thread of
-// light under the sectors.
+// Necron bar section: a shard floating just off the edge, dark metal with a lit edge and phase glass.
+// the centre one has a lit diamond hanging under the sectors
 Item {
     id: root
     required property Item host

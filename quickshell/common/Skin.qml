@@ -4,10 +4,8 @@ import QtQuick
 import Quickshell
 import qs.common
 
-// The skin layer. Every structural part of the shell (housings, glass, cards, keys, wells, faders, switches,
-// titles, workspace marks, the bar's silhouette) is drawn by one of four built-in liveries in skins/<style>/.
-// A theme pack picks a style per slot from this whitelist; nothing else reaches a path. Only the decorative
-// layers are swapped: what the user works with lives outside them and survives a change of livery.
+// skin layer: every structural part is drawn by one of four built-in liveries in skins/<style>/. Packs pick
+// a style per slot from this whitelist, never a path. Only decoration is swapped, user state survives
 Singleton {
     id: root
     readonly property var styles: ["mechanicus", "ultramarines", "necrons", "khorne"]
@@ -26,9 +24,8 @@ Singleton {
     readonly property string glyph: of("glyph")
     readonly property string type: of("type")
 
-    // ---- type. Each faction's display face is shipped with the shell and loaded here, from the shell's own
-    // folder: nothing is installed system-wide. Until a face is ready, or for text it has no letters for
-    // (none of the three carries Cyrillic), the display falls back to Plex Condensed.
+    // ---- type. Faction faces ship with the shell and load from its own folder, nothing system-wide.
+    // Plex Condensed until a face is loaded, and for Cyrillic (none of the three has it)
     FontLoader { id: cinzel; source: Qt.resolvedUrl("../assets/fonts/Cinzel.ttf") }
     FontLoader { id: michroma; source: Qt.resolvedUrl("../assets/fonts/Michroma.ttf") }
     FontLoader { id: grenze; source: Qt.resolvedUrl("../assets/fonts/GrenzeGotisch.ttf") }

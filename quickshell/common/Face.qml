@@ -6,10 +6,8 @@ import qs.skins.ultramarines as Um
 import qs.skins.necrons as Ne
 import qs.skins.khorne as Kh
 
-// The face of a key: what shows behind its glyph or label at rest, under the pointer, pressed and engaged.
-// Mechanicus draws exactly what the caller asks for (`level` and `edge` are the wash and rim strengths, as
-// every key of the shell has always set them); the other liveries read the plain states and draw their own.
-// The key's MouseArea and content stay with the caller.
+// key face behind a glyph or label: rest, hover, pressed, engaged. Mechanicus draws `level`/`edge` as given,
+// other liveries read the states and draw their own. MouseArea and content stay with the caller
 Item {
     id: root
     property color tone: Theme.glow

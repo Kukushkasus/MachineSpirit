@@ -6,11 +6,8 @@ import qs.skins.ultramarines as Um
 import qs.skins.necrons as Ne
 import qs.skins.khorne as Kh
 
-// A section on a panel. `glow` marks it engaged. `tab` hangs a title over the top left edge; `plate` sets
-// readings into the top edge on the right. The livery (Skin.card) draws the section, its title and the plate
-// behind the readings: a rounded glass well with an engraved plate (mechanicus), a cut plate with a gold
-// ribbon (ultramarines), corner brackets and a lit channel (necrons), riveted iron with a forged tag (khorne).
-// What sits inside it and on the plate stays where it is when the livery changes.
+// a section on a panel. `glow`: engaged, `tab`: title over the top left edge, `plate`: readings on the right.
+// drawn by the livery (Skin.card), the content stays where it is when it changes
 Item {
     id: root
     property real radius: 10

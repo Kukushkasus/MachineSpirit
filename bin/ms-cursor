@@ -70,7 +70,7 @@ def gsettings(*args):
 
 
 def hypr_env():
-    # Only the session this runs in: never go looking for some other running Hyprland (a test, a TTY, SSH).
+    # only this session's Hyprland, don't go looking for others (a test, a TTY, SSH)
     return dict(os.environ)
 
 

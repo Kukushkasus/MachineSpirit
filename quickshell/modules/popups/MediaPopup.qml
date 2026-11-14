@@ -6,10 +6,8 @@ import Quickshell.Services.Mpris
 import qs.common
 import qs.services
 
-// Vox Receiver. The cover's colours bleed faintly through the glass; a record slides out from behind the
-// cover and turns while music plays. Source and volume, title and artist (they change with a short
-// roll when the track does), a live spectrum with its reflection, a seek bar that tells the time under
-// the pointer, and the transport. Everything that moves runs only while the panel is open.
+// Vox Receiver: blurred cover behind, record sliding out, spectrum, seek bar, transport.
+// all the animation runs only while the panel is open
 Item {
     id: root
     implicitWidth: 360; width: 360

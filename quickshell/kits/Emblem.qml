@@ -5,12 +5,8 @@ import QtQuick.Shapes
 import qs.common
 import qs.services
 
-// The crest over the control desk. Every one is drawn here from scratch on a 58 px tall grid and scaled;
-// none is, or may become, a copy of anyone's emblem.
-//   mechanicus    the winged cog and skull (common/Crest.qml)
-//   ultramarines  a laurel wreath open at the top round a star, on a short banner bar
-//   necrons       a cartouche: a ring cut by a vertical bar, rayed, between two stepped wings of lines
-//   khorne        a horned brass mask over crossed blades
+// crest over the control desk, drawn here from scratch on a 58 px grid and scaled:
+// winged cog (mechanicus), laurel and star (ultramarines), cartouche (necrons), horned mask (khorne)
 Item {
     id: root
     height: 58

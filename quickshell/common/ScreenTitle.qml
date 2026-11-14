@@ -2,9 +2,7 @@
 import QtQuick
 import qs.common
 
-// Heading of a cogitator screen: spaced phosphor capitals between two short rules.
-// A screen's title. Mechanicus: phosphor capitals between two short faint rules. The other liveries set it
-// as their Title: gold capitals between gilt bars, wide lit letters, or black-letter between spiked bars.
+// screen heading: phosphor capitals between two rules on Mechanicus, the livery's Title elsewhere
 Item {
     id: root
     property string text: ""

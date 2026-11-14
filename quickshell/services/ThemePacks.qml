@@ -6,9 +6,8 @@ import Quickshell
 import Quickshell.Io
 import qs.common
 
-// Theme manager: the list of packs, a timed preview that touches nothing permanent, apply and revert.
-// All of it goes through `ms-theme`; the shell is never reloaded, the theme changes through live properties,
-// so it is safe beside the lock screen. While the screen is locked an apply waits for the unlock.
+// theme manager: pack list, timed preview that writes nothing permanent, apply and revert, all through `ms-theme`.
+// the shell never reloads, it's all live properties, so it's safe next to the lock. While locked, apply waits
 Singleton {
     id: root
     property var packs: []
@@ -109,6 +108,6 @@ Singleton {
     // a theme applied from anywhere (a terminal, another tool) shows up here too
     Connections { target: Theme; function onAppliedPackChanged() { root.refresh() } }
     FileView { path: (Quickshell.env("XDG_CONFIG_HOME") || (Quickshell.env("HOME") + "/.config")) + "/machinespirit/theme.conf"; watchChanges: true; onFileChanged: root.refresh(); printErrors: false }
-    // A preview left by a shell that died is never shown again: clear it on start.
+    // a preview left by a dead shell: clear it on start
     Component.onCompleted: { Quickshell.execDetached(["ms-theme", "preview-end"]); refresh() }
 }

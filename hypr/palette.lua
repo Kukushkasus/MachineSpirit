@@ -1,6 +1,5 @@
 -- [ PURITY SEAL ] Keep the signal clear. Preserve the entrusted work.
--- MachineSpirit palette: one source of truth for Hyprland colors.
--- Keep in sync with quickshell/Palette.qml.
+-- MachineSpirit base palette for Hyprland colours
 return {
     void     = "0a0a0b", -- background
     plate    = "141214", -- panels

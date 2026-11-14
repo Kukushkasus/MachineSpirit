@@ -84,9 +84,8 @@ conf=Path(os.environ.get('XDG_CONFIG_HOME',Path.home()/'.config'))
 subprocess.run(['ms-settings','generate'],stdout=subprocess.DEVNULL)
 env=dict(os.environ,MS_STARTUP='1',MS_RUN=str(run))
 def compositor_alive():
-    # The Hyprland this session belongs to. Once it has gone (logout), its control socket is removed: the
-    # supervisor must end with it, or it would keep the session lock, restart the shell into the next login
-    # and leave that login without its own idle lock.
+    # the Hyprland this session belongs to. When it's gone (logout) its socket is removed and the supervisor
+    # has to exit too, otherwise it holds the lock and restarts the shell into the next login
     sig=os.environ.get('HYPRLAND_INSTANCE_SIGNATURE'); rt=os.environ.get('XDG_RUNTIME_DIR')
     return not sig or not rt or (Path(rt)/'hypr'/sig/'.socket.sock').exists()
 state=Path(os.environ.get('XDG_STATE_HOME',Path.home()/'.local/state'))/'machinespirit'

@@ -5,12 +5,8 @@ import QtQuick.Shapes
 import qs.common
 import qs.services
 
-// What stands at each side of the command console and holds it (46 x 44, `mirror` for the right side).
-//   mechanicus    a servo-skull on a suspensor (common/ServoSkull.qml)
-//   ultramarines  a company standard: a gilt pole, a short enamelled banner with a star
-//   necrons       a hovering shard of living metal with a lit seam, two motes beneath it
-//   khorne        a brazier on a chain, its coals glowing
-// `active` lets it live a little; `arrive()` brings it in when the console opens.
+// what holds each side of the command console (46x44, `mirror` for the right): servo-skull, standard, shard or brazier.
+// `active` lets it move a little, `arrive()` brings it in when the console opens
 Item {
     id: root
     property bool active: false

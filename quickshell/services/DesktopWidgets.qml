@@ -41,7 +41,7 @@ Singleton {
     function geometry(key) {
         const cfg = settings(key), screen = screenFor(key)
         if (!screen) return cfg
-        // Temporarily reflow on a small display; saved coordinates remain intact.
+        // small display: reflow for now, the saved coordinates stay as they are
         const peers = catalog.filter(c => settings(c.key).screen === cfg.screen)
         const savedWidth = cfg.viewportWidth || Math.max(...peers.map(c => settings(c.key).x + c.w * settings(c.key).scale + 24))
         const savedHeight = cfg.viewportHeight || Math.max(...peers.map(c => settings(c.key).y + c.h * settings(c.key).scale + 24))

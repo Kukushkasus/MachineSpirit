@@ -7,9 +7,8 @@ import QtQuick.Shapes
 import qs.common
 import qs.services
 
-// One monitor's view of the lock. Other shells show a blurred wallpaper with a clock and a password pill; here the
-// wallpaper is the dimmed, blurred backdrop and the rest is an instrument: a riveted housing, a cogitator screen with nixie
-// tubes, a phosphor input and a status line. It comes up quickly (a short fade) and shakes once on a wrong passphrase.
+// one monitor's lock view: dimmed blurred wallpaper behind a riveted housing with nixie tubes and a phosphor
+// input. Short fade in, shakes once on a wrong passphrase
 Item {
     id: surface
     required property var owner
@@ -19,9 +18,8 @@ Item {
 
     clip: true
     Rectangle { anchors.fill: parent; color: Theme.surface }
-    // The blur reads its neighbours, so at the edge of the picture it fades into transparency and the plain surface
-    // showed through as a dark frame with rounded corners. The picture is therefore drawn larger than the screen by
-    // more than the blur reaches, and the surface clips it: the screen only ever sees the solid middle.
+    // blur fades to transparent at the picture's edge, which showed as a dark rounded frame. So the picture is
+    // drawn bigger than the screen by more than the blur radius and clipped
     readonly property real blurReach: 48
     Image {
         id: wall

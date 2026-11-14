@@ -6,9 +6,7 @@ import qs.skins.ultramarines as Um
 import qs.skins.necrons as Ne
 import qs.skins.khorne as Kh
 
-// A panel's title between ornaments: phosphor between double rules (mechanicus), gold Roman capitals between
-// gilt bars (ultramarines), wide lit letters between glyph-tipped lines (necrons), black-letter between
-// spiked bars (khorne).
+// panel title between ornaments, drawn by the livery
 Item {
     id: root
     property string text: ""

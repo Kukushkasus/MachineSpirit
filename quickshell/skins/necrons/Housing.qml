@@ -2,9 +2,8 @@
 import QtQuick
 import qs.common
 
-// Necron housing: a monolith of dark living metal. A deep cut at the upper left, a lesser one at the lower
-// right, a slot let into the left flank of a large window. No rivets, no bolts: energy runs in channels let
-// into the edge, a shard hangs free off the great cut, and a column of glyphs is set into the right flank.
+// Necron housing: dark metal monolith, a deep cut top left and a smaller one bottom right. No bolts:
+// energy channels in the edge, a free shard off the big cut, glyphs on the right flank
 Item {
     id: root
     required property Item host

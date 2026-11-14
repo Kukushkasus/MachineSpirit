@@ -4,9 +4,8 @@ import QtQuick.Shapes
 import qs.common
 import qs.services
 
-// The cog (brass vector art, or a phosphor drawing with `outline`). It ticks round like a worn escapement:
-// the harder the machine works, the faster it ticks, and now and then it catches, slips back and judders,
-// or its picture flickers. Heats to rust under strain.
+// the cog (brass art, or a phosphor drawing with `outline`). Ticks faster under load, sometimes
+// slips or judders, goes rust under strain
 Item {
     id: root
     property bool spin: true

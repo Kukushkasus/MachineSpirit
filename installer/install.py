@@ -303,7 +303,7 @@ def main():
     packages = sorted(set(' '.join(PACKAGES[c] for c in selected).split()))
     print('Components:', ', '.join(selected)); print('Packages:', ' '.join(packages))
     for _, dst in pairs: print('File:', dst)
-    # Never traverse a redirected parent silently.
+    # don't silently follow a redirected parent
     for _, dst in pairs:
         for parent in dst.parents:
             if parent == HOME.parent: break

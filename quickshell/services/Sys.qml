@@ -51,7 +51,7 @@ Singleton {
     }
     Timer { interval: 2000; running: root.wantProcs; repeat: true; triggeredOnStart: true; onTriggered: psProc.running = true }
 
-    // Fixed-shape rate text: "812 B/s", "79.3 KB/s", "1.2 MB/s".
+    // rate text: "812 B/s", "79.3 KB/s", "1.2 MB/s"
     function formatRate(b) {
         if (b < 1000) return Math.round(b) + " B/s"
         if (b < 1000 * 1024) return (b / 1024).toFixed(1) + " KB/s"
@@ -85,7 +85,7 @@ Singleton {
         }
     }
 
-    // Network is sampled every two seconds and smoothed so the readout does not flicker.
+    // network: sampled every 2 s and smoothed, otherwise the readout jumps
     Timer {
         interval: 2000; running: true; repeat: true; triggeredOnStart: true
         onTriggered: {

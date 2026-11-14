@@ -2,9 +2,8 @@
 import QtQuick
 import qs.common
 
-// Necron glass: phase glass, nearly black, cut to the monolith's outline. Circuit traces run faint in it,
-// a cold light rises from below, a band of light hangs a third of the way down, and a column of glyphs is
-// set into the left margin of a tall screen. It wakes with a green wash instead of switching on.
+// Necron glass: near black, cut to the monolith outline, faint circuit traces, cold light from below, glyphs
+// in the margin on tall screens. Wakes with a green wash
 Item {
     id: root
     required property Item host

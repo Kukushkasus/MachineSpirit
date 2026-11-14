@@ -1,7 +1,7 @@
-## Change
+## What changed
 
-Describe the concrete problem and resulting behaviour.
+What was wrong and what it does now.
 
-## Validation
+## Tested
 
-List checks actually run and any untested hardware or scenarios.
+What you ran or tried, and which hardware you couldn't test on.

@@ -2,9 +2,8 @@
 import QtQuick
 import qs.common
 
-// Mechanicus section: dark glass in a thin rounded metal rim, a halo when engaged, an engraved metal plate
-// over the top left edge and another set into the rim on the right. Current runs through the plates' edges
-// when the panel opens.
+// Mechanicus section: dark glass in a thin rounded rim, halo when engaged, engraved plates top left and right.
+// current runs through the plate edges when the panel opens
 Item {
     id: root
     required property Item host

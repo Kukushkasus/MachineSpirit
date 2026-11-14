@@ -13,9 +13,8 @@ function fish_greeting
     end
 end
 
-# Tiling resizes a fresh terminal as more windows open, which would tear the greeting apart. Until the
-# first command is run, a resize clears the screen (and the emblem image) and draws the greeting again
-# for the new size; after that the terminal's contents are left alone.
+# tiling resizes a fresh terminal as more windows open. Until the first command, redraw the greeting
+# on every resize; after that leave the terminal alone
 set -g __ms_fresh 1
 function __ms_regreet --on-signal WINCH
     set -q __ms_fresh; or return

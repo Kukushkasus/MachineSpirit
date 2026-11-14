@@ -2,9 +2,8 @@
 import QtQuick
 import qs.common
 
-// Khorne housing: blackened iron under a battered brass lip. The corners are cut, the foot of a large
-// window is cut into a brass saw edge, a row of rivets holds the lip on, and brass spikes jut from the upper
-// corners. Heavy, plain, and nothing glows on it but the forge light in the glass.
+// Khorne housing: blackened iron under a brass lip, cut corners, rivets, spikes up top, saw edge on large windows.
+// nothing glows on it except the forge light in the glass
 Item {
     id: root
     required property Item host

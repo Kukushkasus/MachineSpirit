@@ -2,9 +2,8 @@
 import QtQuick
 import qs.common
 
-// Khorne glass: a window into a forge. Dark iron-red glass with cut corners, a deep shadow under the lip,
-// the ember light at the foot, a few old scores across it, and on a large window one dried mark low in a
-// corner. It lands heavily with a red flash.
+// Khorne glass: dark iron-red with cut corners, ember light at the foot, a few scores, one dried mark on large
+// windows. Lands heavily with a red flash
 Item {
     id: root
     required property Item host

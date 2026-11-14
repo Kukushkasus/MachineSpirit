@@ -44,7 +44,7 @@ def main():
             print(json.dumps({'data': validate(json.loads(path.read_text()))}, ensure_ascii=False))
         return
     data = validate(json.loads(sys.stdin.readline()))
-    # Refuse to replace damaged or unknown state, including changes made since loading.
+    # don't overwrite a broken or unknown file, or one that changed after we read it
     if path.exists():
         validate(json.loads(path.read_text()))
     path.parent.mkdir(parents=True, exist_ok=True)

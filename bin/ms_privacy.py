@@ -75,7 +75,7 @@ def fetch(feature,url,manual=False,headers=None,image=False,force_proxy=False):
     if u.scheme!='https' or not u.hostname or u.username or u.password: raise ValueError('Only HTTPS network resources are allowed')
     p=read();via=force_proxy or (p['proxy']['enabled'] and p['proxy']['shell'])
     if force_proxy and not p['proxy']['enabled']: raise ValueError('Enable and apply a proxy first')
-    # curl config travels over stdin, never argv; no environment proxy/bypass inheritance.
+    # curl config goes over stdin, not argv, and no proxy/no_proxy env is inherited
     env={k:v for k,v in os.environ.items() if k.lower() not in ('http_proxy','https_proxy','all_proxy','no_proxy')}
     opts={'url':url,'proxy':proxy_endpoint() if via else '', 'noproxy':''}
     config=''.join(k+' = '+json.dumps(v)+'\n' for k,v in opts.items())

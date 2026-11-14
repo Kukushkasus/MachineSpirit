@@ -8,10 +8,9 @@ import QtQuick
 import qs.common
 import qs.services
 
-// The lock screen. `phase` follows the compositor: "secure" appears only when ext-session-lock confirms the screen is
-// locked (WlSessionLock.secure), never merely because a request was made. While the lock is held a marker file records the
-// Hyprland instance. If this shell dies while locked, the compositor keeps the screen locked; the supervisor starts the
-// shell again, the marker is found and the lock is taken over at once (Hyprland: misc:allow_session_lock_restore).
+// lock screen. `phase` is "secure" only after ext-session-lock confirms it (WlSessionLock.secure). A marker file
+// keeps the Hyprland instance: if the shell dies locked, the supervisor restarts it and it takes the lock over
+// (misc:allow_session_lock_restore)
 Scope {
     id: root
     readonly property string runDir: Quickshell.env("MS_RUN")

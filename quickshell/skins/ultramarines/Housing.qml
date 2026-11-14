@@ -2,9 +2,8 @@
 import QtQuick
 import qs.common
 
-// Ultramarines housing: an armour plate with four cut corners. A gold rim, blue enamel lit from above, a gold
-// pinstripe inlaid just inside the rim. Large windows get gilded corner guards and three rank pips on the top
-// edge; nothing on it is crooked, and nothing moves.
+// Ultramarines housing: armour plate with cut corners, gold rim and pinstripe, blue enamel. Large windows get
+// gilded corner guards and three rank pips. Nothing crooked, nothing moves
 Item {
     id: root
     required property Item host

@@ -99,7 +99,7 @@ def status():
                 row.update(state='External changes detected' if changed else 'Written; verify after restart' if record.get('written') else 'Browser defaults / existing policies',conflict=changed)
                 row['policies']=current
                 row['observed']={f:all(get(current,path)=={'exists':True,'value':v} for path,v in leaves(policies(name,{f:True}))) for f in FLAGS if f!='studies' or b['engine']=='gecko'}
-                # Do not infer effective state solely from brand or a saved switch.
+                # don't guess the real state from the brand or a saved switch
                 if name in ('zen','librewolf'):row['note']='Vendor removes telemetry; installed runtime state still needs verification.'
             except Exception as e:row.update(state=str(e),supported=False)
         rows.append(row)
@@ -117,7 +117,7 @@ def apply(name,flags):
         if record.get('written') and record.get('path') != str(p):
             raise ValueError('Browser policy location changed; restore the original policy file before applying')
         backup=record.get('before',{});written=record.get('written',{})
-        # Remove only our unchanged values. Never clobber administrator changes.
+        # remove only our own unchanged values, leave admin changes alone
         for k,v in written.items():
             path=json.loads(k)
             if get(new,path)!={'exists':True,'value':v}:raise ValueError('External policy change; restore manually before applying')

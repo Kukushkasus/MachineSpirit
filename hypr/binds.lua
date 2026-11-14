@@ -9,9 +9,8 @@ local WS = 10
 
 local function digit(d) return "code:" .. (9 + d) end -- 1..9 => evdev codes 10..18, 10 => 19 (the 0 key)
 
--- Tapping Super alone opens the command console (Quickshell global shortcut "machinespirit:superTap",
--- pressed + released). Every Super+key combination below also fires "superInterrupt", so holding Super
--- for a shortcut never opens the console. Mouse drags are covered by a time limit in the shell.
+-- tap Super alone: console (global shortcut machinespirit:superTap). Every Super+key below also fires
+-- superInterrupt so a held Super never opens it; mouse drags are covered by a timeout in the shell
 local rawbind = hl.bind
 local catalog = {}
 local labels = {

@@ -2,9 +2,8 @@
 import QtQuick
 import qs.common
 
-// Khorne section: a slab of iron with cut corners, a heavy brass lip along its top and a rivet in each upper
-// corner. The title is a forged tag riveted over the edge, its letters cut in a black-letter hand; readings
-// sit on a second tag. Engaged, the slab glows from inside like iron left in the fire.
+// Khorne section: iron slab with a brass lip and rivets, title on a forged tag in black-letter, readings on a
+// second tag. Engaged, it glows like iron left in the fire
 Item {
     id: root
     required property Item host

@@ -2,10 +2,7 @@
 import QtQuick
 import qs.common
 
-// Brass name plate with engraved lettering. `gothic` marks a ceremonial plate: bolder, wider spaced.
-// An engraved plate with a short label. Its make follows the livery (Skin.frame): stamped brass (mechanicus),
-// a gilt plate with cut corners (ultramarines), a leaning cartouche of light (necrons), a forged iron tag with a
-// brass edge (khorne).
+// engraved name plate, drawn by the livery (Skin.frame). `gothic`: ceremonial, bolder and wider spaced
 Item {
     id: root
     property string text: ""

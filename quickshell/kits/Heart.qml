@@ -5,12 +5,8 @@ import QtQuick.Shapes
 import qs.common
 import qs.services
 
-// The living mark of the machine: on the bar (small, opens the console) and as the wheel of the power menu
-// (large, `spin: false`, turned by `rotation` from outside). It shows the real processor load and nothing else.
-//   mechanicus    the cog, ticking like a worn escapement (common/Gear.qml)
-//   ultramarines  a readiness dial: a ring of twelve marks lit clockwise by load, steady, a star at the centre
-//   necrons       two broken rings turning slowly against each other round a lit core
-//   khorne        a heavy saw-toothed wheel that turns in slow, weighty steps
+// the machine's living mark: small on the bar (opens the console), large as the power wheel (`spin: false`).
+// shows real CPU load and nothing else: cog, readiness dial, counter-turning rings or saw wheel
 Item {
     id: root
     property bool spin: true

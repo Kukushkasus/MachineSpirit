@@ -4,9 +4,8 @@ import QtQuick.Shapes
 import qs.common
 import qs.services
 
-// Mechanicus glass: a cogitator CRT. Under the content: recessed glass and a vignette. Over it: the power-on
-// line and sweep, scanlines (thicker when the processor is really busy, on the Cogitator's own screens),
-// and the sheen of the tube.
+// Mechanicus glass: cogitator CRT. Under the content: recessed glass and vignette. Over it: power-on line,
+// scanlines (thicker under real load on the Cogitator) and tube sheen
 Item {
     id: root
     required property Item host

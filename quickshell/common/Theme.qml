@@ -147,7 +147,7 @@ Singleton {
     readonly property string kit: kits.includes(pack.kit) ? pack.kit : "mechanicus"
     readonly property bool previewing: previewMeta !== null
     property var previewMeta: null
-    // a decorative word from the pack, or the plain one. Never used for functions that must stay clear.
+    // a decorative word from the pack, or the plain one. Not for anything functional.
     function lex(key, fallback) { const v = pack.lexicon ? pack.lexicon[key] : undefined; return typeof v === "string" && v !== "" ? v : fallback }
     function litany() { const l = pack.litanies || []; return l.length ? l[Math.floor(Math.random() * l.length)] : "" }
 
@@ -168,7 +168,7 @@ Singleton {
         const a = Array.isArray(e) ? e[0] : lo, b = Array.isArray(e) ? e[1] : hi
         return (a + Math.random() * (b - a)) * 1000 * fxSlow
     }
-    // One decorative effect at a time per screen-wide scheduler: ask before starting, so effects never pile up.
+    // one decorative effect at a time across the screen: ask first so effects don't pile up
     property real fxBusyUntil: 0
     function fxClaim(ms) {
         const now = Date.now()
@@ -288,9 +288,8 @@ Singleton {
         onLoaded: { root.appliedPack = text(); if (!root.previewing) root.applyPack(text()) }
         onLoadFailed: { root.appliedPack = ""; if (!root.previewing) root.pack = root.packDefault }
     }
-    // meta.json is written last and removed first, so the other two are whole whenever it is seen.
-    // A preview is shown only when this very shell asked for it (ThemePacks arms it): one left behind by a
-    // crashed shell is never picked up, it is discarded at start.
+    // meta.json is written last and removed first, so the other two are complete whenever it exists.
+    // only show a preview this shell asked for (ThemePacks arms it); a leftover from a crash is dropped at start
     property bool previewArmed: false
     function loadPreview() { previewArmed = true; pvMeta.reload() }
     function endPreview() { previewArmed = false; if (previewing) restoreApplied() }

@@ -3,7 +3,7 @@ import QtQuick
 import qs.common
 
 // Small push button for panels on cogitator screens: a phosphor outline that lights when touched.
-// (Named for its brass ancestor; the calls stay the same.)
+// (the name is left from when it was brass)
 Item {
     id: root
     property string icon: ""

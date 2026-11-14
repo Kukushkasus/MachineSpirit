@@ -2,10 +2,8 @@
 import QtQuick
 import qs.common
 
-// Ultramarines bar section: part of one armour band that runs the width of the screen. A fine gold rim, blue
-// enamel, tactical glass set in it with a gold pinstripe at its foot and small hex bolts at its corners. The
-// centre section stands a little deeper as a command post, with three gold pips under the sectors.
-// The glass keeps 32 px for the housings (they sit at y 3..31); everything else is trim and is kept thin.
+// Ultramarines bar section: part of one armour band across the screen, gold rim, blue enamel, tactical glass.
+// the centre one is a deeper command post. Glass keeps 32 px for the housings (y 3..31), trim stays thin
 Item {
     id: root
     required property Item host

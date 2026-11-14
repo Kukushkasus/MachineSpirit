@@ -3,9 +3,8 @@ import QtQuick
 import qs.common
 import qs.services
 
-// Augury: now (big reading, sky, feels-like, today's range), the coming hours as a strip of readings,
-// the coming days as range bars on one shared scale, and four small instruments: wind, humidity,
-// pressure, and the sun's hours.
+// Augury: current reading, the next hours, daily ranges on one scale,
+// and small gauges for wind, humidity, pressure and daylight
 Column {
     id: root
     width: 392

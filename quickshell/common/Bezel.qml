@@ -6,12 +6,8 @@ import qs.skins.ultramarines as Um
 import qs.skins.necrons as Ne
 import qs.skins.khorne as Kh
 
-// Instrument housing. Content goes inside, inset by `inset`. The livery (Skin.frame) decides what it is:
-//   mechanicus    forged metal with a bevelled edge and slotted brass bolts
-//   ultramarines  an enamelled armour plate with cut corners inside a gold rim
-//   necrons       an asymmetric monolith of dark living metal with energy let into its edges
-//   khorne        blackened iron under a battered brass lip, riveted, its foot cut into a saw edge
-// Only the housing is drawn by the livery; the content stays put when the livery changes.
+// instrument housing, content goes inside, inset by `inset`. The livery (Skin.frame) draws it,
+// the content stays put when the livery changes
 Item {
     id: root
     default property alias content: inner.data

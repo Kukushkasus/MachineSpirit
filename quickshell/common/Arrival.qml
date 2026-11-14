@@ -2,13 +2,8 @@
 import QtQuick
 import qs.common
 
-// The moment a large window arrives, drawn over its housing by faction. It runs once per opening (about half a second),
-// costs nothing at rest and never holds back the window's controls: they take input from the first frame.
-//   mechanicus    current runs out from the crown along the frame in two crackling points and earths at the feet
-//   ultramarines  a gold pulse travels the trim, left to right along the top and back along the foot, then the rim answers
-//   necrons       a phase line scans down the glass while glyphs flare and fade along its path
-//   khorne        a sheen of heat sweeps across the iron and the plate throws sparks where it lands
-// Put it over the housing (anchors.fill) and call play(). `landed` fires when a heavy window touches down.
+// faction moment drawn over a large window's housing when it opens (~0.5 s, free at rest, never blocks input).
+// fill the housing and call play(); `landed` fires when a heavy window touches down. Looks: docs/THEMES.md#motion
 Item {
     id: root
     property string kit: Theme.kit

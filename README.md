@@ -31,7 +31,7 @@ Then reboot and sign in on the login screen with the Hyprland session.
 
 ## Four factions
 
-One shell, four liveries. A theme changes the bar's silhouette, housings and glass, cards and titles, keys and gauges, popups, toasts, the power wheel, the lock screen, the display face, the cursor and the way windows arrive. The layout, the click areas and the readings stay the same. Each faction has its own 4K wallpaper; choosing a theme never changes yours unless you ask.
+One shell, four liveries. A theme redraws the bar, housings, glass, controls, popups, the power wheel, the lock screen, the cursor and how windows open. The layout, click areas and readings stay the same. Each faction has its own 4K wallpaper, but picking a theme doesn't touch yours unless you ask.
 
 | Adeptus Mechanicus | Ultramarines |
 |---|---|
@@ -41,7 +41,7 @@ One shell, four liveries. A theme changes the bar's silhouette, housings and gla
 
 <p align="center"><img src="docs/media/themes.gif?v=0.6.0" alt="The four faction themes switched live with Sanctum open, each with its own wallpaper: Adeptus Mechanicus, Ultramarines, Necrons and Khorne" width="100%"></p>
 
-Each faction moves in its own way. Mechanicus relays snap into place while lamps warm up and current runs along the frame; Ultramarines instruments come up in strict order behind a gold pulse; Necron panels phase in under a scanning line; Khorne plates drop with weight and throw sparks. See [Theme packs](docs/THEMES.md).
+Each faction also moves differently: Mechanicus relays snap in and lamps warm up, Ultramarines come up in strict order, Necron panels phase in, Khorne plates drop with weight and throw sparks. More in [Theme packs](docs/THEMES.md).
 
 ## What is in it
 
@@ -66,7 +66,7 @@ Existing files are backed up and your own edits are kept on update. To update, o
 
 ## Compatibility and known limitations
 
-- Developed and tested on Hyprland 0.57 and Quickshell 0.3.2 with a virtual GPU (virtio/virgl). Physical GPUs, NVIDIA and multi-GPU setups have not been tested yet; reports are welcome.
+- Developed and tested on Hyprland 0.57 and Quickshell 0.3.2 with a virtual GPU (virtio/virgl). Physical GPUs, NVIDIA and multi-GPU setups have not been tested yet. If you try it on real hardware, please leave an [install report](https://github.com/Kukushkasus/MachineSpirit/issues/new?template=install-report.yml), even if everything worked.
 - The faction display faces have no Cyrillic; such text is set in IBM Plex. The interface itself is English.
 - Before 1.0 the theme pack format may still change.
 

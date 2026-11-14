@@ -3,9 +3,8 @@ import QtQuick
 import QtQuick.Shapes
 import qs.common
 
-// A cogitator screen clamped to the top edge of the monitor, built like the console: a forged bezel with
-// bolts holding a recessed glass screen (vignette, scanlines, sheen), metal shoulders flowing into the edge.
-// It powers on like a CRT when the shell starts; otherwise static.
+// Mechanicus bar section: a CRT in a bolted bezel clamped to the top edge, shoulders flowing into it.
+// powers on like a CRT at shell start, static after that
 Item {
     id: root
     required property Item host

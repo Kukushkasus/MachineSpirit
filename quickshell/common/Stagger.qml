@@ -2,15 +2,9 @@
 import QtQuick
 import qs.common
 
-// The parts of a window come up one after another, in the faction's manner, instead of all at once:
-//   mechanicus    each part drops into place with a relay's kick while its lamp warms (a dip in the light, then full)
-//   ultramarines  each slides in from the left and stops dead, crisp and in order
-//   necrons       each phases in: it shimmers sideways and its light wavers before it holds
-//   khorne        each falls a short way and lands heavily, bouncing once
-// Give it `items` (the parts, in reading order) and call play() when the window opens. It drives only a Translate
-// and the opacity of each part; a part whose opacity is bound to something else declares `property real reveal: 1`
-// and multiplies it into its own opacity.
-// Everything is shown at once with reduced motion or low power.
+// window parts come up one after another in the faction's manner (docs/THEMES.md#motion). Give it `items` in
+// reading order, call play() on open. A part with its own opacity binding declares `property real reveal: 1`
+// and multiplies it in. Reduced motion or low power: everything at once
 Item {
     id: root
     property var items: []
@@ -53,10 +47,8 @@ Item {
         return 0
     }
 
-    // Each part gets one Translate of its own, made the first time it is staggered and owned by the part, so it
-    // goes when the part goes. A part's transform list is only ever touched to add that Translate to a living part:
-    // rewriting the list of a part that is being torn down (a closing window) left other transforms pointing at
-    // a dead item, and Qt crashed when those were deleted.
+    // one Translate per part, created on first use and owned by the part. Only ever add it to a living part:
+    // rewriting transforms of a part being destroyed left dangling pointers and crashed Qt
     property var bound: []      // [{item, tr}] currently driven
     onItemsChanged: attach()
     Component.onCompleted: attach()

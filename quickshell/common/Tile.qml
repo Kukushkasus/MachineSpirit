@@ -9,7 +9,7 @@ Item {
     default property alias content: inner.data
     property real radius: 8
     property real padding: 8
-    property bool scanlines: false     // accepted for CrtScreen compatibility
+    property bool scanlines: false     // unused, only so Tile can stand in for CrtScreen
     property bool bootOnLoad: false
     property bool lit: false           // highlighted tile
     readonly property alias inner: inner

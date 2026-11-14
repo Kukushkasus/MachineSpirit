@@ -1,0 +1,54 @@
+name: Bug report
+description: Something broke or looks wrong
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. open Sanctum
+        2. switch to Necrons
+        3. ...
+  - type: dropdown
+    id: gpu
+    attributes:
+      label: GPU
+      options: [AMD, NVIDIA, Intel, Hybrid / multi-GPU, VM, Other]
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Distro, Hyprland, Quickshell, MachineSpirit versions
+      placeholder: CachyOS, Hyprland 0.57.0, Quickshell 0.3.2, MachineSpirit 0.6.0
+    validations:
+      required: true
+  - type: input
+    id: theme
+    attributes:
+      label: Theme
+      description: Output of `ms-theme status`, and whether reduced motion or low power is on.
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `./install.sh doctor`
+      render: text
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: "`quickshell log -c machinespirit` helps a lot. Remove personal stuff (tokens, notification text) first."
+  - type: checkboxes
+    id: defaults
+    attributes:
+      label: Checks
+      options:
+        - label: It also happens with default settings

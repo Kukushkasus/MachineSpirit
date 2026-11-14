@@ -66,7 +66,7 @@ Item {
             Rectangle { required property int index; x: 2 + index * 5; y: 1 + index * 3.6; width: 30 - index * 6; height: 2.6; radius: 1.3; rotation: -7; antialiasing: true; color: Theme.rust } }
     }
     Item { id: body; anchors { fill: parent; leftMargin: 18; rightMargin: 18; topMargin: 42; bottomMargin: 15 } }
-    // Receiver vents and the memorandum feed distinguish the physical instruments.
+    // vents on the receiver, tape feed on the memorandum
     Repeater {
         model: root.housing === "receiver" ? 12 : 0
         Rectangle { required property int index; x: 8; y: 48 + index * 11; width: 3; height: 6; radius: 1; color: Theme.metalLo }
@@ -78,7 +78,7 @@ Item {
             Rectangle { x: 9; y: 1; width: parent.width - 18; height: 1; color: Theme.metalHi }
         }
     }
-    // One subtle scan every minute or two. Never over note input.
+    // a faint scan every minute or two, not over the note while typing
     Rectangle {
         id: scan; x: 7; y: -20; width: parent.width - 14; height: 16
         visible: sweep.running; color: Qt.alpha(Theme.glow, 0.025)

@@ -2,9 +2,8 @@
 import QtQuick
 import qs.common
 
-// Necron section: no frame round it. A field of dark glass with one corner cut, held by four corner brackets
-// of light; a channel runs along its top edge from the title to a node. The title floats on the edge in wide
-// letters behind a lit diamond; readings sit in a leaning cartouche.
+// Necron section: no frame, dark glass with one cut corner held by four light brackets, a channel along the
+// top. Title in wide letters behind a lit diamond, readings in a leaning cartouche
 Item {
     id: root
     required property Item host

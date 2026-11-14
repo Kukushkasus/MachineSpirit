@@ -185,9 +185,8 @@ def download(url):
 
 
 def remote_result(result):
-    # QML must never fetch remote thumbnails directly, bypassing routing/permissions.
-    # Up to four at a time: twenty thumbnails one after another could take minutes on a slow proxy. Every fetch still
-    # checks the permission itself, so a policy change cancels all of them; map() keeps the original order.
+    # QML never fetches remote thumbnails itself, that would skip routing and permissions. Four at a time: one by
+    # one is minutes on a slow proxy. Each fetch checks permission, so a policy change cancels them; map() keeps order
     def load(item):
         try: item['thumb']=privacy.fetch('wallpapers',item['thumb'],True,image=True)
         except Exception: item['thumb']=''

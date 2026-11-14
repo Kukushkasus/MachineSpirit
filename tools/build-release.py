@@ -19,7 +19,7 @@ DIRS = {
     'privacy': {'', '.py', '.policy'}, 'quickshell': {'.qml', '.svg', '.png', '.jpg', '.conf', '.py', '.json'}, 'quickshell/assets/fonts': {'.ttf', '.txt'},
     'assets/fonts': {'.ttf', '.txt'}, 'assets/plymouth': {'.plymouth', '.script'}, 'assets/sddm': {'.qml', '.conf', '.desktop', '.png', '.ttf', '.txt'}, 'assets/wallpapers': {'.png'}, 'docs': {'.md'},
 }
-# Safety net inside the allowed directories: never ship runtime state, credentials or private images.
+# safety net inside the allowed dirs: no runtime state, credentials or private images in a release
 SKIP_PARTS = {'__pycache__', 'wallpapers-local'}
 SKIP_SUFFIXES = {'.pyc', '.log', '.qcow2', '.iso'}
 SKIP_NAMES = {'keys.conf', 'local.lua', 'credentials', 'proxy-secret.json', 'gost.json'}

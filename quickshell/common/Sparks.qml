@@ -3,9 +3,8 @@ import QtQuick
 import QtQuick.Particles
 import qs.common
 
-// Sparks from a live joint: hot white-gold points that fly out, fall under gravity and shrink away.
-// The particle system runs only while sparks are alive.
-// puff(): a burst, hiss(): a few, jet(): a spray both ways along a seam.
+// sparks that fly out, fall and shrink; the particle system runs only while they're alive.
+// puff(): a burst, hiss(): a few, jet(): a spray along a seam
 Item {
     id: root
     property real spread: 10        // width of the joint the sparks leave

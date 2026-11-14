@@ -1,0 +1,61 @@
+name: Install report
+description: Tried MachineSpirit on your machine? Tell me how it went, good or bad.
+title: "Install report: <distro>, <GPU>"
+labels: [install-report]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for testing! Even "it just worked" is useful, especially on real hardware.
+  - type: dropdown
+    id: result
+    attributes:
+      label: How did it go
+      options:
+        - Worked fine
+        - Worked, but with some issues
+        - Didn't work
+    validations:
+      required: true
+  - type: dropdown
+    id: gpu
+    attributes:
+      label: GPU
+      options: [AMD, NVIDIA, Intel, Hybrid / multi-GPU, VM, Other]
+    validations:
+      required: true
+  - type: input
+    id: hardware
+    attributes:
+      label: Hardware and monitors
+      placeholder: RTX 3060 + Ryzen 5600, 2560x1440@144 and 1920x1080 at 1.25 scale
+  - type: input
+    id: versions
+    attributes:
+      label: Distro, Hyprland, Quickshell versions
+      placeholder: Arch, Hyprland 0.57.0, Quickshell 0.3.2
+    validations:
+      required: true
+  - type: dropdown
+    id: how
+    attributes:
+      label: How you installed
+      options:
+        - Fresh system from a text console
+        - On top of an existing Hyprland setup
+        - Update from an older MachineSpirit
+  - type: checkboxes
+    id: checked
+    attributes:
+      label: What you checked
+      options:
+        - label: Login screen
+        - label: Lock screen (Super+L) and unlock
+        - label: Switching all four factions
+        - label: Cursors
+        - label: Sleep / resume
+        - label: Multiple monitors
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything off?
+      description: Glitches, lag, black screens, things that confused you. Screenshots welcome.

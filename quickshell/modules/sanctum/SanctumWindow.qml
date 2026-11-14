@@ -12,10 +12,8 @@ import qs.common
 import qs.services
 import qs.kits
 
-// Sanctum: the control desk on the right. Under the crest: the machine and its vigil, the vox bus (output,
-// input and brightness faders, the playing track), six circuit modules, and the vox log of
-// messages. One state mark per control, one reading per module. Slides in from the edge; a click elsewhere or Esc closes it.
-// Created on first use.
+// Sanctum: control desk on the right. Crest, machine info, vox bus (faders and track), six circuit modules and
+// the log. Slides in from the edge, click outside or Esc closes it, created on first use
 Variants {
     model: Quickshell.screens
 
@@ -60,9 +58,8 @@ Variants {
             y: 70; height: win.height - y - 12
             enabled: win.mine
             property real slide: win.mine ? 0 : 1
-            // How the desk arrives, by faction. Mechanicus: a latch lets go and the panel runs out to its stop with a small
-            // kick. Ultramarines: straight to its place, no overshoot. Necrons: it does not travel, it phases in.
-            // Khorne: slower, and it lands with weight. The panel takes input from the first frame in every case.
+            // how the desk arrives by faction: latch and kick, straight in, phase in, heavy landing.
+            // it takes input from the first frame either way
             readonly property string kit: Theme.kit
             Behavior on slide { NumberAnimation {
                 duration: win.mine ? Math.round(Theme.dLong * (panel.kit === "mechanicus" ? 1.25 : 1)) : Theme.dClose
@@ -420,9 +417,8 @@ Variants {
                 text: fd.off ? "--" : String(Math.round(fd.level * 100)).padStart(2, "0") }
         }
 
-        // a circuit module: the glyph sits in a round glass well, beside it the name and one live reading.
-        // An engaged module glows along its rim, well and name; that is its only state mark. The whole module
-        // is the switch; `moreTip` adds a key for details (a right click does the same); `roll` takes the wheel.
+        // circuit module: glyph in a glass well, name and one live reading. Engaged = glowing rim, the whole module
+        // is the switch. `moreTip` adds a details key (right click does the same), `roll` takes the wheel
         component Card: Item {
             id: cd
             property int order: 0

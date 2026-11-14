@@ -6,12 +6,8 @@ import qs.skins.ultramarines as Um
 import qs.skins.necrons as Ne
 import qs.skins.khorne as Kh
 
-// The screen inside a housing. Put glowing content inside. The livery (Skin.screen) draws the glass:
-//   mechanicus    a cogitator CRT: scanlines, opens from a bright line and a sweep runs down it
-//   ultramarines  a tactical display: blue glass, a fine grid, a ruler and gold brackets, wipes on from the left
-//   necrons       phase glass: near black, circuit traces, glyphs in the margin, a cold light rising; phases in
-//   khorne        iron lit by a forge: an ember glow at the foot, a deep shadow under the lip; lands heavily
-// The glass is drawn in two layers, under and over the content; the content itself is never rebuilt.
+// the glass inside a housing, put glowing content inside. The livery (Skin.screen) draws it in two layers,
+// under and over the content, so the content is never rebuilt
 Item {
     id: root
     default property alias content: inner.data

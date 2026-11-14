@@ -1,8 +1,19 @@
 # User settings
 
-Open **Super+,** or the Settings button in the control panel. **Super+/** opens the shortcut manual. The sidebar is grouped: **Look** (Appearance, Themes, Animations & effects), **Shell** (Bar & panels, Desktop & widgets, Notifications), **System** (Displays, Keyboard, Pointer, Session & controls, Shortcuts) and **Data** (Privacy, Browsers, Updates). Search finds each control by name, opens its page and lights the control up. Theme packs are described in [THEMES.md](THEMES.md). Appearance includes a live geometry preview and Balanced, Compact and Square presets. Changes stay in a draft until **Apply changes**; **Discard** restores saved values, and **Reset page** returns the current page to its defaults. Closing with a modified draft asks whether to keep editing or discard it.
+Open with **Super+,** or the Settings button in the control panel. **Super+/** opens the shortcut manual.
 
-Settings are stored in `$XDG_CONFIG_HOME/machinespirit/settings.json` (default `~/.config/machinespirit/settings.json`). The file is versioned JSON. Missing supported fields receive defaults; unsupported versions and invalid values are rejected. After manual edits, run `ms-settings generate` and reload Hyprland. The settings UI watches the file.
+The sidebar has four groups:
+
+- **Look**: Appearance, Themes, Animations & effects
+- **Shell**: Bar & panels, Desktop & widgets, Notifications
+- **System**: Displays, Keyboard, Pointer, Session & controls, Shortcuts
+- **Data**: Privacy, Browsers, Updates
+
+Search finds a control by name, opens its page and highlights it. Appearance has a live geometry preview and Balanced, Compact and Square presets. Theme packs are in [THEMES.md](THEMES.md).
+
+Changes stay a draft until **Apply changes**. **Discard** drops them, **Reset page** puts the page back to defaults, and closing with unsaved changes asks what to do.
+
+Settings are stored in `$XDG_CONFIG_HOME/machinespirit/settings.json` (default `~/.config/machinespirit/settings.json`). It's versioned JSON: missing fields get defaults, unknown versions and bad values are rejected. If you edit it by hand, run `ms-settings generate` and reload Hyprland; the settings window picks up changes on its own.
 
 | Field | Default | Meaning |
 |---|---|---|
@@ -49,13 +60,13 @@ The `privacy` object:
 | weatherMode / city | `ip` / empty | Locate weather by exit IP, or use `city` |
 | proxy | disabled | `enabled`, `scheme` (`http`, `https`, `socks5`), `host`, `port`, `username` and `shell` (route shell requests through it); the password is stored separately |
 
-The English interface is not translated yet. Keyboard layouts are independent of interface language. User overrides in `hypr/local.lua` remain outside the shipped configuration; settings-managed values are applied after the standard look configuration.
+The interface is English only for now; keyboard layouts don't depend on it. Your own overrides in `hypr/local.lua` stay outside the shipped config, and values from Settings are applied after the standard look config.
 
 ## Displays
 
-Select an output and its advertised mode, scale, rotation and position. Positions use compositor logical coordinates, such as `0x0`, `1920x0` or `-1920x0`; scale changes the logical size. A selected primary output controls placement of major panels and the startup overlay. The bar stays available on each screen. Individually placed desktop widgets retain their own screen assignments.
+Pick an output and set its mode, scale, rotation and position. Positions are in logical coordinates (`0x0`, `1920x0`, `-1920x0`), and scale changes the logical size. The primary output gets the big panels and the startup overlay; the bar is on every screen, and desktop widgets keep their own screens.
 
-If the primary output disappears, panels fall back to the first available output. Its saved preference is retained for reconnection. Display changes through Settings require confirmation within 15 seconds; a separate watchdog restores the previous settings if the UI closes or crashes. Do not bypass this safeguard by directly editing monitor settings unless you have another way into the machine.
+If the primary output disappears, panels move to the first available one and go back when it's reconnected. Display changes from Settings have to be confirmed within 15 seconds, otherwise a watchdog puts the old settings back, even if the window closes or crashes. Editing monitor settings by hand skips that safety net, so have another way into the machine.
 
 Example:
 
@@ -75,7 +86,7 @@ Use your own advertised modes, not these example values.
 
 ## Shortcuts
 
-Select an action and choose **Record keys**, then press a combination. You can also type the Hyprland combination directly, disable an action, or restore its original binding. Escape cancels recording. Compositor shortcuts are inhibited while the recorder dialog is open. Conflicts are checked before saving; an invalid configuration leaves the saved settings intact. Recording recognizes Latin letters, numbers, function keys and common navigation keys; use manual entry for other key names.
+Pick an action, press **Record keys** and then the combination. You can also type a Hyprland combination, disable an action or restore its default. Esc cancels. Compositor shortcuts are paused while recording. Conflicts are checked before saving, and a broken config doesn't overwrite your saved settings. Recording knows Latin letters, numbers, F-keys and the usual navigation keys; type anything else by hand.
 
 ## Cursor
 
@@ -91,33 +102,33 @@ Theme policy remains in `theme.conf` next to settings: the theme pack (`pack`) a
 
 ## First launch and privacy
 
-The first launch opens a six-step setup flow: privacy preset, network/weather, browsers, appearance, keyboard and review. Background shell requests remain paused until **Finish setup**. Existing installations are offered setup once without replacing their saved preferences. **Skip setup** finishes at once with safe defaults (weather and public-IP lookups stay off). Closing setup postpones it; **Privacy → Run setup again** opens it later.
+The first launch opens a six-step setup: privacy preset, network and weather, browsers, appearance, keyboard and a review. The shell makes no background requests until you press **Finish setup**. Existing installs are offered the setup once, without replacing saved preferences. **Skip setup** finishes right away with safe defaults (weather and public IP lookups off). Closing it just postpones it; **Privacy → Run setup again** brings it back.
 
-**Normal** enables optional shell networking. **Recommended** keeps weather and wallpapers, asks for a city, and makes public-IP and track-cover lookups manual. **Local only** blocks the shell's external requests, including remote notification images, artwork and wallpaper thumbnails. Local instruments, playback controls, notes and local wallpapers remain available. Cached weather is marked saved. These modes do not isolate the whole computer.
+**Normal** turns on the optional networking. **Recommended** keeps weather and wallpapers, asks for a city, and makes public IP and cover lookups manual. **Local only** blocks all of the shell's outside requests, including remote notification images, artwork and wallpaper thumbnails; local widgets, playback controls, notes and local wallpapers still work, and cached weather is marked as saved. These modes cover the shell only, not the whole computer.
 
-Each network feature can be allowed, manual or blocked. Manual weather, public-IP and cover requests are available in Privacy. Online wallpaper searches are initiated in the wallpaper archive. Weather uses wttr.in; public IP uses ipify; cover search sends artist/title to iTunes. Remote artwork and notification images contact their originating hosts. Wallpaper requests contact the selected provider. Update checks contact GitHub, only when you press refresh. Notifications are not uploaded by the shell. Text metadata is displayed as plain text rather than executable image markup.
+Each network feature can be on, manual or off. Manual weather, IP and cover lookups are in Privacy, online wallpaper search is in the wallpaper archive. Who gets contacted: wttr.in for weather, ipify for public IP, iTunes for covers (artist and title), the original host for remote artwork and notification images, the chosen provider for wallpapers, and GitHub for updates, only when you press refresh. The shell doesn't upload notifications, and their text is shown as plain text, not markup.
 
-Weather can use a city entered manually or the connection's exit IP. With a proxy, IP location is the proxy's location. A city avoids IP-based geolocation but does not hide the connection's IP. `MS_COVER_LOOKUP=0` remains a hard opt-out; the city setting replaces `MS_WEATHER_LOCATION` after migration.
+Weather uses either a city you enter or your exit IP; with a proxy that's the proxy's location. A city avoids IP geolocation but doesn't hide your IP. `MS_COVER_LOOKUP=0` still turns cover lookup off completely, and the city setting replaces `MS_WEATHER_LOCATION` after migration.
 
 ### Proxy
 
-Configure your own HTTP, HTTPS or SOCKS5 proxy, with optional username/password. Apply the connection settings, then select shell routing and browser routing independently. **Test saved proxy** explicitly contacts ipify through the saved proxy; it never makes a direct comparison request.
+Set your own HTTP, HTTPS or SOCKS5 proxy, with an optional username and password. Apply the connection, then choose shell routing and browser routing separately. **Test saved proxy** asks ipify through the saved proxy and makes no direct request to compare.
 
-GOST v3 runs as a session child and forwards a loopback HTTP listener on port 17879 through the selected upstream. A failed or disabled proxy does not fall back to a direct connection. Browser proxy policies continue to point at that listener until restored; disabling the connection can therefore leave routed browsers offline. The listener is local to the computer, not a firewall or a multi-user isolation boundary. Proxy providers can observe connection metadata; this feature does not promise anonymity.
+GOST v3 runs as part of the session and forwards a local HTTP listener on port 17879 through your proxy. If the proxy fails or is off, nothing falls back to a direct connection. Browsers routed through it keep pointing at that listener until you restore them, so turning the proxy off can leave them offline. The listener is only local, it's not a firewall or multi-user isolation. Your proxy provider can still see connection metadata; this isn't an anonymity tool.
 
-Credentials are stored separately in `~/.config/machinespirit/proxy-secret.json` with mode 0600. The generated GOST configuration lives in the private runtime directory. Credentials are excluded from command arguments, diagnostic responses and release archives. Changing permissions cancels in-flight shell transfers. Remote images are downloaded through the same permission checks as other requests; only raster image formats are accepted.
+The password is stored separately in `~/.config/machinespirit/proxy-secret.json` (mode 0600), the generated GOST config in the private runtime dir. Credentials never go into command arguments, diagnostics or release archives. Changing permissions cancels shell downloads in progress. Remote images go through the same permission checks and only raster formats are accepted.
 
 ### Browser policies
 
-The Browsers page supports native Linux installations of Firefox, Chrome, Chromium, LibreWolf and Zen. Unsupported package layouts, including sandboxed packages, are not silently configured. It shows existing blocking policies separately from the requested switches; a written file is not proof of runtime enforcement.
+The Browsers page works with native Linux installs of Firefox, Chrome, Chromium, LibreWolf and Zen. Sandboxed packages and other unusual layouts are left alone. Policies that already block something are shown separately from your switches. A written policy file doesn't prove the browser applies it, so check.
 
-Select controls, review the exact policy preview and apply with administrator authorization. Policies affect all profiles of the selected browser. A recommendation in setup only prepares choices; browser changes require their separate Apply action. Restart the browser yourself and verify `about:policies` or `chrome://policy`. No tabs are automatically closed.
+Pick the controls, look at the exact policy preview and apply with admin rights. Policies apply to all profiles of that browser. Setup only prepares the choices; a browser changes only when you press its own Apply. Restart the browser yourself and check `about:policies` or `chrome://policy`; no tabs get closed.
 
-Supported controls cover usage telemetry, Firefox studies, automatic crash uploads, search suggestions, speculative loading and proxy routing. Chrome/Chromium combine usage and crash reporting in one metrics policy. LibreWolf and Zen already remove or disable telemetry; their vendor policies are preserved. Proxy routing also restricts supported direct DNS, QUIC and WebRTC paths and may affect calls. This is not a system-wide network kill switch.
+Controls: usage telemetry, Firefox studies, crash uploads, search suggestions, speculative loading and proxy routing. Chrome/Chromium have usage and crash reporting under one metrics policy. LibreWolf and Zen already strip telemetry, their own policies are kept. Proxy routing also blocks direct DNS, QUIC and WebRTC where supported, which may break calls. It's not a system-wide kill switch.
 
-Existing conflicting administrator policies are not overwritten. **Restore previous** removes only unchanged MachineSpirit-owned values and restores their originals. External modifications are reported as conflicts. Updates, certificate checks, malicious-site protection, browser profiles and saved passwords are not disabled or erased. Package upgrades may replace vendor policy files: refresh browser status after updates.
+Admin policies that conflict are not overwritten. **Restore previous** removes only MachineSpirit's own unchanged values and puts the originals back; outside changes are shown as conflicts. Updates, certificate checks, safe browsing, profiles and saved passwords are never turned off or deleted. Browser package upgrades can replace policy files, so refresh the status after updating.
 
-The installer installs an administrator-owned helper at `/usr/local/libexec/ms-browser-policy` and its Polkit action. User-writable scripts never run as root during browser Apply. Browser operations accept only fixed browser IDs and whitelisted boolean controls. Uninstall restores managed browser values before removing the helper; conflicts stop restoration rather than overwrite later edits.
+The installer puts a root-owned helper at `/usr/local/libexec/ms-browser-policy` with a Polkit action. No user-writable script runs as root on Apply, and the helper accepts only fixed browser IDs and a fixed list of on/off controls. Uninstall restores browser values before removing the helper, and stops on conflicts instead of overwriting later edits.
 
 ## Updates
 

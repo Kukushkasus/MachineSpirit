@@ -62,7 +62,11 @@ Off by default. It is enabled with `--with-autologin`, or by answering yes to th
 
 The shell draws its own lock screen (Quickshell session lock, passphrase checked through PAM with the `hyprlock` service from the hyprlock package). `ms-session lock`, **Super+L**, the idle timer and sleep all use it. It reports the screen as locked only after the compositor has confirmed it. If the shell crashes while the screen is locked, the screen stays locked, the session supervisor starts the shell again and the new shell takes the lock over, so the passphrase is still required.
 
-While the screen is locked, `ms-session restart`, `./install.sh` (install, update, restore, uninstall) and `ms-update install` refuse to run and say so before anything changes, and the shell does not reload its files; unlock first, then repeat. hyprlock is the fallback. It is used automatically only when the shell is not running and nothing is locked; it is never started on top of a lock that is held. To use it always, set `"lockBackend": "hyprlock"` in `settings.json`. If both the shell and the supervisor are gone while the screen is locked, the screen stays locked (Hyprland shows its own recovery screen). Start the shell again with `ms-session start` from another console, with the session's environment: it takes the lock over and asks for the passphrase. The recovery screen lists Hyprland's own command as well; follow those instructions.
+While the screen is locked, `ms-session restart`, `./install.sh` (install, update, restore, uninstall) and `ms-update install` refuse to run and say why, and the shell doesn't reload its files. Unlock first, then repeat.
+
+hyprlock is the fallback. It's used only when the shell isn't running and nothing is locked, never on top of an existing lock. To always use it, set `"lockBackend": "hyprlock"` in `settings.json`.
+
+If both the shell and the supervisor die while locked, the screen stays locked and Hyprland shows its recovery screen. From another console, run `ms-session start` with the session's environment: the shell takes the lock over and asks for the passphrase. The recovery screen also lists Hyprland's own command.
 
 ## Updating
 
@@ -94,11 +98,11 @@ Selected components are remembered. Both ways use the same installer, so the rul
 
 Every installation is a transaction recorded under `$XDG_STATE_HOME/machinespirit/install/` (default `~/.local/state/machinespirit/install/`). It keeps the original files and symlinks, permissions and the hashes of what was installed. Generated theme files use the same format.
 
-- **Your edits are preserved.** Updates keep files you changed since they were installed and list their paths; merge those by hand. Settings, widget positions and notes are never reset.
-- **Files a new version no longer ships** are removed only when MachineSpirit installed them, you did not change them and nothing in the new version refers to them. Otherwise they stay and a warning says why.
-- **Failures roll back.** A failed installation restores every file it can and says what is left and how to retry. Package installations are not rolled back.
-- **Interrupted installations** (crash, power loss) are recovered on the next installation, and only when the process that wrote the record is provably gone. `doctor` reports unfinished records and who owns them.
-- **Nothing is discarded silently.** Restore and uninstall keep files whose hashes no longer match the installed version and report them. Generated state, notes, API keys and wallpaper downloads remain after uninstall; the generated MachineSpirit cursor themes are removed and the cursor you had before is set again. Stop the shell before uninstalling it.
+- Files you changed are kept on update, and their paths are listed so you can merge by hand. Settings, widget positions and notes are never reset.
+- Files a new version no longer ships are removed only if MachineSpirit put them there, you didn't change them and nothing still uses them. Otherwise they stay, with a warning.
+- If an install fails, it rolls back every file it can and tells you what's left and how to retry. Packages aren't rolled back.
+- An install interrupted by a crash or power loss is picked up on the next run, but only once the process that wrote the record is definitely gone. `doctor` shows unfinished records.
+- Restore and uninstall keep files whose hashes don't match anymore and tell you about them. Generated state, notes, API keys and downloaded wallpapers stay after uninstall; the MachineSpirit cursors are removed and your old cursor is set back. Stop the shell before uninstalling it.
 
 ```sh
 ./install.sh doctor                 # check commands, versions, settings and unfinished records
@@ -110,9 +114,9 @@ Keep the backup folder until you have verified a recovery.
 
 ## Boot component
 
-Currently supported: GRUB + mkinitcpio and an existing console-based login. The installer adds Plymouth to recognized `HOOKS` arrays, selects the original theme, adds quiet/splash kernel arguments and regenerates initramfs/GRUB. Existing display managers are preserved and cause this component to stop before installation. Choose the other components on unsupported systems.
+Supported for now: GRUB + mkinitcpio with a console login. The installer adds Plymouth to the `HOOKS` array, selects the theme, adds quiet/splash to the kernel arguments and regenerates initramfs and GRUB. If a display manager is installed, this component stops before doing anything; on other setups just pick the other components.
 
-Existing autologin is kept; autologin is never enabled automatically. Password-based console login remains password-based. Plymouth supports password prompts. The shell startup overlay is decorative, not a lock screen. Hardware/firmware mode switches may still cause brief blank frames.
+Autologin is never turned on here, an existing one is kept, and password login stays password login. Plymouth handles password prompts. The shell's startup overlay is just decoration, not a lock screen. Some hardware may still show a blank frame or two when the display mode switches.
 
 Boot backups are under `/var/lib/machinespirit/boot/`. To restore a specific boot backup from the source checkout:
 

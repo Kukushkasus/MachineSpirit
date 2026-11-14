@@ -105,7 +105,7 @@ def read():
     if not PATH.exists(): return copy.deepcopy(DEFAULT)
     try: return validate(json.loads(PATH.read_text()))
     except ValueError as e:
-        # The file is never rewritten automatically; tell the user how to recover it.
+        # don't rewrite it ourselves, tell the user how to recover
         raise ValueError(f'Settings file {PATH} cannot be used ({str(e)[:120]}). It was left untouched; rename or delete it to restore the defaults.') from e
 def lua(value):
     if isinstance(value,bool): return str(value).lower()

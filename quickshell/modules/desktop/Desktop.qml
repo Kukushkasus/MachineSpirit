@@ -30,9 +30,8 @@ Scope {
             property real dragY: 0
             readonly property real placedX: Math.round(Math.max(8, Math.min((screen?.width ?? 1920) - modelData.w * factor - 8, dragging ? dragX : geometry.x)))
             readonly property real placedY: Math.round(Math.max(60, Math.min((screen?.height ?? 1080) - modelData.h * factor - 8, dragging ? dragY : geometry.y)))
-            // During editing, move the item inside a stationary surface. This avoids
-            // Wayland configure round trips and moving-surface pointer coordinates.
-            // Outside the editor the surface shrinks back to the instrument's size.
+            // while editing, the surface stays put and the item moves inside it: moving the surface itself makes the
+            // pointer drift. After editing it shrinks back to the instrument
             margins.left: DesktopWidgets.editing ? 0 : placedX
             margins.top: DesktopWidgets.editing ? 0 : placedY
             mask: Region { item: instrument }
@@ -66,7 +65,7 @@ Scope {
                         win.dragY = origin.y + p.y - start.y
                     }
                     onReleased: {
-                        // Track every pixel while held; snap once when the drag finishes.
+                        // follow the pointer exactly, snap to the grid on release
                         const x = Math.max(8, Math.min(win.screen.width - win.modelData.w * win.factor - 8, Math.round(win.placedX / 8) * 8))
                         const y = Math.max(60, Math.min(win.screen.height - win.modelData.h * win.factor - 8, Math.round(win.placedY / 8) * 8))
                         DesktopWidgets.change(win.modelData.key, {x: x, y: y, screen: win.screen.name})

@@ -2,9 +2,8 @@
 import QtQuick
 import qs.common
 
-// Ultramarines section: a tactical panel. Its upper left and lower right corners are cut, its rim is a fine
-// gold line (blue light when engaged), with square ticks in the two whole corners. The title is a gold ribbon
-// with a pointed end, set in Roman capitals; readings sit on a dark plate with a gold edge.
+// Ultramarines section: tactical panel with two cut corners and a thin gold rim (blue when engaged).
+// title on a gold ribbon in Roman capitals, readings on a dark gold-edged plate
 Item {
     id: root
     required property Item host

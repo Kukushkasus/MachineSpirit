@@ -3,9 +3,8 @@ import QtQuick
 import QtQuick.Shapes
 import qs.common
 
-// Servo-skull holding a panel by its side: a bone skull with a brass crown plate, one red optic,
-// a small suspensor glowing under it and a brass clamp arm reaching to the panel (`mirror` for the right).
-// `active` lets it hover and blink; `arrive()` flies it in from the side.
+// servo-skull holding a panel by its side (`mirror` for the right one).
+// `active` makes it hover and blink, `arrive()` flies it in
 Item {
     id: root
     property bool active: false

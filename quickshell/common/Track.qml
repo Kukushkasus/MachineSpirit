@@ -6,9 +6,8 @@ import qs.skins.ultramarines as Um
 import qs.skins.necrons as Ne
 import qs.skins.khorne as Kh
 
-// A level strip: the volume, microphone and brightness faders. Segments in a dark well (mechanicus), a ruled
-// gauge with a gold cap (ultramarines), leaning cells of light (necrons), heavy notched blocks (khorne).
-// The input (drag, click, wheel) belongs to the caller; this only shows `level`.
+// level strip for volume, mic and brightness, drawn by the livery.
+// input belongs to the caller, this only shows `level`
 Item {
     id: root
     property real level: 0

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
-// MachineSpirit login screen. Plain QtQuick only: it runs before any user session exists, so it needs no Quickshell,
-// matugen or Hyprland, and it carries its own font. Colours come from theme.conf with the same values as defaults.
+// login screen. Plain QtQuick: it runs before any user session, so no Quickshell, matugen or Hyprland.
+// colours come from theme.conf, with the same values as fallback
 import QtQuick
 
 Rectangle {

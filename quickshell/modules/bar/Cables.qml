@@ -3,11 +3,8 @@ import QtQuick
 import QtQuick.Shapes
 import qs.common
 
-// A bundle of thin cables hanging between two housings. Two of them are braided (over and under in turn),
-// a third, thinner rubber line hangs lower. Here and there the insulation is worn away and the copper
-// shows; that is where the lightning lives. A strike flashes along the bare copper with return strokes,
-// heats it, throws sparks that fall, and makes the span shudder. Drawn as static shapes; the canvas only
-// exists while something is burning.
+// cables between two housings: two braided, one thinner rubber line. Strikes run along the bare copper,
+// throw sparks and shake the span. The canvas exists only while something is burning
 Item {
     id: root
     property real portY: 19

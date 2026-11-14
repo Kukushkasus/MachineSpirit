@@ -6,9 +6,8 @@ import qs.common
 import qs.services
 import qs.modules.bar
 
-// What hangs between two mounts of the bar. The bar only knows this one item; the theme pack's kit decides
-// what it is: cables (mechanicus), an armour rail (ultramarines), energy conduits (necrons), a chain (khorne).
-// Every kind answers the same three calls, so the bar's timers never care which one is there.
+// what hangs between two bar mounts, picked by the pack's kit (cables, rail, conduits, chain).
+// all kinds answer the same three calls, so the bar doesn't care which one it is
 Item {
     id: root
     property real portY: 17

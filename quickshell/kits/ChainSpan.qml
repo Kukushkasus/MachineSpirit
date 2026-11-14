@@ -5,9 +5,8 @@ import QtQuick.Shapes
 import qs.common
 import qs.services
 
-// Khorne: a heavy chain slung between the mounts. Links are drawn as two dashed strokes along one catenary
-// (the flat links and the links seen edge-on), so the whole chain is two paths. Rarely a single dark drop
-// gathers under a link and falls. One drop, not a stream.
+// Khorne: a chain between the mounts, two dashed strokes on one catenary (flat links and edge-on ones).
+// rarely a single dark drop gathers under a link and falls
 Item {
     id: root
     property real portY: 17

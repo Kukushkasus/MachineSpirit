@@ -31,9 +31,8 @@ Variants {
         readonly property bool typing: query.trim() !== ""
         readonly property var numerals: ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"]
 
-        // the surface stays mapped, so opening only flips properties instead of creating a window;
-        // while closed it takes no input and draws nothing. (Hyprland 0.57.0 paints such surfaces black;
-        // The virtio workaround lives in the Hyprland configuration.)
+        // the surface stays mapped, so opening only flips properties instead of creating a window. Closed, it takes
+        // no input and draws nothing (on virtio Hyprland 0.57 paints such surfaces black, workaround in hyprland.lua)
         readonly property bool showing: mine || shell.opacity > 0.01
         visible: true
         mask: showing ? null : noInput
@@ -377,9 +376,7 @@ Variants {
                                             layer.effect: MultiEffect { maskEnabled: true; maskSource: msk }
                                             ScreencopyView {
                                                 anchors.fill: parent
-                                                // Wait for the first delivered frame instead of capturing
-                                                // before the recording context is ready. Reset on close
-                                                // so the next opening gets a fresh, non-live snapshot.
+                                                // wait for the first real frame before capturing; reset on close so the next opening gets a fresh snapshot
                                                 captureSource: win.mine ? th.modelData.wayland : null
                                                 live: win.mine && !hasContent
                                             }

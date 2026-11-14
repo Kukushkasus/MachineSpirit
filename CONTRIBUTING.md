@@ -31,7 +31,7 @@ The archive is built from an explicit list of paths in `tools/build-release.py`,
 
 - Installed for users: `managed.py` (transactions for ms-theme), `make_emblem.py` (the terminal emblem), `make_cursors.py` (the cursor themes, built by `ms-cursor`).
 - Release and docs: `build-release.py`, `export-keybindings.py` (regenerates `docs/KEYBINDINGS.md` from the live shortcut catalog).
-- Graphics: `make_svg.py`, `make_fx.py`, `svg_to_ansi.py`, `contrast_check.py`, and the wallpaper scenes in `wallpapers/` (see its README).
+- Graphics: `make_svg.py`, `make_fx.py`, `svg_to_ansi.py`, `contrast_check.py`.
 - Tests: `test_*.py`, `test_install.sh`, and `fake_mpris.py` (a fake media player for checking the player panels).
 
 ## License

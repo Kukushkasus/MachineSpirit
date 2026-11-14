@@ -3,7 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 
-// Kept for call sites: the overview now lives inside the command console.
+// stub for old callers, the overview moved into the command console
 Singleton {
     readonly property bool open: Launcher.open
     function toggle() { Launcher.toggleSectors() }

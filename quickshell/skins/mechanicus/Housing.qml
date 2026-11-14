@@ -2,9 +2,8 @@
 import QtQuick
 import qs.common
 
-// Mechanicus housing: forged metal lit from above, a bevelled edge, slotted brass bolts in the corners. A large
-// window is dressed as an altar-machine: brass corner straps over the edge and a riveted band along the top and
-// foot of the rim.
+// Mechanicus housing: forged metal, bevelled edge, brass bolts in the corners. Large windows also get brass
+// corner straps and a riveted band
 Item {
     id: root
     required property Item host
