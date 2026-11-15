@@ -37,7 +37,21 @@ Singleton {
         if (unsaved) { closeRequested = true; return }
         open = false
     }
-    function primary() { return Quickshell.screens.find(s => s.name === data.primaryOutput) || Quickshell.screens[0] || null }
+    // same rule as hypr/monitors.lua: the chosen screen, else the fastest, then the biggest
+    readonly property string autoPrimary: {
+        let best = null
+        for (const m of monitors) {
+            if (m.disabled) continue
+            if (!best || m.refreshRate > best.refreshRate + 1 || (Math.abs(m.refreshRate - best.refreshRate) <= 1 && m.width * m.height > best.width * best.height)) best = m
+        }
+        return best ? best.name : ""
+    }
+    function primary() {
+        const want = data.primaryOutput || autoPrimary
+        return Quickshell.screens.find(s => s.name === want) || Quickshell.screens[0] || null
+    }
+    Connections { target: Quickshell; function onScreensChanged() { root.refreshDevices() } }
+    Component.onCompleted: refreshDevices()
     function toggle(help) {
         if (open && manual === help) { requestClose(); return }
         Popups.close(); Launcher.close(); Walls.close(); Power.close(); Sanctum.close();
@@ -74,7 +88,7 @@ Singleton {
                 }
                 if (root.operation === "write") { root.status = r.preview ? "Confirm your display setup" : "Settings applied"; root.refreshDevices() }
                 if(root.operation==="write"&&root.finishRequested){root.finishRequested=false;if(editedDuringSave)root.status="New changes are waiting. Finish setup again to save them.";else if(!r.preview)Privacy.completeSetup();else root.status="Confirm displays before finishing setup"}
-                if (r.preview) root.countdown = 15
+                if (r.preview) root.countdown = 20
                 if (root.operation === "confirm" || root.operation === "revert") {
                     root.countdown = 0; root.status = root.operation === "confirm" ? "Display setup kept" : "Previous display setup restored"; root.refreshDevices()
                 }

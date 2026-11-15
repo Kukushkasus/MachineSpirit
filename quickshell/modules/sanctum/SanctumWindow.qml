@@ -234,7 +234,7 @@ Variants {
                         tip: !win.bt ? "" : win.bt.enabled ? "Click: bluetooth off" : "Click: bluetooth on"
                         moreTip: "Devices"
                         onFlip: if (win.bt) win.bt.enabled = !win.bt.enabled
-                        onMore: { Sanctum.close(); Quickshell.execDetached(["blueman-manager"]) }
+                        onMore: { Sanctum.close(); Popups.toggle("bluetooth", win.width - 260, win.modelData.name) }
                     }
                     Card {
                         width: grid.cell; order: 2

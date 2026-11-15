@@ -399,20 +399,78 @@ Variants {
                                 }
                                 ColumnLayout {
                                     visible:!win.query&&win.page===1;Layout.fillWidth:true;spacing:14
-                                    DeckCard {title:"Connected displays";subtitle:"Choose the screen that hosts your panels."
-                                        RowLayout {Layout.fillWidth:true;spacing:10
-                                            Repeater {model:Settings.monitors
-                                                Rectangle {required property var modelData;Layout.fillWidth:true;implicitHeight:100;radius:7;color:Theme.surfaceContainerLowest;border.color:win.d.primaryOutput===modelData.name?Theme.glowDim:Theme.outlineVariant
-                                                    Column {anchors.centerIn:parent;spacing:7
-                                                        Icon{name:"desktop_windows";size:28;color:Theme.glow;anchors.horizontalCenter:parent.horizontalCenter}
-                                                        DeckText{text:modelData.name+" · "+modelData.width+" × "+modelData.height;font.pixelSize:12;anchors.horizontalCenter:parent.horizontalCenter}
+                                    DeckCard {title:"Arrangement";subtitle:"Drag the screens to match your desk. Click one to make it the main screen: panels open there and it starts on workspace 1."
+                                        Item {
+                                            id:arr;Layout.fillWidth:true;implicitHeight:230
+                                            // logical rectangles: saved position if there is one, else what Hyprland reports
+                                            readonly property var rects:Settings.monitors.filter(m=>!m.disabled).map(m=>{
+                                                const s=(win.d.monitors||[]).find(x=>x.output===m.name)
+                                                const pos=s&&/^-?[0-9]+x-?[0-9]+$/.test(s.position||"")?s.position.split("x").map(Number):[m.x,m.y]
+                                                const sc=(s&&s.scale)||m.scale||1, turned=((s?s.transform:m.transform)||0)%2===1
+                                                return {name:m.name,x:pos[0],y:pos[1],w:Math.round((turned?m.height:m.width)/sc),h:Math.round((turned?m.width:m.height)/sc),hz:Math.round(m.refreshRate),res:m.width+"×"+m.height}})
+                                            readonly property real minX:Math.min(...rects.map(r=>r.x),0)
+                                            readonly property real minY:Math.min(...rects.map(r=>r.y),0)
+                                            readonly property real spanW:Math.max(1,Math.max(...rects.map(r=>r.x+r.w),1)-minX)
+                                            readonly property real spanH:Math.max(1,Math.max(...rects.map(r=>r.y+r.h),1)-minY)
+                                            readonly property real k:Math.min((width-40)/spanW,(height-30)/spanH)
+                                            readonly property real offX:(width-spanW*k)/2
+                                            readonly property real offY:(height-spanH*k)/2
+                                            readonly property string main:win.d.primaryOutput||Settings.autoPrimary
+                                            // drop a screen next to the nearest other one, on the side its centre ended up, edges aligned
+                                            function drop(name,lx,ly){
+                                                const me=rects.find(r=>r.name===name);if(!me)return
+                                                const cx=lx+me.w/2,cy=ly+me.h/2
+                                                let o=null,dist=1e18
+                                                for(const r of rects){if(r.name===name)continue;const d=(r.x+r.w/2-cx)**2+(r.y+r.h/2-cy)**2;if(d<dist){dist=d;o=r}}
+                                                let best=[lx,ly]
+                                                if(o){
+                                                    const dx=(cx-o.x-o.w/2)/(o.w+me.w),dy=(cy-o.y-o.h/2)/(o.h+me.h)
+                                                    const top=Math.abs(ly-o.y)<=Math.abs(ly+me.h-o.y-o.h)
+                                                    const left=Math.abs(lx-o.x)<=Math.abs(lx+me.w-o.x-o.w)
+                                                    if(Math.abs(dx)>=Math.abs(dy)) best=[dx<0?o.x-me.w:o.x+o.w,top?o.y:o.y+o.h-me.h]
+                                                    else best=[left?o.x:o.x+o.w-me.w,dy<0?o.y-me.h:o.y+o.h]
+                                                }
+                                                const pos={};for(const r of rects)pos[r.name]=r.name===name?best:[r.x,r.y]
+                                                const mx=Math.min(...Object.values(pos).map(v=>v[0])),my=Math.min(...Object.values(pos).map(v=>v[1]))
+                                                const out=Settings.monitors.map(m=>{
+                                                    const s=(win.d.monitors||[]).find(x=>x.output===m.name)||{output:m.name,mode:"preferred",scale:m.scale,transform:m.transform,disabled:!!m.disabled}
+                                                    const v=pos[m.name];return v?Object.assign({},s,{position:Math.round(v[0]-mx)+"x"+Math.round(v[1]-my)}):s})
+                                                Settings.set("monitors",out)
+                                            }
+                                            Rectangle{anchors.fill:parent;radius:7;color:Theme.surfaceContainerLowest;border.color:Theme.outlineVariant}
+                                            DeckText{visible:arr.rects.length===0;anchors.centerIn:parent;text:"No displays found. Press Refresh displays.";font.pixelSize:12}
+                                            Repeater{model:arr.rects
+                                                Rectangle{
+                                                    id:scr;required property var modelData
+                                                    readonly property bool isMain:arr.main===modelData.name
+                                                    x:arr.offX+(modelData.x-arr.minX)*arr.k;y:arr.offY+(modelData.y-arr.minY)*arr.k
+                                                    width:modelData.w*arr.k-4;height:modelData.h*arr.k-4;radius:6
+                                                    z:sm.drag.active?2:1
+                                                    color:sm.drag.active?Theme.surfaceContainerHigh:Theme.surfaceContainer
+                                                    border{width:isMain?2:1;color:isMain?Theme.glow:sm.containsMouse?Theme.glowDim:Theme.outlineVariant}
+                                                    Column{anchors.centerIn:parent;spacing:3
+                                                        Icon{anchors.horizontalCenter:parent.horizontalCenter;name:scr.isMain?"star":"desktop_windows";size:20;color:scr.isMain?Theme.glow:Theme.glowDim}
+                                                        DeckText{anchors.horizontalCenter:parent.horizontalCenter;text:scr.modelData.name;font.pixelSize:13;font.weight:Font.DemiBold}
+                                                        DeckText{anchors.horizontalCenter:parent.horizontalCenter;text:scr.modelData.res+" · "+scr.modelData.hz+" Hz";font.pixelSize:11;color:Theme.surfaceVariantOn}
+                                                        DeckText{visible:scr.isMain;anchors.horizontalCenter:parent.horizontalCenter;text:"main";font.pixelSize:11;color:Theme.glow}
+                                                    }
+                                                    MouseArea{
+                                                        id:sm;anchors.fill:parent;hoverEnabled:true;cursorShape:drag.active?Qt.ClosedHandCursor:Qt.OpenHandCursor
+                                                        // the page scrolls: without this the scroll view takes the pointer mid-drag and the screen is left hanging
+                                                        preventStealing:true
+                                                        drag.target:arr.rects.length>1?scr:null;drag.threshold:6
+                                                        drag.minimumX:0;drag.maximumX:arr.width-scr.width;drag.minimumY:0;drag.maximumY:arr.height-scr.height
+                                                        function place(){if(Math.abs(scr.x-(arr.offX+(scr.modelData.x-arr.minX)*arr.k))>2||Math.abs(scr.y-(arr.offY+(scr.modelData.y-arr.minY)*arr.k))>2)arr.drop(scr.modelData.name,arr.minX+(scr.x-arr.offX)/arr.k,arr.minY+(scr.y-arr.offY)/arr.k)}
+                                                        onReleased:place()
+                                                        onCanceled:place()
+                                                        onClicked:if(!drag.active)Settings.set("primaryOutput",scr.modelData.name)
                                                     }
                                                 }
                                             }
                                         }
                                         RowLayout {Layout.fillWidth:true
-                                            DeckText{text:"Panels open on";Layout.fillWidth:true}
-                                            DeckChoice{model:["Automatic"].concat(Settings.monitors.map(m=>m.name));currentIndex:Math.max(0,model.indexOf(win.d.primaryOutput||"Automatic"));onActivated:Settings.set("primaryOutput",currentIndex?currentText:"")}
+                                            DeckText{text:"Main screen";Layout.fillWidth:true}
+                                            DeckChoice{model:["Automatic ("+(Settings.autoPrimary||"none")+")"].concat(Settings.monitors.map(m=>m.name));currentIndex:Math.max(0,model.indexOf(win.d.primaryOutput));onActivated:Settings.set("primaryOutput",currentIndex?currentText:"")}
                                         }
                                         DeckButton{text:"Refresh displays";onClicked:Settings.refreshDevices()}
                                     }
@@ -429,7 +487,7 @@ Variants {
                                             RowLayout{Layout.fillWidth:true;DeckText{text:"Position";Layout.fillWidth:true} DeckField{Layout.preferredWidth:140;text:display.saved.position;placeholderText:"0x0";onEditingFinished:display.update("position",text)} DeckButton{text:"Auto";onClicked:display.update("position","auto")}}
                                         }
                                     }
-                                    DeckText{text:"Display changes are a 15-second preview. If the picture disappears, wait: the previous setup returns automatically.";color:Theme.surfaceVariantOn;font.pixelSize:12;Layout.fillWidth:true}
+                                    DeckText{text:"After a change you get 20 seconds to keep it. If the picture is gone, just wait and the old setup comes back.";color:Theme.surfaceVariantOn;font.pixelSize:12;Layout.fillWidth:true}
                                 }
                                 ColumnLayout {
                                     visible:!win.query&&win.page===2;Layout.fillWidth:true;spacing:14
@@ -452,8 +510,8 @@ Variants {
                                         DeckText{visible:win.d.layoutSwitch==="grp:win_space_toggle";text:"Super+Space also opens the command console by default. Remap that action in Shortcuts if you use it for languages.";color:Theme.hazard;font.pixelSize:12;Layout.fillWidth:true}
                                     }
                                     DeckCard {title:"Typing rhythm";subtitle:"How held keys repeat."
-                                        DeckRange{title:"Repeat speed";value:win.d.repeatRate??25;from:1;to:100;unit:" / sec";onChanged:v=>Settings.set("repeatRate",Math.round(v))}
-                                        DeckRange{title:"Delay before repeating";value:win.d.repeatDelay??600;from:100;to:2000;step:50;unit:" ms";onChanged:v=>Settings.set("repeatDelay",Math.round(v))}
+                                        DeckRange{title:"Repeat speed";value:win.d.repeatRate??35;from:1;to:100;unit:" / sec";onChanged:v=>Settings.set("repeatRate",Math.round(v))}
+                                        DeckRange{title:"Delay before repeating";value:win.d.repeatDelay??250;from:100;to:2000;step:50;unit:" ms";onChanged:v=>Settings.set("repeatDelay",Math.round(v))}
                                         DeckField{Layout.fillWidth:true;placeholderText:"Try typing here after applying…"}
                                     }
                                 }

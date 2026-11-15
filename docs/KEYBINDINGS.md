@@ -4,7 +4,7 @@ Generated from the same registration catalog as the Super+/ manual. See [setting
 
 | Shortcut | Action |
 |---|---|
-| SUPER + B | Apps: Browser |
+| SUPER + W | Apps: Browser |
 | SUPER + E | Apps: File manager |
 | CONTROL + SHIFT + Escape | Apps: System monitor |
 | SUPER + Return | Apps: Terminal |
@@ -34,7 +34,6 @@ Generated from the same registration catalog as the Super+/ manual. See [setting
 | SUPER + Space | Shell: Command console |
 | SUPER + N | Shell: Control panel |
 | SUPER + comma | Shell: Settings |
-| SUPER + W | Shell: Wallpaper archive |
 | SUPER + Tab | Shell: Workspace overview |
 | SUPER + Q | Windows: Close |
 | ALT + Tab | Windows: Cycle |

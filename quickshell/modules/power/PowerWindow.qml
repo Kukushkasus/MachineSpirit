@@ -24,14 +24,18 @@ Variants {
 
         readonly property var rites: [
             { icon: "lock",               label: "Lock",            hint: mech ? "Seal the cogitator" : "Lock the screen",        cmd: ["ms-session", "lock"], danger: false },
-            { icon: "bedtime",            label: "Sleep",           hint: mech ? "Let the spirit rest" : "Suspend the computer",       cmd: ["systemctl", "suspend"], danger: false },
+            { icon: "bedtime",            label: "Sleep",           hint: mech ? "Let the spirit rest" : "Suspend the computer",       cmd: win.systemctl("suspend", "Could not sleep"), danger: false },
             { icon: "monitoring",         label: "Settings",        hint: mech ? "Configure the instruments" : "Open settings", cmd: ["quickshell", "ipc", "-c", "machinespirit", "call", "settings", "toggle"], danger: false },
             { icon: "imagesmode",         label: "Wallpapers",      hint: mech ? "Open the pict archive" : "Choose a wallpaper",     cmd: ["quickshell", "ipc", "-c", "machinespirit", "call", "walls", "toggle"], danger: false },
-            { icon: "restart_alt",        label: "Reboot",          hint: "Hold to restart",           cmd: ["systemctl", "reboot"], danger: true },
-            { icon: "power_settings_new", label: "Shut down",       hint: "Hold to power off",         cmd: ["systemctl", "poweroff"], danger: true },
+            { icon: "restart_alt",        label: "Reboot",          hint: "Hold to restart",           cmd: win.systemctl("reboot", "Could not reboot"), danger: true },
+            { icon: "power_settings_new", label: "Shut down",       hint: "Hold to power off",         cmd: win.systemctl("poweroff", "Could not shut down"), danger: true },
             { icon: "logout",             label: "Log out",         hint: "Hold to end the session",   cmd: ["hyprctl", "eval", "hl.dispatch(hl.dsp.exit())"], danger: true },
             { icon: "refresh",            label: "Reload shell",    hint: "Restart the shell",         cmd: ["ms-session", "restart"], danger: false }
         ]
+        // systemctl can be refused (another user's session, no polkit agent): say so instead of doing nothing
+        function systemctl(verb, title) {
+            return ["sh", "-c", 'out=$(systemctl "$1" 2>&1) || notify-send -a MachineSpirit -u critical "$2" "${out:-systemctl $1 failed}"', "sh", verb, title]
+        }
         readonly property bool mech: Theme.kit === "mechanicus"
         property int sel: 0
         property real hold: 0          // 0..1 pressure for dangerous rites

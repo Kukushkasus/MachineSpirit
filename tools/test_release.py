@@ -14,7 +14,7 @@ class SettingsTests(unittest.TestCase):
     def test_old_settings_receive_input_and_appearance_defaults(self):
         data = settings.validate({'version':1,'layouts':['us','ru'],'bindings':{'SUPER + E':'SUPER + ALT + E'}})
         self.assertEqual(data['rounding'],14)
-        self.assertEqual(data['repeatRate'],25)
+        self.assertEqual(data['repeatRate'],35)
         self.assertEqual(data['bindings'],{'SUPER + E':'SUPER + ALT + E'})
     def test_input_and_appearance_reject_unsafe_values(self):
         for patch in [{'rounding':31},{'gapsIn':-1},{'borderSize':0},{'sensitivity':float('nan')},

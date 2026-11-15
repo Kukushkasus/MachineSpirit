@@ -20,7 +20,7 @@ Variants {
 
         readonly property bool mine: Popups.active !== "" && Popups.screenName === modelData.name
         property string shown: ""
-        readonly property var titles: ({ calendar: Theme.lex("clock", "Chronometer"), resources: Theme.lex("resources", "Cogitator"), network: Theme.kit === "mechanicus" ? "Vox-caster" : "Network", weather: Theme.lex("weather", "Augury"), notifs: Theme.lex("logTitle", "Vox Log") })   // panels without a title get no plate
+        readonly property var titles: ({ calendar: Theme.lex("clock", "Chronometer"), resources: Theme.lex("resources", "Cogitator"), network: Theme.kit === "mechanicus" ? "Vox-caster" : "Network", weather: Theme.lex("weather", "Augury"), notifs: Theme.lex("logTitle", "Vox Log"), bluetooth: "Bluetooth" })   // panels without a title get no plate
         Connections {
             target: Popups
             function onActiveChanged() {
@@ -208,6 +208,7 @@ Variants {
                     : win.shown === "weather" ? cWeather
                     : win.shown === "notifs" ? cNotifs
                     : win.shown === "network" ? cNetwork
+                    : win.shown === "bluetooth" ? cBluetooth
                     : win.shown === "resources" ? cResources
                     : win.shown === "media" ? cMedia
                     : win.shown === "traymenu" ? cTrayMenu : null
@@ -235,6 +236,7 @@ Variants {
         Component { id: cWeather; WeatherCard {} }
         Component { id: cNotifs; NotifPopup {} }
         Component { id: cNetwork; NetPopup {} }
+        Component { id: cBluetooth; BluetoothPopup {} }
         Component { id: cResources; ResourcesPopup {} }
         Component { id: cMedia; MediaPopup {} }
         Component { id: cTrayMenu; TrayMenu {} }

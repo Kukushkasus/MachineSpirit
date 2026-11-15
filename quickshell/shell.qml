@@ -47,6 +47,7 @@ ShellRoot {
     Bar {}
     PopupLayer {}
     Toasts {}
+    DisplayConfirm {}
     // the big windows exist only while used, and a minute after, then free their memory
     component Lazy: LazyLoader {
         id: lz

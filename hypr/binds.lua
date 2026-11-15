@@ -21,8 +21,8 @@ local labels = {
     ["XF86AudioRaiseVolume"]="Audio: Volume up", ["XF86AudioLowerVolume"]="Audio: Volume down",
     ["XF86AudioMute"]="Audio: Toggle mute", ["XF86AudioMicMute"]="Audio: Toggle microphone mute",
     ["XF86AudioPlay"]="Media: Play or pause", ["XF86AudioNext"]="Media: Next track", ["XF86AudioPrev"]="Media: Previous track",
-    ["SUPER + Return"]="Apps: Terminal", ["SUPER + E"]="Apps: File manager", ["SUPER + B"]="Apps: Browser",
-    ["SUPER + W"]="Shell: Wallpaper archive", ["SUPER + Space"]="Shell: Command console", ["SUPER + Tab"]="Shell: Workspace overview",
+    ["SUPER + Return"]="Apps: Terminal", ["SUPER + E"]="Apps: File manager", ["SUPER + W"]="Apps: Browser",
+    ["SUPER + Space"]="Shell: Command console", ["SUPER + Tab"]="Shell: Workspace overview",
     ["SUPER + ALT + W"]="Desktop: Edit widgets", ["SUPER + Q"]="Windows: Close", ["SUPER + F"]="Windows: Fullscreen",
     ["SUPER + D"]="Windows: Maximize", ["SUPER + J"]="Windows: Toggle split", ["SUPER + ALT + Space"]="Windows: Toggle floating",
     ["ALT + Tab"]="Windows: Cycle", ["SUPER + S"]="Windows: Toggle scratchpad", ["SUPER + CONTROL + S"]="Windows: Send to scratchpad",
@@ -65,8 +65,8 @@ hl.bind(mod .. " + ALT + W", hl.dsp.exec_cmd("quickshell ipc -c machinespirit ca
 -- Apps
 hl.bind(mod .. " + Return", hl.dsp.exec_cmd(terminal))
 hl.bind(mod .. " + E",      hl.dsp.exec_cmd("dolphin"))
-hl.bind(mod .. " + W",      hl.dsp.exec_cmd("quickshell ipc -c machinespirit call walls toggle"))
-hl.bind(mod .. " + B",      hl.dsp.exec_cmd("firefox"))
+-- the system's default browser (xdg-settings), Firefox if none is set
+hl.bind(mod .. " + W",      hl.dsp.exec_cmd([[sh -c 'b=$(xdg-settings get default-web-browser 2>/dev/null); [ -n "$b" ] && gtk-launch "$b" || exec firefox']]))
 hl.bind("CONTROL + SHIFT + Escape", hl.dsp.exec_cmd(terminal .. " -e btop"))
 
 -- Command console: also on Super+Space, and Super+Tab with the keyboard on the sectors

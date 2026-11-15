@@ -21,10 +21,10 @@ Singleton {
     function run(op, value) { if (worker.running) return false; operation=op;payload=value?JSON.stringify(value):"";error="";worker.running=true; return true }
     function completeSetup() { completion.restart() }
     Timer { id:completion; interval:100; onTriggered:{if(worker.running){restart();return}root.run("complete")} }
-    // Skip: safe defaults that need no input. Network lookups that need a choice from the user stay off.
+    // skip: defaults that need no input. Weather locates itself by IP, public IP lookup stays off
     function skipSetup() {
         preset("recommended")
-        const p=Settings.clone(Settings.draft.privacy||{});p.weather="off";p.weatherMode="ip";p.publicIp="off";Settings.set("privacy",p)
+        const p=Settings.clone(Settings.draft.privacy||{});p.weatherMode=p.city?p.weatherMode:"ip";p.publicIp="off";Settings.set("privacy",p)
         Settings.finishSetup()
     }
     function restartSetup() { onboarding=true;Settings.open=true;Settings.manual=false }
@@ -33,8 +33,8 @@ Singleton {
         p.mode=name;
         for (const k of ["weather","publicIp","coverSearch","remoteArt","wallpapers"]) p[k]=name==="local"?"off":"auto";
         p.updates=name==="local"?"off":"manual";
-        if(name==="recommended") {p.publicIp="manual";p.coverSearch="manual";p.weatherMode="city"}
-        if(name==="normal") p.weatherMode="ip";
+        if(name==="recommended") {p.publicIp="manual";p.coverSearch="manual"}
+        if(!p.city) p.weatherMode="ip";
         Settings.set("privacy",p)
     }
     function set(key,value) { const p=Settings.clone(Settings.draft.privacy||{});p[key]=value;Settings.set("privacy",p) }

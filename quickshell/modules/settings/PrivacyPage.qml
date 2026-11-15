@@ -20,7 +20,7 @@ ColumnLayout {
             DeckButton{text:"Recommended";Layout.fillWidth:true;accent:true;onClicked:{Privacy.preset("recommended");BrowserPrivacy.recommend()}}
             DeckButton{text:"Local only";Layout.fillWidth:true;onClicked:{Privacy.preset("local");BrowserPrivacy.recommend()}}
         }
-        DeckText{text:"Recommended keeps weather and wallpapers, asks for your city, and makes public-IP and cover searches manual. Local only blocks the shell’s network access, not other applications.";Layout.fillWidth:true;font.pixelSize:12;color:Theme.surfaceVariantOn}
+        DeckText{text:"Recommended keeps weather and wallpapers and makes public-IP and cover searches manual. Local only blocks the shell’s network access, not other applications.";Layout.fillWidth:true;font.pixelSize:12;color:Theme.surfaceVariantOn}
         DeckText{text:"Saved mode: "+(Privacy.policy.mode||"custom")+" · Network: "+(!Privacy.ready?"paused until setup is complete":Privacy.policy.mode==="local"?"blocked":Privacy.policy.proxy?.enabled&&Privacy.policy.proxy?.shell?"through proxy":"direct");Layout.fillWidth:true;color:Theme.glowDim;font.pixelSize:12}
     }
     DeckCard{visible:root.stage===-1||root.stage===1;title:"Network permissions";subtitle:"Each request checks the saved permission, including images and wallpaper thumbnails."
@@ -32,8 +32,8 @@ ColumnLayout {
         }
         DeckText{visible:root.p.mode==="local";text:"Local mode overrides every network permission above. Select another preset to allow network access.";Layout.fillWidth:true;color:Theme.hazard;font.pixelSize:12}
     }
-    DeckCard{visible:root.stage===-1||root.stage===1;title:"Weather location";subtitle:"A city avoids IP-based location. The provider still sees the connection’s exit IP."
-        DeckChoice{model:["Choose a city","Locate by exit IP"];currentIndex:root.p.weatherMode==="city"?0:1;onActivated:Privacy.set("weatherMode",currentIndex?"ip":"city")}
+    DeckCard{visible:root.stage===-1||root.stage===1;title:"Weather location";subtitle:"Found automatically from your IP. Set a city if it guesses wrong."
+        DeckChoice{model:["Automatic","Choose a city"];currentIndex:root.p.weatherMode==="city"?1:0;onActivated:Privacy.set("weatherMode",currentIndex?"city":"ip")}
         DeckField{visible:root.p.weatherMode==="city";Layout.fillWidth:true;text:root.p.city||"";placeholderText:"City, country · e.g. London, United Kingdom";onTextEdited:Privacy.set("city",text)}
         DeckText{text:"With a proxy, IP location refers to the proxy’s city. City entry performs no background search.";Layout.fillWidth:true;font.pixelSize:12;color:Theme.surfaceVariantOn}
         RowLayout{DeckButton{text:"Refresh weather";enabled:!Settings.dirty&&Privacy.allowed("weather",true);onClicked:Weather.refresh(true)} DeckText{text:Weather.error||(Weather.ready?"Updated: "+new Date(Weather.updatedAt).toLocaleTimeString():"No weather loaded");Layout.fillWidth:true;font.pixelSize:12}}
@@ -60,7 +60,7 @@ ColumnLayout {
     DeckCard{visible:root.stage===5;title:"Ready for your desktop";subtitle:"Save your choices and start using MachineSpirit. You can change everything later in Settings."
         DeckText{text:root.p.mode==="local"?"Online features are turned off.":"Only the online features you allowed will connect.";Layout.fillWidth:true;font.pixelSize:17;color:Theme.glow}
         DeckDivider{}
-        DeckText{text:"Weather: "+(root.p.mode==="local"||root.p.weather==="off"?"Off":root.p.weatherMode==="city"?(root.p.city||"Choose a city in Network & weather"):"Use network location");Layout.fillWidth:true}
+        DeckText{text:"Weather: "+(root.p.mode==="local"||root.p.weather==="off"?"Off":root.p.weatherMode==="city"?(root.p.city||"Choose a city in Network & weather"):"Automatic");Layout.fillWidth:true}
         DeckText{text:"Keyboard: "+(Settings.draft.layouts||[]).join(", ");Layout.fillWidth:true}
         DeckText{text:BrowserPrivacy.dirty?"Some browser changes are not applied yet. You can finish setup now and apply them later in Browsers.":"No unapplied browser changes. Restart open browsers if you changed their policies.";Layout.fillWidth:true;color:BrowserPrivacy.dirty?Theme.hazard:Theme.surfaceVariantOn}
         DeckText{text:"Click Start using MachineSpirit below to finish.";Layout.fillWidth:true;color:Theme.surfaceVariantOn}

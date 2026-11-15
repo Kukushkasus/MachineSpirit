@@ -30,7 +30,7 @@ Settings are stored in `$XDG_CONFIG_HOME/machinespirit/settings.json` (default `
 | sensitivity / accelProfile | 0 / adaptive | Pointer sensitivity (−1 to 1), adaptive or flat acceleration |
 | naturalScroll / tapToClick | true / true | Touchpad scrolling direction and tap to click |
 | leftHanded / followMouse | false / true | Swap pointer buttons; focus windows under the pointer |
-| repeatRate / repeatDelay | 25 / 600 | Key repeat rate per second and initial delay in milliseconds |
+| repeatRate / repeatDelay | 35 / 250 | Key repeat rate per second and initial delay in milliseconds |
 | lockSeconds | 600 | Idle lock timeout |
 | screenOffSeconds | 900 | Screen-off timeout, at least lockSeconds |
 | lockBackend | quickshell | Lock screen: `quickshell` (the shell's own) or `hyprlock`. The shell falls back to hyprlock only when it is not running, never on top of a lock that is held |
@@ -64,9 +64,11 @@ The interface is English only for now; keyboard layouts don't depend on it. Your
 
 ## Displays
 
-Pick an output and set its mode, scale, rotation and position. Positions are in logical coordinates (`0x0`, `1920x0`, `-1920x0`), and scale changes the logical size. The primary output gets the big panels and the startup overlay; the bar is on every screen, and desktop widgets keep their own screens.
+Drag the screens on the arrangement map to match your desk; a dropped screen snaps to the side of its neighbour. Click a screen to make it the main one. Per screen you can also set mode, scale, rotation and an exact position in logical coordinates (`0x0`, `1920x0`, `-1920x0`).
 
-If the primary output disappears, panels move to the first available one and go back when it's reconnected. Display changes from Settings have to be confirmed within 15 seconds, otherwise a watchdog puts the old settings back, even if the window closes or crashes. Editing monitor settings by hand skips that safety net, so have another way into the machine.
+The main screen gets the big panels and the startup overlay and starts on workspace 1. Workspaces aren't tied to screens: Super+N opens N on the screen you're on. On **Automatic** the fastest screen is the main one, and the bigger one if they tie. Screens you haven't placed yourself go main screen first, the rest to its right. The bar is on every screen, and desktop widgets keep their own screens.
+
+If the primary output disappears, panels move to the first available one and go back when it's reconnected. Display changes from Settings have to be confirmed within 20 seconds (a prompt shows up on every screen), otherwise a watchdog puts the old settings back, even if the window closes or crashes. Editing monitor settings by hand skips that safety net, so have another way into the machine.
 
 Example:
 
@@ -102,13 +104,13 @@ Theme policy remains in `theme.conf` next to settings: the theme pack (`pack`) a
 
 ## First launch and privacy
 
-The first launch opens a six-step setup: privacy preset, network and weather, browsers, appearance, keyboard and a review. The shell makes no background requests until you press **Finish setup**. Existing installs are offered the setup once, without replacing saved preferences. **Skip setup** finishes right away with safe defaults (weather and public IP lookups off). Closing it just postpones it; **Privacy → Run setup again** brings it back.
+The first launch opens a six-step setup: privacy preset, network and weather, browsers, appearance, keyboard and a review. The shell makes no background requests until you press **Finish setup**. Existing installs are offered the setup once, without replacing saved preferences. **Skip setup** finishes right away with defaults: weather finds your location by IP, public IP lookup stays off. Closing it just postpones it; **Privacy → Run setup again** brings it back.
 
-**Normal** turns on the optional networking. **Recommended** keeps weather and wallpapers, asks for a city, and makes public IP and cover lookups manual. **Local only** blocks all of the shell's outside requests, including remote notification images, artwork and wallpaper thumbnails; local widgets, playback controls, notes and local wallpapers still work, and cached weather is marked as saved. These modes cover the shell only, not the whole computer.
+**Normal** turns on the optional networking. **Recommended** keeps weather and wallpapers and makes public IP and cover lookups manual. **Local only** blocks all of the shell's outside requests, including remote notification images, artwork and wallpaper thumbnails; local widgets, playback controls, notes and local wallpapers still work, and cached weather is marked as saved. These modes cover the shell only, not the whole computer.
 
 Each network feature can be on, manual or off. Manual weather, IP and cover lookups are in Privacy, online wallpaper search is in the wallpaper archive. Who gets contacted: wttr.in for weather, ipify for public IP, iTunes for covers (artist and title), the original host for remote artwork and notification images, the chosen provider for wallpapers, and GitHub for updates, only when you press refresh. The shell doesn't upload notifications, and their text is shown as plain text, not markup.
 
-Weather uses either a city you enter or your exit IP; with a proxy that's the proxy's location. A city avoids IP geolocation but doesn't hide your IP. `MS_COVER_LOOKUP=0` still turns cover lookup off completely, and the city setting replaces `MS_WEATHER_LOCATION` after migration.
+Weather finds your location by exit IP unless you enter a city; with a proxy that's the proxy's location. A city avoids IP geolocation but doesn't hide your IP. `MS_COVER_LOOKUP=0` still turns cover lookup off completely, and the city setting replaces `MS_WEATHER_LOCATION` after migration.
 
 ### Proxy
 

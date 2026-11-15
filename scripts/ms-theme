@@ -107,6 +107,26 @@ def readable(fg, bg, want):
     return rgb_to_hex(r, g, b)
 
 
+def terminal_contrast(path):
+    """Keep every kitty colour readable on the background: bright colours lighter than the base, text 4.5:1."""
+    try: text = path.read_text()
+    except OSError: return
+    vals = dict(re.findall(r"(?m)^(background|color\d+)\s+(#[0-9a-fA-F]{6})", text))
+    bg = vals.get("background")
+    if not bg: return
+    want = {"color7": 7, "color15": 7, "color8": 3.2}
+    for i in range(1, 7):
+        base = vals.get(f"color{i}")
+        if not base: continue
+        vals[f"color{i}"] = readable(base, bg, 4.5)
+        r, g, b = hex_to_rgb(vals[f"color{i}"])
+        vals[f"color{i + 8}"] = readable(rgb_to_hex(*(c + (1 - c) * 0.3 for c in (r, g, b))), bg, 6)
+    for k, w in want.items():
+        if k in vals: vals[k] = readable(vals[k], bg, w)
+    out = re.sub(r"(?m)^(color\d+)(\s+)#[0-9a-fA-F]{6}", lambda m: m[1] + m[2] + vals.get(m[1], ""), text)
+    if out != text: atomic(path, out)
+
+
 def dress(colors, pack, mode):
     """Lay the pack over a generated scheme: its anchors always, its materials unless the wallpaper leads."""
     for role, key in ANCHOR_KEYS.items():
@@ -391,7 +411,9 @@ def apply_inner(args, selected, runtime):
             atomic(cj, json.dumps(dress(colors, pack, mode), indent=2))
         except Exception as e:
             say("could not add materials:", e)
-        if "terminal" in selected: repaint_emblem(cj)
+        if "terminal" in selected:
+            repaint_emblem(cj)
+            terminal_contrast(CONFIG / "kitty/colors.conf")
     else:
         fixed = DATA / "matugen/fixed-colors.json"
         if fixed.exists():

@@ -56,3 +56,4 @@ local loaded, err = pcall(dofile, userSettings)
 if not loaded then print("MachineSpirit settings: " .. tostring(err)) end
 require("binds")
 require("rules")
+require("monitors")

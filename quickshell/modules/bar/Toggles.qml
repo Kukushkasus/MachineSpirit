@@ -34,7 +34,7 @@ Row {
             font { family: Theme.fontNum; pixelSize: 13; weight: Font.DemiBold } text: root.layout }
     }
     GlyphButton { icon: "screenshot_region"; tip: "Screenshot of an area (Print)"; onClicked: Quickshell.execDetached([Quickshell.env("HOME") + "/.local/bin/ms-screenshot", "region"]) }
-    GlyphButton { icon: "imagesmode"; tip: "Wallpapers (Super+W)"; onClicked: Walls.toggle() }
+    GlyphButton { icon: "imagesmode"; tip: "Wallpapers"; onClicked: Walls.toggle() }
     VolumeScreen {}
     GlyphButton {
         icon: root.mic?.muted ? "mic_off" : "mic"; tip: root.mic?.muted ? "Microphone off" : "Microphone on"
@@ -43,8 +43,9 @@ Row {
     }
     GlyphButton {
         visible: root.bt !== null
-        icon: root.bt?.enabled ? "bluetooth" : "bluetooth_disabled"; tip: root.bt?.enabled ? "Bluetooth on" : "Bluetooth off"
+        icon: root.bt?.enabled ? "bluetooth" : "bluetooth_disabled"; tip: "Bluetooth devices (right click: " + (root.bt?.enabled ? "off)" : "on)")
         on: root.bt?.enabled ?? false
-        onClicked: if (root.bt) root.bt.enabled = !root.bt.enabled
+        popup: "bluetooth"
+        onRightClicked: if (root.bt) root.bt.enabled = !root.bt.enabled
     }
 }
