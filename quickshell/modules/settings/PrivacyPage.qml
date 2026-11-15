@@ -60,7 +60,7 @@ ColumnLayout {
     DeckCard{visible:root.stage===5;title:"Ready for your desktop";subtitle:"Save your choices and start using MachineSpirit. You can change everything later in Settings."
         DeckText{text:root.p.mode==="local"?"Online features are turned off.":"Only the online features you allowed will connect.";Layout.fillWidth:true;font.pixelSize:17;color:Theme.glow}
         DeckDivider{}
-        DeckText{text:"Weather: "+(root.p.mode==="local"||root.p.weather==="off"?"Off":root.p.weatherMode==="city"?(root.p.city||"Choose a city in Network & weather"):"Automatic");Layout.fillWidth:true}
+        DeckText{text:"Weather: "+(root.p.mode==="local"||root.p.weather==="off"?"Off":root.p.weatherMode==="city"?(root.p.city||"Automatic"):"Automatic");Layout.fillWidth:true}
         DeckText{text:"Keyboard: "+(Settings.draft.layouts||[]).join(", ");Layout.fillWidth:true}
         DeckText{text:BrowserPrivacy.dirty?"Some browser changes are not applied yet. You can finish setup now and apply them later in Browsers.":"No unapplied browser changes. Restart open browsers if you changed their policies.";Layout.fillWidth:true;color:BrowserPrivacy.dirty?Theme.hazard:Theme.surfaceVariantOn}
         DeckText{text:"Click Start using MachineSpirit below to finish.";Layout.fillWidth:true;color:Theme.surfaceVariantOn}

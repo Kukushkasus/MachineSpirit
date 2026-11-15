@@ -4,14 +4,15 @@
 
 ### Added
 
-- Bluetooth panel: click the Bluetooth button on the bar (or Devices in Sanctum) to search, pair, connect and forget devices and see their battery. Right click still turns the adapter on and off. No blueman needed.
+- Bluetooth devices right in Sanctum, in place of the log (like end-4's sidebar): search, pair, connect, forget, battery. The Bluetooth button on the bar opens it, right click still turns the adapter on and off. No blueman needed.
 - Displays: drag the screens on a map and click one to make it the main screen. A "Keep these display settings?" prompt shows on every screen, and you get 20 seconds instead of 15.
 
 ### Changed
 
 - The main screen on Automatic is the fastest one (then the biggest), not whichever came up first, and it starts on workspace 1. Workspaces stay free like in end-4: Super+N opens N on the screen you're on. Unplaced screens go main first, the rest to the right.
 - Super+W opens your default browser. The wallpaper archive has no shortcut anymore, it's on the bar and in the power menu. Super+B is free.
-- Weather finds your location by IP out of the box, the city is optional.
+- Weather finds your location by IP out of the box, the city is optional. Setups left in city mode without a city now locate by IP too instead of showing nothing.
+- Desktop widgets start on the main screen and follow it until you move them.
 - Key repeat starts sooner and runs faster by default: 250 ms, then 35 per second (was 600 ms and 25). Holding Backspace no longer feels stuck. Saved settings keep their values.
 
 ### Fixed

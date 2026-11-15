@@ -10,7 +10,7 @@ def main(r):
         except FileNotFoundError:return {'error':'No saved forecast'}
     if kind=='weather':
         p=read();city=p['city'].strip() if p['weatherMode']=='city' else ''
-        if p['weatherMode']=='city' and not city: raise ValueError('Choose a city in Privacy settings')
+        # city mode with no city yet (older setups asked for one): locate by IP instead of failing
         raw=fetch('weather','https://wttr.in/'+urllib.parse.quote(city,safe='')+'?format=j1',manual)
         value=json.loads(raw);value['_msUpdatedAt']=int(time.time()*1000);atomic(CACHE/'weather.json',json.dumps(value));return value
     if kind=='publicIp': return {'ip':fetch('publicIp','https://api.ipify.org',manual).strip()}

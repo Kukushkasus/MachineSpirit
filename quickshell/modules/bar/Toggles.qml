@@ -45,7 +45,7 @@ Row {
         visible: root.bt !== null
         icon: root.bt?.enabled ? "bluetooth" : "bluetooth_disabled"; tip: "Bluetooth devices (right click: " + (root.bt?.enabled ? "off)" : "on)")
         on: root.bt?.enabled ?? false
-        popup: "bluetooth"
+        onClicked: Sanctum.openBluetooth()
         onRightClicked: if (root.bt) root.bt.enabled = !root.bt.enabled
     }
 }

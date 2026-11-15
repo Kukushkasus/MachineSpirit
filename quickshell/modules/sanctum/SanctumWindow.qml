@@ -11,6 +11,7 @@ import QtQuick
 import qs.common
 import qs.services
 import qs.kits
+import qs.modules.popups
 
 // Sanctum: control desk on the right. Crest, machine info, vox bus (faders and track), six circuit modules and
 // the log. Slides in from the edge, click outside or Esc closes it, created on first use
@@ -234,7 +235,7 @@ Variants {
                         tip: !win.bt ? "" : win.bt.enabled ? "Click: bluetooth off" : "Click: bluetooth on"
                         moreTip: "Devices"
                         onFlip: if (win.bt) win.bt.enabled = !win.bt.enabled
-                        onMore: { Sanctum.close(); Popups.toggle("bluetooth", win.width - 260, win.modelData.name) }
+                        onMore: Sanctum.view = Sanctum.view === "bluetooth" ? "" : "bluetooth"
                     }
                     Card {
                         width: grid.cell; order: 2
@@ -268,9 +269,24 @@ Variants {
                 }
             }
 
+            // ---------------- Bluetooth devices, in place of the log (like end-4's sidebar), not in a separate popup
+            SectionFrame {
+                id: btFrame
+                visible: Sanctum.view === "bluetooth"
+                x: logFrame.x; y: logFrame.y; width: logFrame.width; height: logFrame.height
+                tab: "Bluetooth"; tabIcon: "bluetooth"
+                plate: [ Plate { anchors.verticalCenter: parent.verticalCenter; height: 20; flat: true; label: "Back"; onHit: Sanctum.view = "" } ]
+                Flickable {
+                    x: 10; y: 26; width: parent.width - 20; height: parent.height - y - 12
+                    clip: true; contentHeight: btList.height; boundsBehavior: Flickable.StopAtBounds
+                    BluetoothPopup { id: btList; width: btFrame.width - 20 }
+                }
+            }
+
             // ---------------- the vox log
             SectionFrame {
                 id: logFrame
+                visible: Sanctum.view !== "bluetooth"
                 x: 16; width: parent.width - 32
                 y: stack.y + stack.height + (win.compact ? 8 : 12)
                 height: parent.height - y - 16

@@ -8,8 +8,11 @@ import QtQuick
 Singleton {
     id: root
     property bool open: false
-    function toggle() { open = !open; if (open) { Settings.open = false; Launcher.close(); Walls.close(); Power.close(); Popups.close() } }
-    function close() { open = false }
+    function toggle() { open = !open; if (!open) view = ""; if (open) { Settings.open = false; Launcher.close(); Walls.close(); Power.close(); Popups.close() } }
+    function close() { open = false; view = "" }
+    // what the lower half of the desk shows: the message log, or "bluetooth"
+    property string view: ""
+    function openBluetooth() { if (!open) toggle(); view = "bluetooth" }
 
     // keep awake: an inhibitor that lives as long as the switch is on. Blocking sleep needs an active seat
     // session (polkit); when that is refused it falls back to blocking idle only, which anyone may.

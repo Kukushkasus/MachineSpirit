@@ -27,7 +27,7 @@ Singleton {
     readonly property string path: Theme.stateDir + "/desktop-widgets.json"
     readonly property string status: error !== "" ? "Not saved · " + error : (dirty || writer.running ? "Saving…" : "Saved")
     function settings(key) { return state.widgets[key] || {enabled: false, screen: "", x: 24, y: 70, scale: 1} }
-    function screenFor(key) { return Quickshell.screens.find(s => s.name === settings(key).screen) || Quickshell.screens[0] || null }
+    function screenFor(key) { return Quickshell.screens.find(s => s.name === settings(key).screen) || Settings.primary() }
     function packed(key, screen, scale) {
         const compact = screen.height < 760
         const leftKeys = compact ? ["clock", "weather", "media"] : ["clock", "weather"]
@@ -52,9 +52,12 @@ Singleton {
         const next = JSON.parse(JSON.stringify(state))
         const screen = screenFor(key)
         next.widgets[key] = Object.assign({}, settings(key), geometry(key), {viewportWidth: screen?.width ?? 1920, viewportHeight: screen?.height ?? 1080}, fields)
+        next.autoPlaced = false
         state = next; changed()
     }
     function changed() { dirty = true; revision++; saveTimer.restart() }
+    // a layout nobody has touched yet follows the main screen, which is known only once the monitors are probed
+    Connections { target: Settings; function onAutoPrimaryChanged() { if (root.loaded && root.state.autoPlaced) root.defaults() } }
     function note(title, text) {
         const next = Object.assign({}, state, {note: {title: title, text: text}})
         state = next; changed()
@@ -62,14 +65,14 @@ Singleton {
     function seconds(value) { state = Object.assign({}, state, {seconds: value}); changed() }
     function toggle() { editing = !editing; if (!editing) flush() }
     function defaults() {
-        const s = Quickshell.screens[0]
+        const s = Settings.primary()
         if (!s) return
         const scale = s.height < 860 || s.width < 1000 ? 0.8 : 1
         const widgets = {}
         catalog.forEach(c => {
             widgets[c.key] = Object.assign({enabled: true, screen: s.name, viewportWidth: s.width, viewportHeight: s.height}, packed(c.key, s, scale))
         })
-        state = Object.assign({}, state, {widgets: widgets}); changed()
+        state = Object.assign({}, state, {widgets: widgets, autoPlaced: true}); changed()
     }
     function reset() { defaults(); flush() }
     function flush() {

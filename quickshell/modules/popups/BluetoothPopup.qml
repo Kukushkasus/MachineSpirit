@@ -5,8 +5,8 @@ import QtQuick
 import qs.common
 import qs.services
 
-// Bluetooth: adapter power, scanning, and the device list. Click a device to connect, disconnect or pair it.
-// scanning stops when the panel closes, so the adapter isn't left discovering in the background
+// Bluetooth: adapter power, scanning, and the device list, shown inside Sanctum. Click a device to connect,
+// disconnect or pair it. Scanning stops when the view closes, so the adapter isn't left discovering
 Column {
     id: root
     width: 420
