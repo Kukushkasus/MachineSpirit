@@ -3,7 +3,7 @@
 
 **MachineSpirit** is a desktop shell for Hyprland, built with Quickshell: phosphor screens, Nixie clocks and machined housings, with colours taken from your wallpaper. Four faction liveries (Adeptus Mechanicus, Ultramarines, Necrons and Khorne) redraw the whole shell and change how it moves, while every control stays where it is. It is an unofficial fan project in the style of Warhammer 40,000.
 
-**0.6.0 · Visual & Motion Overhaul** · Arch Linux / CachyOS · Wayland · [GPL-3.0-only](LICENSE) · Author: [Kukushkasus](https://github.com/Kukushkasus)
+**0.6.1 Stable** · Arch Linux / CachyOS · Wayland · [GPL-3.0-only](LICENSE) · Author: [Kukushkasus](https://github.com/Kukushkasus)
 
 <details>
 <summary><b>I'm not reading all that. Just give me the install command.</b></summary>
@@ -45,8 +45,8 @@ Each faction also moves differently: Mechanicus relays snap in and lamps warm up
 
 ## What is in it
 
-- **Bar, command console and workspace overview**, the **Sanctum** control desk, popups for time, weather, resources, network and media, a notification log, a wallpaper archive with online sources, and five movable desktop instruments.
-- **Settings Center** with fourteen searchable pages: appearance and cursor, themes, bar, widgets, effects, notifications, displays, input, session, shortcuts, privacy, browsers and updates.
+- **Bar, command console and workspace overview**, the **Sanctum** control desk with Bluetooth, popups for time, weather, resources, network and media, a notification log, a wallpaper archive with online sources, and five movable desktop instruments.
+- **Settings Center** with fourteen searchable pages: appearance and cursor, themes, bar, widgets, effects, notifications, displays (drag the screens, pick the main one), input, session, shortcuts, privacy, browsers and updates.
 - **Theme packs** with a 30-second preview that saves nothing, apply and revert; your own packs as plain data (they cannot run code).
 - **Cursors** for every faction, outlined light and dark so they stay visible on any wallpaper; or keep your own.
 - **Login, lock and boot** in the same style; reduced-motion and low-power modes; installs and updates with backups.
@@ -66,7 +66,7 @@ Existing files are backed up and your own edits are kept on update. To update, o
 
 ## Compatibility and known limitations
 
-- Developed and tested on Hyprland 0.57 and Quickshell 0.3.2 with a virtual GPU (virtio/virgl). Physical GPUs, NVIDIA and multi-GPU setups have not been tested yet. If you try it on real hardware, please leave an [install report](https://github.com/Kukushkasus/MachineSpirit/issues/new?template=install-report.yml), even if everything worked.
+- Tested on Hyprland 0.57 and Quickshell 0.3.2, on NVIDIA (RTX 3050, two monitors at 144 and 60 Hz) and in a VM. AMD, Intel and hybrid laptops are not tested yet. If you run it on one of them, please leave an [install report](https://github.com/Kukushkasus/MachineSpirit/issues/new?template=install-report.yml), even if everything worked.
 - The faction display faces have no Cyrillic; such text is set in IBM Plex. The interface itself is English.
 - Before 1.0 the theme pack format may still change.
 

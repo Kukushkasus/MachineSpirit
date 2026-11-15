@@ -61,5 +61,3 @@ effects. The scan line can be switched off on its own in Settings → Desktop & 
 ```sh
 python3 -m unittest discover -s tools -p test_desktop_state.py
 ```
-
-Multi-monitor hotplug has only been tried in a VM so far.

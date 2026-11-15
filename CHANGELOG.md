@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.6.1 - 2026-11-15
+
+Fixes from the first test on real hardware (two monitors, NVIDIA).
 
 ### Added
 

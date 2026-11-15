@@ -28,7 +28,7 @@ body:
     id: versions
     attributes:
       label: Distro, Hyprland, Quickshell, MachineSpirit versions
-      placeholder: CachyOS, Hyprland 0.57.0, Quickshell 0.3.2, MachineSpirit 0.6.0
+      placeholder: CachyOS, Hyprland 0.57.0, Quickshell 0.3.2, MachineSpirit 0.6.1
     validations:
       required: true
   - type: input
